@@ -1,0 +1,6 @@
+argcomplete
+bs4
+configparser
+psutil
+urllib3
+xmltodict
