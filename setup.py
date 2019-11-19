@@ -8,7 +8,7 @@ long_description = open('./README.md').read()
 
 setup(
   name='lt-pylib',
-  version='0.0.1',
+  version='0.0.2',
   description='Common Python helper functions',
   long_description=long_description,
   long_description_content_type='text/markdown',
@@ -26,7 +26,7 @@ setup(
       'dev': ['check-manifest'],
       'test': ['coverage'],
   },
-  packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+  packages=find_packages(exclude=['contrib', 'docs', 'scripts', 'tests']),
   install_requires=requirements,
   classifiers=[],
 )
