@@ -23,9 +23,9 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
   }
   if default is None:
     prompt = "\n[y/n]> "
-  elif default == "yes":
+  elif default == "yes" or default == "y":
     prompt = "\n[Y/n]> "
-  elif default == "no":
+  elif default == "no" or default == "n":
     prompt = "\n[y/N]> "
   else:
     raise ValueError("invalid default answer: '%s'" % default)
