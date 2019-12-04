@@ -3,9 +3,16 @@
 
 import re
 import urllib.parse
-from typing import Callable
+from typing import Callable, List
 
 StrConverter = Callable[[str], str]
+
+SEARCH_SEP_CHARS: List[str] = [
+  " ",
+  "_",
+  "-",
+  ".",
+]
 
 
 def stripper(val: str) -> str:
@@ -26,6 +33,25 @@ def url_encode(val: str) -> str:
 
 def url_decode(val: str) -> str:
   return urllib.parse.unquote_plus(val)
+
+
+def to_camel_case(val: str, sep: str = None) -> str:
+  if not val:
+    return val
+
+  if sep is None:
+    if val.count(" ") > 0:
+      sep = " "
+    else:
+      count: int = -1
+      for sep_char in SEARCH_SEP_CHARS:
+        sep_char_count = val.count(sep_char)
+        if sep_char_count > count:
+          count = sep_char_count
+          sep = sep_char
+
+  val = val.lower().replace(sep, " ").title()
+  return (val[0:1].lower() + val[1:]).replace(" ", "")
 
 
 def _main():

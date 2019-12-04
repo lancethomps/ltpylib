@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import itertools
 import os
+import select
+import sys
 from typing import List, Optional, Sequence
 
 import argcomplete
-import itertools
 
 from pylib import logs
 
@@ -78,6 +80,13 @@ def parse_args_with_positionals_and_init_others(arg_parser: argparse.ArgumentPar
   args.__setattr__(positionals_key, positionals)
   logs.init_logging(args=args)
   return args
+
+
+def does_stdin_have_data() -> bool:
+  if select.select([sys.stdin, ], [], [], 0.0)[0]:
+    return True
+  else:
+    return False
 
 
 class BaseArgs(object):

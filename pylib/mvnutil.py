@@ -60,10 +60,10 @@ def run_mvn_expression(pom: Union[str, Path], expression: str) -> str:
     pom = Path(pom)
 
   mvn_out = procs.run_and_parse_output(
-    ['mvn', '-f', pom.absolute().as_posix(), 'help:evaluate', '-Dexpression={0}'.format(expression)],
+    ['mvn', '-f', pom.absolute().as_posix(), 'help:evaluate', '-Dexpression={0}'.format(expression), '--quiet', '-DforceStdout'],
     check=True,
   )[1].strip()
-  return parse_mvn_expression_output(mvn_out)
+  return mvn_out
 
 
 def update_dep_version(pom: Union[str, Path], dep: str, version: str, additional_arguments: List[str] = None, check: bool = False) -> Tuple[int, str]:
