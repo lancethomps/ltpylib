@@ -9,7 +9,7 @@ from typing import List, Optional, Sequence
 
 import argcomplete
 
-from pylib import logs
+from ltpylib import logs
 
 TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
 DEFAULT_POSITIONALS_KEY = 'command'

@@ -2,7 +2,7 @@
 import os
 import tempfile
 
-from pylib import files, procs
+from ltpylib import files, procs
 
 
 def diff_git(initial: str, updated: str, add_suffix: str = None):

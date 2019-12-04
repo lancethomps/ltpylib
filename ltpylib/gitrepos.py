@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import List, Sequence
 
-from pylib import files, filters
+from ltpylib import files, filters
 
 
 FIND_REPOS_RECURSION_EXCLUDES = frozenset([

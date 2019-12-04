@@ -10,7 +10,7 @@ from typing import AnyStr, List, Sequence, Set, Tuple, Union, Pattern
 
 import itertools
 
-from pylib import filters
+from ltpylib import filters
 
 
 def replace_matches_in_file(file: Union[str, Path], search_string: str, replacement: str, quote_replacement: Union[bool, str] = False, force_replace: bool = False) -> bool:

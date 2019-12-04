@@ -7,7 +7,7 @@ from xml.etree.ElementTree import Element
 
 import xmltodict
 
-from pylib import files, procs
+from ltpylib import files, procs
 
 
 def xq(file: Union[str, Path], expr: str, remove_null: bool = True, raw_output: bool = True) -> str:

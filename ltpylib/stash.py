@@ -7,7 +7,7 @@ from stashy import errors, helpers
 from stashy.pullrequests import PullRequest, PullRequests
 from stashy.repos import Repos
 
-from pylib.stash_types import PullRequestMergeStatus, PullRequestMergeability, PullRequestStatus, Repository
+from ltpylib.stash_types import PullRequestMergeStatus, PullRequestMergeability, PullRequestStatus, Repository
 
 STASH_URL: str = "https://stash.wlth.fr"
 

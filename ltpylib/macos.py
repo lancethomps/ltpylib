@@ -4,7 +4,7 @@ import os
 import sys
 from getpass import getpass, getuser
 
-from pylib import inputs, procs
+from ltpylib import inputs, procs
 
 
 def notify(message: str, title: str = "Terminal Notification", sound_name: str = "Ping", subtitle: str = ""):

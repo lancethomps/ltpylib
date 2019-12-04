@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import List, Tuple, Union
 
-from pylib import procs, xmlparser
+from ltpylib import procs, xmlparser
 
 MVN_EXPR_PROJECT_GROUP_ID = 'project.groupId'
 MVN_EXPR_PROJECT_ARTIFACT_ID = 'project.artifactId'

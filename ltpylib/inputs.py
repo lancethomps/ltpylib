@@ -4,7 +4,7 @@ import subprocess
 import sys
 from typing import Sequence
 
-from pylib import procs
+from ltpylib import procs
 
 
 def confirm(question: str = 'Continue?', default: str = None) -> bool:
