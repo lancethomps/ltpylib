@@ -2,6 +2,7 @@
 
 import argparse
 import itertools
+import logging
 import os
 import select
 import sys
@@ -85,6 +86,8 @@ def parse_args_with_positionals_and_init_others(arg_parser: argparse.ArgumentPar
 def does_stdin_have_data() -> bool:
   if select.select([sys.stdin, ], [], [], 0.0)[0]:
     return True
+  elif sys.stdin.isatty():
+    return True
   else:
     return False
 
@@ -121,3 +124,15 @@ class IncludeExcludeRegexArgs(object):
     arg_parser.add_argument('--exclude-regex', action='append')
     arg_parser.add_argument('--include-regex', action='append')
     return arg_parser
+
+
+def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] = None):
+  for item in sorted(args.__dict__.items()):
+    if item[0] == '_args':
+      continue
+    elif only_keys and not item[0] in only_keys:
+      continue
+    elif skip_keys and item[0] in skip_keys:
+      continue
+
+    logs.log_with_title_sep(logging.INFO, item[0], item[1])
