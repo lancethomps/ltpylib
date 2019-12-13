@@ -6,18 +6,18 @@ import subprocess
 from collections import OrderedDict
 from configparser import ConfigParser
 from pathlib import Path
-from typing import AnyStr, List, Sequence, Set, Tuple, Union, Pattern
+from typing import AnyStr, List, Sequence, Set, Tuple, Union, Pattern, Callable, Match
 
 import itertools
 
 from ltpylib import filters
 
 
-def replace_matches_in_file(file: Union[str, Path], search_string: str, replacement: str, quote_replacement: Union[bool, str] = False, force_replace: bool = False) -> bool:
+def replace_matches_in_file(file: Union[str, Path], search_string: str, replacement: Union[str, Callable[[Match], str]], quote_replacement: Union[bool, str] = False, force_replace: bool = False) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
 
-  if quote_replacement:
+  if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
 
   content = read_file(file)
