@@ -3,14 +3,14 @@ import collections
 import logging
 import subprocess
 import sys
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Union
 
 import psutil
 from psutil import AccessDenied, NoSuchProcess, ZombieProcess
 from time import sleep
 
 
-def run(*popenargs, input=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
   if 'stdout' not in kwargs:
     kwargs['stdout'] = subprocess.PIPE
@@ -20,11 +20,11 @@ def run(*popenargs, input=None, timeout=None, check=False, **kwargs) -> subproce
   return subprocess.run(*popenargs, input=input, timeout=timeout, check=check, **kwargs)
 
 
-def run_with_regular_stdout(*popenargs, input=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
   return run(*popenargs, input=input, timeout=timeout, check=check, stdout=sys.stdout, stderr=sys.stderr, **kwargs)
 
 
-def run_and_parse_output(*popenargs, input=None, timeout=None, check=False, **kwargs) -> Tuple[int, str]:
+def run_and_parse_output(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
   kwargs['universal_newlines'] = True
   if 'stderr' not in kwargs:

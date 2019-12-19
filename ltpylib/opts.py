@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import functools
 
 import argparse
 import itertools
@@ -57,8 +58,8 @@ def create_default_arg_parser() -> argparse.ArgumentParser:
   return add_default_arguments_to_parser(arg_parser)
 
 
-def create_default_with_positionals_arg_parser() -> argparse.ArgumentParser:
-  arg_parser = argparse.ArgumentParser(formatter_class=PositionalsHelpFormatter)
+def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
+  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
   return add_default_arguments_to_parser(arg_parser)
 
 
