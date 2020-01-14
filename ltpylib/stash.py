@@ -7,7 +7,7 @@ from stashy import errors, helpers
 from stashy.pullrequests import PullRequest, PullRequests
 from stashy.repos import Repos
 
-from ltpylib.stash_types import PullRequestMergeStatus, PullRequestMergeability, PullRequestStatus, Repository
+from ltpylib.stash_types import PullRequestMergeStatus, PullRequestMergeability, PullRequestStatus, Repository, SearchResults
 
 STASH_URL: str = "https://stash.wlth.fr"
 
@@ -16,12 +16,6 @@ class StashApi(object):
 
   def __init__(self, stash: stashy.Stash):
     self.stash: stashy.Stash = stash
-
-  def repos_for_project(self, project: str) -> List[Repository]:
-    repos: Repos = self.stash.projects[project].repos
-    return [
-      Repository(repo) for repo in repos.list()
-    ]
 
   def create_pull_request(
       self,
@@ -129,6 +123,29 @@ class StashApi(object):
         author=author,
       )
     ]
+
+  def repos_for_project(self, project: str) -> List[Repository]:
+    repos: Repos = self.stash.projects[project].repos
+    return [
+      Repository(repo) for repo in repos.list()
+    ]
+
+  def search(self, query: str, limit: int = 25) -> SearchResults:
+    api_json = {
+      "entities": {
+        "code": {}
+      },
+      "limits"  : {
+        "primary": limit
+      },
+      "query"   : query
+    }
+    kw = helpers.add_json_headers({})
+    return SearchResults(self._parse_raw_response(self.stash._client._session.post(
+      '%s/rest/search/latest/search' % self.stash._client._base_url,
+      json=api_json,
+      **kw
+    )))
 
   def _parse_raw_response(self, response: Response) -> dict:
     errors.maybe_throw(response)

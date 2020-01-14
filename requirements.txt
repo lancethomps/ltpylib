@@ -1,5 +1,6 @@
 argcomplete
 bs4
+colorama
 configparser
 psutil
 requests

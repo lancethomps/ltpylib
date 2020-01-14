@@ -6,6 +6,7 @@ import itertools
 import logging
 import os
 import select
+import shutil
 import sys
 from typing import List, Optional, Sequence
 
@@ -93,12 +94,38 @@ def does_stdin_have_data() -> bool:
     return False
 
 
+def check_command(cmd: str) -> bool:
+  return shutil.which(cmd) is not None
+
+
 class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
     self._args: argparse.Namespace = args
     self.verbose: bool = args.verbose
     self.dry_run: bool = args.dry_run
+
+
+class ColorArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.no_color: bool = args.no_color
+    self.use_color: bool = args.use_color
+
+  def should_use_color(self, default: bool = True) -> bool:
+    if self.use_color:
+      return True
+
+    if self.no_color:
+      return False
+
+    return default
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument('--no-color', action='store_true')
+    arg_parser.add_argument('--use-color', action='store_true')
+    return arg_parser
 
 
 class IncludeExcludeCmdArgs(object):
@@ -124,6 +151,30 @@ class IncludeExcludeRegexArgs(object):
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     arg_parser.add_argument('--exclude-regex', action='append')
     arg_parser.add_argument('--include-regex', action='append')
+    return arg_parser
+
+
+class PagerArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.no_pager: bool = args.no_pager
+    self.pager: str = args.pager
+    self.use_pager: bool = args.use_pager
+
+  def should_use_pager(self, default: bool = True) -> bool:
+    if self.use_pager:
+      return True
+
+    if self.no_pager:
+      return False
+
+    return default
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
+    arg_parser.add_argument('--no-pager', action='store_true')
+    arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
+    arg_parser.add_argument('--use-pager', action='store_true')
     return arg_parser
 
 
