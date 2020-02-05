@@ -1,8 +1,105 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
+if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
 set -o errexit -o errtrace -o nounset
 ##################################################################################################################################################
 
-git clean -Xd --force -- build dist
-python3 setup.py sdist bdist_wheel
-python3 -m twine upload dist/*
+function exiting() {
+  echo "Exiting..."
+  exit "${1:-1}"
+}
+function confirm() {
+  local response=""
+  read -r -p "${1:-Are you sure?}"$'\n'"[Y/n]> " response
+  case $response in
+    [yY][eE][sS] | [yY] | "") true ;;
+    [nN][oO] | [nN]) false ;;
+    *)
+      echo "Incorrect value entered... Try again."
+      confirm "$@"
+      ;;
+  esac
+}
+function confirm_with_auto() {
+  if test "${auto_confirm:-}" = 'true'; then
+    echo "AUTO CONFIRMED: ${1:-}"
+    return 0
+  fi
+  confirm "$@"
+}
+
+function check_git_dirty() {
+  if git is-dirty; then
+    echo "Git repo is dirty!"
+    git status
+    exit 1
+  fi
+  return 0
+}
+
+function increment_semver() {
+  local version major=0 minor=0 patch=0
+  while test $# -gt 0; do
+    case "$1" in
+      --major)
+        shift
+        major="$1"
+        shift
+        ;;
+      --minor)
+        shift
+        minor="$1"
+        shift
+        ;;
+      --patch)
+        shift
+        patch="$1"
+        shift
+        ;;
+      --)
+        shift
+        break
+        ;;
+      -*)
+        echo "Unknown option: $1"
+        _usage
+        exit 1
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
+  version="$1"
+
+  echo "$version" |
+    awk -F. -v a="$major" -v b="$minor" -v c="$patch" '{printf("%d.%d.%d", $1+a, $2+b , $3+c)}'
+}
+
+function publish_and_tag() {
+  check_git_dirty
+  git clean -Xd --force -- build dist
+  python3 setup.py sdist bdist_wheel
+  python3 -m twine upload dist/*
+
+  git tag "v$CURR_VERSION"
+  git push --tags
+}
+
+function next_vers() {
+  check_git_dirty
+  git checkout -b "dev-v${NEXT_VERSION}"
+  echo -n "${NEXT_VERSION}" > "$VERSION_FILE"
+  git commit -m "Prepare next version" -- "$VERSION_FILE"
+  git push --set-upstream origin "$(git current-branch)"
+}
+
+cd "$_SCRIPT_DIR"
+
+export VERSION_FILE="VERSION"
+export CURR_VERSION="$(cat "$VERSION_FILE" | sed -E 's/ *$//g' | sed -E 's/^ *//g')"
+export NEXT_VERSION="$(increment_semver --patch 1 "$CURR_VERSION")"
+
+publish_and_tag
+next_vers

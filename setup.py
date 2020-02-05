@@ -5,10 +5,11 @@ from setuptools import setup, find_packages
 
 requirements = open('./requirements.txt').read().splitlines()
 long_description = open('./README.md').read()
+version = open('./VERSION').read().strip()
 
 setup(
   name='ltpylib',
-  version='0.0.3',
+  version=version,
   description='Common Python helper functions',
   long_description=long_description,
   long_description_content_type='text/markdown',
