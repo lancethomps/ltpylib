@@ -105,6 +105,34 @@ class Project(DataWithUnknownProperties):
     DataWithUnknownProperties.__init__(self, values)
 
 
+class PullRequestActivities(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.isLastPage: int = values.pop("isLastPage", None)
+    self.limit: int = values.pop("limit", None)
+    self.size: int = values.pop("size", None)
+    self.start: int = values.pop("start", None)
+    self.values: List[PullRequestActivity] = list(map(PullRequestActivity, values.pop("values", []))) if "values" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class PullRequestActivity(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.action: str = values.pop("action", None)
+    self.commentAction: str = values.pop("commentAction", None)
+    self.createdDate: int = values.pop("createdDate", None)
+    self.id: int = values.pop("id", None)
+    self.user: User = User(values=values.pop("user")) if "user" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
 class PullRequestMergeability(DataWithUnknownProperties):
 
   def __init__(self, values: dict = None):
