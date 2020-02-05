@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
+import functools
 
 import argparse
 import itertools
+import logging
 import os
 import select
+import shutil
 import sys
 from typing import List, Optional, Sequence
 
@@ -56,8 +59,8 @@ def create_default_arg_parser() -> argparse.ArgumentParser:
   return add_default_arguments_to_parser(arg_parser)
 
 
-def create_default_with_positionals_arg_parser() -> argparse.ArgumentParser:
-  arg_parser = argparse.ArgumentParser(formatter_class=PositionalsHelpFormatter)
+def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
+  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
   return add_default_arguments_to_parser(arg_parser)
 
 
@@ -85,8 +88,14 @@ def parse_args_with_positionals_and_init_others(arg_parser: argparse.ArgumentPar
 def does_stdin_have_data() -> bool:
   if select.select([sys.stdin, ], [], [], 0.0)[0]:
     return True
+  elif sys.stdin.isatty():
+    return True
   else:
     return False
+
+
+def check_command(cmd: str) -> bool:
+  return shutil.which(cmd) is not None
 
 
 class BaseArgs(object):
@@ -95,6 +104,28 @@ class BaseArgs(object):
     self._args: argparse.Namespace = args
     self.verbose: bool = args.verbose
     self.dry_run: bool = args.dry_run
+
+
+class ColorArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.no_color: bool = args.no_color
+    self.use_color: bool = args.use_color
+
+  def should_use_color(self, default: bool = True) -> bool:
+    if self.use_color:
+      return True
+
+    if self.no_color:
+      return False
+
+    return default
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument('--no-color', action='store_true')
+    arg_parser.add_argument('--use-color', action='store_true')
+    return arg_parser
 
 
 class IncludeExcludeCmdArgs(object):
@@ -121,3 +152,39 @@ class IncludeExcludeRegexArgs(object):
     arg_parser.add_argument('--exclude-regex', action='append')
     arg_parser.add_argument('--include-regex', action='append')
     return arg_parser
+
+
+class PagerArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.no_pager: bool = args.no_pager
+    self.pager: str = args.pager
+    self.use_pager: bool = args.use_pager
+
+  def should_use_pager(self, default: bool = True) -> bool:
+    if self.use_pager:
+      return True
+
+    if self.no_pager:
+      return False
+
+    return default
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
+    arg_parser.add_argument('--no-pager', action='store_true')
+    arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
+    arg_parser.add_argument('--use-pager', action='store_true')
+    return arg_parser
+
+
+def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] = None):
+  for item in sorted(args.__dict__.items()):
+    if item[0] == '_args':
+      continue
+    elif only_keys and not item[0] in only_keys:
+      continue
+    elif skip_keys and item[0] in skip_keys:
+      continue
+
+    logs.log_with_title_sep(logging.INFO, item[0], item[1])

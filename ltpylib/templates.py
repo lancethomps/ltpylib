@@ -3,7 +3,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Sequence, Pattern
+from typing import List, Sequence, Pattern, Match, Callable, Union
 
 from ltpylib import files, logs
 
@@ -67,11 +67,29 @@ def replace_template(candidate_files: List[Path], template_file: Path, debug_mod
     logging.error('Something went wrong, skipping template: template_file=%s lines_count=%s search_string=%s', template_file.as_posix(), len(lines), search_string)
     return
 
-  replacement: str = '\n'.join(lines)
+  replacement_str: str = '\n'.join(lines)
+  replacement: Union[str, Callable[[Match], str]] = replacement_str
+
+  search_string_groups = re.compile(search_string).groups
+  if search_string_groups > 0:
+    def repl(match: Match) -> str:
+      groups = match.groupdict()
+      repl_string = ""
+      if "start" in groups:
+        repl_string += groups.get("start")
+
+      repl_string += replacement_str
+
+      if "end" in groups:
+        repl_string += groups.get("end")
+
+      return repl_string
+
+    replacement = repl
 
   logs.log_with_title_sep(logging.DEBUG, 'template_file', template_file.as_posix())
   logs.log_with_title_sep(logging.DEBUG, 'search_string', search_string)
-  logs.log_with_title_sep(logging.DEBUG, 'replacement', replacement)
+  logs.log_with_title_sep(logging.DEBUG, 'replacement_str', replacement_str)
 
   if not debug_mode:
     for file in candidate_files:

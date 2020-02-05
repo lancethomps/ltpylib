@@ -8,7 +8,7 @@ long_description = open('./README.md').read()
 
 setup(
   name='ltpylib',
-  version='0.0.2',
+  version='0.0.3',
   description='Common Python helper functions',
   long_description=long_description,
   long_description_content_type='text/markdown',

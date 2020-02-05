@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
 # pylint: disable=C0111
+import itertools
 import os
 import re
 import subprocess
 from collections import OrderedDict
 from configparser import ConfigParser
 from pathlib import Path
-from typing import AnyStr, List, Sequence, Set, Tuple, Union, Pattern
-
-import itertools
+from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple, Union
 
 from ltpylib import filters
 
 
-def replace_matches_in_file(file: Union[str, Path], search_string: str, replacement: str, quote_replacement: Union[bool, str] = False, force_replace: bool = False) -> bool:
+# NB: replacement matching groups should be in the \1 format instead of $1
+def replace_matches_in_file(
+    file: Union[str, Path],
+    search_string: str,
+    replacement: Union[str, Callable[[Match], str]],
+    quote_replacement: Union[bool, str] = False,
+    force_replace: bool = False
+) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
 
-  if quote_replacement:
+  if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
 
   content = read_file(file)

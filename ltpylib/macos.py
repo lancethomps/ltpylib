@@ -35,6 +35,14 @@ app.displayNotification("{message}", {{
     exit(result.returncode)
 
 
+def pbcopy(val: str):
+  procs.run_with_regular_stdout(
+    ["pbcopy"],
+    input=val,
+    check=True
+  )
+
+
 def add_generic_password(label: str, pw: str, account: str = None) -> bool:
   if account is None:
     account = getuser()

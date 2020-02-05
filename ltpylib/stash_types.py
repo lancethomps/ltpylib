@@ -105,6 +105,34 @@ class Project(DataWithUnknownProperties):
     DataWithUnknownProperties.__init__(self, values)
 
 
+class PullRequestActivities(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.isLastPage: int = values.pop("isLastPage", None)
+    self.limit: int = values.pop("limit", None)
+    self.size: int = values.pop("size", None)
+    self.start: int = values.pop("start", None)
+    self.values: List[PullRequestActivity] = list(map(PullRequestActivity, values.pop("values", []))) if "values" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class PullRequestActivity(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.action: str = values.pop("action", None)
+    self.commentAction: str = values.pop("commentAction", None)
+    self.createdDate: int = values.pop("createdDate", None)
+    self.id: int = values.pop("id", None)
+    self.user: User = User(values=values.pop("user")) if "user" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
 class PullRequestMergeability(DataWithUnknownProperties):
 
   def __init__(self, values: dict = None):
@@ -223,6 +251,89 @@ class Repository(DataWithUnknownProperties):
     self.slug: str = values.pop("slug", None)
     self.state: str = values.pop("state", None)
     self.statusMessage: str = values.pop("statusMessage", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchGroupResult(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.category: str = values.pop("category", None)
+    self.count: int = values.pop("count", None)
+    self.isLastPage: int = values.pop("isLastPage", None)
+    self.nextStart: int = values.pop("nextStart", None)
+    self.start: int = values.pop("start", None)
+    self.values: List[SearchResult] = list(map(SearchResult, values.pop("values", []))) if "values" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResult(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.file: str = values.pop("file", None)
+    self.hitContexts: List[List[SearchResultHit]] = list(map(lambda vals: list(map(SearchResultHit, vals)), values.pop("hitContexts", []))) if "hitContexts" in values else None
+    self.hitCount: int = values.pop("hitCount", None)
+    self.pathMatches: List[SearchResultPathMatch] = list(map(SearchResultPathMatch, values.pop("pathMatches", []))) if "pathMatches" in values else None
+    self.repository: Repository = Repository(values=values.pop("repository")) if "repository" in values else None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResultHit(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.line: int = values.pop("line", None)
+    self.text: str = values.pop("text", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResultPathMatch(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.match: bool = values.pop("match", None)
+    self.text: str = values.pop("text", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResultQuery(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.substituted: bool = values.pop("substituted", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResultScope(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.type: str = values.pop("type", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class SearchResults(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.code: SearchGroupResult = SearchGroupResult(values=values.pop("code")) if "code" in values else None
+    self.query: SearchResultQuery = SearchResultQuery(values=values.pop("query")) if "query" in values else None
+    self.scope: SearchResultScope = SearchResultScope(values=values.pop("scope")) if "scope" in values else None
 
     DataWithUnknownProperties.__init__(self, values)
 
