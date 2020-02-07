@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # pylint: disable=C0111
 import itertools
+import json
 import os
 import re
 import subprocess
@@ -53,6 +54,15 @@ def read_file(file: Union[str, Path]) -> AnyStr:
   with open(file.as_posix(), 'r') as fr:
     content = fr.read()
   return content
+
+
+def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
+  if isinstance(file, str):
+    file = Path(file)
+
+  with open(file.as_posix(), 'r') as fr:
+    content = fr.read()
+  return json.loads(content)
 
 
 def read_file_n_lines(file: Union[str, Path], n_lines: int) -> List[str]:
