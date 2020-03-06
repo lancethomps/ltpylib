@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 from typing import List
 
-
-class DataWithUnknownProperties(object):
-
-  def __init__(self, values: dict = None):
-    if values:
-      self.unknownProperties: dict = values
+from ltpylib.common_types import DataWithUnknownProperties
 
 
 class DisplayIdAndId(object):
@@ -16,6 +11,17 @@ class DisplayIdAndId(object):
 
     self.displayId: str = values.pop("displayId", None)
     self.id: str = values.pop("id", None)
+
+
+class PaginatedValues(object):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.isLastPage: int = values.pop("isLastPage", None)
+    self.limit: int = values.pop("limit", None)
+    self.size: int = values.pop("size", None)
+    self.start: int = values.pop("start", None)
 
 
 class ApplicationProperties(DataWithUnknownProperties):
@@ -40,6 +46,33 @@ class Branch(DataWithUnknownProperties, DisplayIdAndId):
 
     self.isDefault: bool = values.pop("isDefault", None)
     self.latestChangeset: str = values.pop("latestChangeset", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class Build(DataWithUnknownProperties):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.dateAdded: int = values.pop("dateAdded", None)
+    self.description: str = values.pop("description", None)
+    self.key: str = values.pop("key", None)
+    self.name: str = values.pop("name", None)
+    self.state: str = values.pop("state", None)
+    self.url: str = values.pop("url", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class Builds(DataWithUnknownProperties, PaginatedValues):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    PaginatedValues.__init__(self, values)
+
+    self.values: List[Build] = list(map(Build, values.pop("values", []))) if "values" in values else None
 
     DataWithUnknownProperties.__init__(self, values)
 
@@ -105,15 +138,13 @@ class Project(DataWithUnknownProperties):
     DataWithUnknownProperties.__init__(self, values)
 
 
-class PullRequestActivities(DataWithUnknownProperties):
+class PullRequestActivities(DataWithUnknownProperties, PaginatedValues):
 
   def __init__(self, values: dict = None):
     values = values if values is not None else {}
 
-    self.isLastPage: int = values.pop("isLastPage", None)
-    self.limit: int = values.pop("limit", None)
-    self.size: int = values.pop("size", None)
-    self.start: int = values.pop("start", None)
+    PaginatedValues.__init__(self, values)
+
     self.values: List[PullRequestActivity] = list(map(PullRequestActivity, values.pop("values", []))) if "values" in values else None
 
     DataWithUnknownProperties.__init__(self, values)
@@ -209,6 +240,8 @@ class PullRequestStatus(DataWithUnknownProperties):
     self.toRef: PullRequestRef = PullRequestRef(values=values.pop("toRef")) if "toRef" in values else None
     self.updatedDate: int = values.pop("updatedDate", None)
     self.version: int = values.pop("version", None)
+
+    self.builds: Builds = None
     self.mergeInfo: PullRequestMergeability = None
 
     DataWithUnknownProperties.__init__(self, values)

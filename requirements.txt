@@ -2,8 +2,11 @@ argcomplete
 bs4
 colorama
 configparser
+html5lib
+pandas
 psutil
 requests
 stashy
+tabulate
 urllib3
 xmltodict

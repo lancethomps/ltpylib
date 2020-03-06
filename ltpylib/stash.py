@@ -3,12 +3,11 @@ from typing import List, Tuple
 
 import stashy
 from requests import Response
-from stashy import errors, helpers
 from stashy.pullrequests import PullRequest, PullRequests
 from stashy.repos import Repos
 
-from ltpylib import output
-from ltpylib.stash_types import PullRequestMergeStatus, PullRequestMergeability, PullRequestStatus, Repository, SearchResults, DataWithUnknownProperties, PullRequestActivities
+from ltpylib import requests_helper
+from ltpylib.stash_types import Builds, PullRequestActivities, PullRequestMergeability, PullRequestMergeStatus, PullRequestStatus, Repository, SearchResults
 
 STASH_URL: str = "https://stash.wlth.fr"
 
@@ -17,6 +16,17 @@ class StashApi(object):
 
   def __init__(self, stash: stashy.Stash):
     self.stash: stashy.Stash = stash
+
+  def builds_for_commit(self, commit: str, limit: int = 1000) -> Builds:
+    api_url = '%s/rest/build-status/latest/commits/%s?limit=%s' % (
+      self.stash._client._base_url,
+      commit,
+      str(limit)
+    )
+    kw = requests_helper.add_json_headers()
+    result: Builds = Builds(requests_helper.parse_raw_response(self.stash._client._session.get(api_url, **kw)))
+
+    return result
 
   def create_pull_request(
       self,
@@ -45,19 +55,19 @@ class StashApi(object):
       repo: str,
       pr_id: int,
   ) -> Response:
-    delete_source_branch_url = '%s/rest/pull-request-cleanup/latest/projects/%s/repos/%s/pull-requests/%s' % (
+    api_url = '%s/rest/pull-request-cleanup/latest/projects/%s/repos/%s/pull-requests/%s' % (
       self.stash._client._base_url,
       project,
       repo,
       str(pr_id)
     )
-    kw = helpers.add_json_headers({})
-    delete_source_branch_response = self.stash._client._session.post(
-      delete_source_branch_url,
+    kw = requests_helper.add_json_headers()
+    response = self.stash._client._session.post(
+      api_url,
       json={"deleteSourceRef": True, "retargetDependents": True},
       **kw
     )
-    return delete_source_branch_response
+    return response
 
   def merge_pull_request(
       self,
@@ -73,7 +83,8 @@ class StashApi(object):
       pr_info = self.pull_request(project, repo, pr_id, include_merge_info=False)
       version = pr_info.version
 
-    result: PullRequestMergeStatus = PullRequestMergeStatus(self._parse_raw_response(pr._client.post(pr.url("/merge"), data=dict(message=commit_message, version=version))))
+    result: PullRequestMergeStatus = PullRequestMergeStatus(
+      requests_helper.parse_raw_response(pr._client.post(pr.url("/merge"), data=dict(message=commit_message, version=version))))
     if delete_source_branch and result.state == "MERGED":
       delete_source_branch_response = self.delete_pull_request_source_branch(project, repo, pr_id)
       result.sourceBranchDeleted = delete_source_branch_response.status_code == 200 or delete_source_branch_response.status_code == 204
@@ -85,13 +96,18 @@ class StashApi(object):
       project: str,
       repo: str,
       pr_id: int,
-      include_merge_info: bool = True
+      include_merge_info: bool = True,
+      include_builds: bool = False
   ) -> PullRequestStatus:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     result: PullRequestStatus = PullRequestStatus(pr.get())
     if include_merge_info and result.open:
       merge_info = self.pull_request_merge_info(project, repo, pr_id)
       result.mergeInfo = merge_info
+
+    if include_builds and result.fromRef and result.fromRef.latestCommit:
+      builds = self.builds_for_commit(result.fromRef.latestCommit)
+      result.builds = builds
 
     return result
 
@@ -102,7 +118,7 @@ class StashApi(object):
       pr_id: int
   ) -> PullRequestActivities:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
-    result: PullRequestActivities = PullRequestActivities(self._parse_raw_response(pr._client.get(pr.url() + "/activities")))
+    result: PullRequestActivities = PullRequestActivities(requests_helper.parse_raw_response(pr._client.get(pr.url() + "/activities")))
 
     return result
 
@@ -152,19 +168,12 @@ class StashApi(object):
       },
       "query"   : query
     }
-    kw = helpers.add_json_headers({})
-    return SearchResults(self._parse_raw_response(self.stash._client._session.post(
+    kw = requests_helper.add_json_headers()
+    return SearchResults(requests_helper.parse_raw_response(self.stash._client._session.post(
       '%s/rest/search/latest/search' % self.stash._client._base_url,
       json=api_json,
       **kw
     )))
-
-  def _parse_raw_response(self, response: Response) -> dict:
-    errors.maybe_throw(response)
-    try:
-      return response.json()
-    except ValueError:
-      return response.text
 
 
 def create_stash_api(url: str, creds: Tuple[str, str]) -> StashApi:
