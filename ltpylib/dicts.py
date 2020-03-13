@@ -28,6 +28,12 @@ def find(key: str, obj: dict) -> List[dict]:
   #         yield res
 
 
+def remove_nulls(dict_with_nulls: dict) -> dict:
+  return {
+    key: val for (key, val) in dict_with_nulls.items() if val is not None
+  }
+
+
 if __name__ == "__main__":
   import sys
 

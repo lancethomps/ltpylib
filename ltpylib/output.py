@@ -5,9 +5,21 @@ from typing import List
 import pandas
 import tabulate
 
+from ltpylib import dicts
 
-def prettify_json(obj) -> str:
-  return json.dumps(obj, sort_keys=True, indent='  ', default=lambda x: getattr(x, '__dict__', str(x)))
+
+def prettify_json(obj, remove_nulls: bool = False) -> str:
+  if remove_nulls:
+    obj = json.loads(
+      prettify_json(obj, remove_nulls=False),
+      object_hook=dicts.remove_nulls
+    )
+  return json.dumps(
+    obj,
+    sort_keys=True,
+    indent='  ',
+    default=lambda x: getattr(x, '__dict__', str(x))
+  )
 
 
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
