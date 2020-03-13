@@ -18,7 +18,7 @@ def get_functions_of_class(
     func_info: str = func[0]
 
     if include_signature:
-      func_sig: str = str(inspect.signature(func[1])).replace("(self, ", "(", 1)
+      func_sig: str = str(inspect.signature(func[1])).replace("(self, ", "(", 1).replace("(self)", "()", 1)
       func_info += func_sig
 
     result.append(func_info)
