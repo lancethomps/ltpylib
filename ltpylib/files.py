@@ -19,7 +19,8 @@ def replace_matches_in_file(
     search_string: str,
     replacement: Union[str, Callable[[Match], str]],
     quote_replacement: Union[bool, str] = False,
-    force_replace: bool = False
+    force_replace: bool = False,
+    flags: Union[int, re.RegexFlag] = 0
 ) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
@@ -28,12 +29,12 @@ def replace_matches_in_file(
     replacement = re.escape(replacement)
 
   content = read_file(file)
-  content_new = re.sub(search_string, replacement, content)
+  content_new = re.sub(search_string, replacement, content, flags=flags)
 
   if content != content_new:
     write_file(file, content_new)
     return True
-  elif force_replace and re.search(search_string, content):
+  elif force_replace and re.search(search_string, content, flags=flags):
     write_file(file, content_new)
     return True
 

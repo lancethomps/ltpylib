@@ -3,8 +3,10 @@ bs4
 colorama
 configparser
 html5lib
+jira
 pandas
 psutil
+python-dateutil
 requests
 stashy
 tabulate

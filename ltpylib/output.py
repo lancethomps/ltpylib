@@ -12,7 +12,7 @@ def prettify_json(obj, remove_nulls: bool = False) -> str:
   if remove_nulls:
     obj = json.loads(
       prettify_json(obj, remove_nulls=False),
-      object_hook=dicts.remove_nulls
+      object_hook=dicts.remove_nulls_and_empty
     )
   return json.dumps(
     obj,
@@ -20,6 +20,10 @@ def prettify_json(obj, remove_nulls: bool = False) -> str:
     indent='  ',
     default=lambda x: getattr(x, '__dict__', str(x))
   )
+
+
+def prettify_json_remove_nulls(obj) -> str:
+  return prettify_json(obj, remove_nulls=True)
 
 
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
