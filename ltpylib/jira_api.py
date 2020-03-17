@@ -206,11 +206,15 @@ class JiraApi(object):
           if ISSUE_FIELD_SPRINT_FINAL not in skip_fields:
             updated_value[ISSUE_FIELD_SPRINT_FINAL] = val[-1]
         elif key in dict_field_to_inner_field:
+          if key not in skip_fields:
+            updated_value[key] = val
           inner_field: str = dict_field_to_inner_field.get(key)
           if isinstance(val, dict):
             val = val.get(inner_field)
+            key = key + "_" + inner_field
           elif isinstance(val, list):
             val = [elem.get(inner_field) for elem in val]
+            key = key + "_" + inner_field
 
         if isinstance(val, list):
           if key in join_array_fields:
@@ -223,8 +227,8 @@ class JiraApi(object):
             if len(val) > 1:
               if key in convert_array_fields:
                 convert_array_fields.remove(key)
-        elif key in date_fields:
-          val = val.replace("-0400", "").replace("-0500", "").replace("T", " ")
+        # elif key in date_fields:
+        #   val = val.replace("-0400", "").replace("-0500", "").replace("T", " ")
 
         updated_value[key] = val
 

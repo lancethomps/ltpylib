@@ -50,7 +50,7 @@ def to_camel_case(val: str, sep: str = None) -> str:
           count = sep_char_count
           sep = sep_char
 
-  val = val.lower().replace(sep, " ").title()
+  val = re.sub(r'[^a-zA-Z0-9 ]', ' ', val.lower().replace(sep, " ")).title()
   return (val[0:1].lower() + val[1:]).replace(" ", "")
 
 
