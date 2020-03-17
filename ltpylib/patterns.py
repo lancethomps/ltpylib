@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # pylint: disable=C0111
 import re
-from typing import Union
+from pathlib import Path
+from typing import List, Union
+
+from ltpylib import files
 
 
 def replace_matches(content: str, search_string: str, replacement: str, quote_replacement: Union[bool, str] = False) -> str:
@@ -12,6 +15,21 @@ def replace_matches(content: str, search_string: str, replacement: str, quote_re
     replacement = re.escape(replacement)
 
   return re.sub(search_string, replacement, content)
+
+
+def pull_matches_from_file(
+    file: Union[str, Path],
+    search_string: str,
+    group: int = 0,
+    flags: Union[int, re.RegexFlag] = 0
+) -> List[str]:
+  content = files.read_file(file)
+
+  matches: List[str] = []
+  for match in re.finditer(search_string, content, flags=flags):
+    matches.append(match.group(group))
+
+  return matches
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ StrConverter = Callable[[str], str]
 
 
 def extract_text_from_html(html: str, selector: str) -> Union[str, None]:
-  soup = BeautifulSoup(html, 'html.parser')
+  soup = BeautifulSoup(html, 'html5lib')
   selected: BeautifulSoup = soup.select_one(selector)
   if not selected:
     return
@@ -24,7 +24,7 @@ def parse_table(
     header_converters: List[StrConverter] = None,
     val_converters: List[StrConverter] = None,
     row_data_predicate: Callable[[dict], bool] = None) -> List[dict]:
-  soup = BeautifulSoup(html, 'html.parser')
+  soup = BeautifulSoup(html, 'html5lib')
   table: BeautifulSoup = soup.select_one(table_selector)
   if not table:
     return None
