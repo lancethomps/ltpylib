@@ -28,6 +28,15 @@ function confirm_with_auto() {
   confirm "$@"
 }
 
+function check_git_default_branch() {
+  if git is-side-branch; then
+    echo "Git repo not on master branch!"
+    git status
+    exit 1
+  fi
+  return 0
+}
+
 function check_git_dirty() {
   if git is-dirty; then
     echo "Git repo is dirty!"
@@ -101,5 +110,6 @@ export VERSION_FILE="VERSION"
 export CURR_VERSION="$(cat "$VERSION_FILE" | sed -E 's/ *$//g' | sed -E 's/^ *//g')"
 export NEXT_VERSION="$(increment_semver --patch 1 "$CURR_VERSION")"
 
+check_git_default_branch
 publish_and_tag
 next_vers
