@@ -69,7 +69,10 @@ class Issue(IdAndSelf, DataWithUnknownPropertiesAsAttributes):
     self.creator: JiraUser = JiraUser(values=values.pop("creator")) if "creator" in values else None
     self.description: str = values.pop("description", None)
     self.development: str = values.pop("development", None)
+    self.epicColour: str = values.pop("epicColour", None)
     self.epicLink: str = values.pop("epicLink", None)
+    self.epicName: str = values.pop("epicName", None)
+    self.epicStatus: ValueIdAndSelf = ValueIdAndSelf(values=values.pop("epicStatus")) if "epicStatus" in values else None
     self.expand: str = values.pop("expand", None)
     self.fixVersions: List[FixVersion] = list(map(FixVersion, values.pop("fixVersions", []))) if "fixVersions" in values else None
     self.issuelinks: List[IssueLink] = list(map(IssueLink, values.pop("issuelinks", []))) if "issuelinks" in values else None
