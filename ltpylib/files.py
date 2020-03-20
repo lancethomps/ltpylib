@@ -4,13 +4,8 @@ import itertools
 import json
 import os
 import re
-import subprocess
-from collections import OrderedDict
-from configparser import ConfigParser
 from pathlib import Path
 from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple, Union
-
-from ltpylib import filters
 
 
 # NB: replacement matching groups should be in the \1 format instead of $1
@@ -42,6 +37,8 @@ def replace_matches_in_file(
 
 
 def chmod_proc(perms: str, file: Union[str, Path]) -> int:
+  import subprocess
+
   if isinstance(file, str):
     file = Path(file)
 
@@ -97,10 +94,10 @@ def append_file(file: Union[str, Path], contents: AnyStr):
     fw.write(contents)
 
 
-def list_files(dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
+def list_files(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
   files: Set[Path] = set()
   file: Path = None
-  for file in list(itertools.chain(*[dir.glob(glob) for glob in globs])):
+  for file in list(itertools.chain(*[base_dir.glob(glob) for glob in globs])):
     if file.is_file():
       files.add(file)
 
@@ -119,43 +116,6 @@ def list_dirs(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
   dirs_list = list(dirs)
   dirs_list.sort()
   return dirs_list
-
-
-def read_properties(file: Union[str, Path], use_mock_default_section: bool = True, config: ConfigParser = None) -> ConfigParser:
-  if isinstance(file, str):
-    file = Path(file)
-
-  if not file.is_file():
-    raise ValueError("File does not exist: %s" % file)
-
-  if config is None:
-    config = ConfigParser(allow_no_value=True)
-    config.optionxform = str
-
-  if use_mock_default_section:
-    with open(file.as_posix(), 'r') as configfile:
-      config.read_string('[DEFAULT]\n' + configfile.read())
-  else:
-    config.read(file.as_posix())
-
-  return config
-
-
-def write_properties(config: ConfigParser, file: Union[str, Path], sort_keys: bool = False):
-  if sort_keys:
-    if config._defaults:
-      config._defaults = OrderedDict(sorted(config._defaults.items(), key=lambda t: t[0]))
-
-    for section in config._sections:
-      config._sections[section] = OrderedDict(sorted(config._sections[section].items(), key=lambda t: t[0]))
-
-    config._sections = OrderedDict(sorted(config._sections.items(), key=lambda t: t[0]))
-
-  if isinstance(file, str):
-    file = Path(file)
-
-  with open(file.as_posix(), 'w') as configfile:
-    config.write(configfile)
 
 
 def filter_files_with_matching_line(files: List[Union[str, Path]], regexes: List[Union[str, Pattern]], check_n_lines: int = 1) -> List[Path]:
@@ -237,6 +197,8 @@ def _find_children(
     recursion_includes: Sequence[str],
     recursion_excludes: Sequence[str]
 ) -> Tuple[bool, List[Path]]:
+  from ltpylib import filters
+
   found_match = False
   scandir_it = os.scandir(top)
   dirs = []

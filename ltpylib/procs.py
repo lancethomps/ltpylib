@@ -3,14 +3,11 @@ import collections
 import logging
 import subprocess
 import sys
+from time import sleep
 from typing import Any, List, Tuple, Union
 
-import psutil
-from psutil import AccessDenied, NoSuchProcess, ZombieProcess
-from time import sleep
 
-
-def run(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
   if 'stdout' not in kwargs:
     kwargs['stdout'] = subprocess.PIPE
@@ -20,11 +17,11 @@ def run(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=Fal
   return subprocess.run(*popenargs, input=input, timeout=timeout, check=check, **kwargs)
 
 
-def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
   return run(*popenargs, input=input, timeout=timeout, check=check, stdout=sys.stdout, stderr=sys.stderr, **kwargs)
 
 
-def run_and_parse_output(*popenargs, input: Union[bytes, str, None]=None, timeout=None, check=False, **kwargs) -> Tuple[int, str]:
+def run_and_parse_output(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
   kwargs['universal_newlines'] = True
   if 'stderr' not in kwargs:
@@ -47,18 +44,23 @@ def get_procs_from_name(name_matcher: str) -> List[Tuple[int, str]]:
   return matched_procs
 
 
-def proc_debug_string(proc: psutil.Process) -> str:
+def proc_debug_string(proc) -> str:
+  """
+  :type proc: psutil.Process
+  """
+  import psutil
+
   info = collections.OrderedDict()
   info['pid'] = proc.pid
   try:
     info["name"] = proc.name()
     if proc._create_time:
       info['started'] = psutil._pprint_secs(proc._create_time)
-  except ZombieProcess:
+  except psutil.ZombieProcess:
     info["status"] = "zombie"
-  except NoSuchProcess:
+  except psutil.NoSuchProcess:
     info["status"] = "terminated"
-  except AccessDenied:
+  except psutil.AccessDenied:
     pass
   info['cmdline'] = ' '.join(proc.cmdline())
   return "%s.%s(%s)" % (
@@ -69,6 +71,8 @@ def proc_debug_string(proc: psutil.Process) -> str:
 
 
 def stop_proc_by_name(name_matcher: str) -> bool:
+  import psutil
+
   matched_procs = get_procs_from_name(name_matcher)
   if not matched_procs:
     return False
@@ -82,6 +86,8 @@ def stop_proc_by_name(name_matcher: str) -> bool:
 
 
 def stop_proc_by_pid(pid: Any) -> bool:
+  import psutil
+
   proc = psutil.Process(int(pid))
   if proc.is_running():
     proc.terminate()
@@ -91,6 +97,8 @@ def stop_proc_by_pid(pid: Any) -> bool:
 
 
 def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_level: int = logging.INFO):
+  import psutil
+
   if pid is None:
     return
 
@@ -114,7 +122,16 @@ def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_leve
     logging.log(log_level, 'STATUS: Process successfully shutdown after %s seconds.', total_time)
 
 
-if __name__ == "__main__":
+def _main():
+  import sys
+
   result = globals()[sys.argv[1]](*sys.argv[2:])
   if result is not None:
     print(result)
+
+
+if __name__ == "__main__":
+  try:
+    _main()
+  except KeyboardInterrupt:
+    exit(130)

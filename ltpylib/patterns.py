@@ -4,8 +4,6 @@ import re
 from pathlib import Path
 from typing import List, Union
 
-from ltpylib import files
-
 
 def replace_matches(content: str, search_string: str, replacement: str, quote_replacement: Union[bool, str] = False) -> str:
   if isinstance(quote_replacement, str):
@@ -23,6 +21,8 @@ def pull_matches_from_file(
     group: int = 0,
     flags: Union[int, re.RegexFlag] = 0
 ) -> List[str]:
+  from ltpylib import files
+
   content = files.read_file(file)
 
   matches: List[str] = []

@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import json
-from typing import List
 
-import pandas
-import tabulate
+from typing import List
 
 from ltpylib import dicts
 
@@ -27,14 +25,20 @@ def prettify_json_remove_nulls(obj) -> str:
 
 
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
-  data_frame = pandas.DataFrame(data)
+  from pandas import DataFrame
+
+  data_frame = DataFrame(data)
   return data_frame.to_csv(
     index=showindex
   )
 
 
 def dicts_to_markdown_table(data: List[dict], showindex: bool = False, tablefmt: str = "github") -> str:
-  data_frame = pandas.DataFrame(data)
+  import tabulate
+
+  from pandas import DataFrame
+
+  data_frame = DataFrame(data)
   return tabulate.tabulate(
     data_frame,
     showindex=showindex,

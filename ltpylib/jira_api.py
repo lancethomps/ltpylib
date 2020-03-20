@@ -17,8 +17,6 @@ JIRA_API_EPICS: str = "/rest/greenhopper/latest/xboard/plan/backlog/epics"
 ISSUE_FIELD_SPRINT_FINAL: str = "sprintFinal"
 ISSUE_FIELD_SPRINT_RAW: str = "sprintRaw"
 
-GLOBAL_JIRA_SESSION: Union[Session, None] = None
-
 
 class JiraApi(object):
 

@@ -75,7 +75,7 @@ def maybe_throw(response: Response):
       raise e
 
 
-def parse_raw_response(response: Response) -> dict:
+def parse_raw_response(response: Response) -> Union[dict, list]:
   maybe_throw(response)
   try:
     return response.json()

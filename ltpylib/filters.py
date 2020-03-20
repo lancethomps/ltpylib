@@ -5,8 +5,6 @@ import re
 from pathlib import Path
 from typing import Sequence, Union
 
-from ltpylib import procs
-
 
 def should_include(
     test_value: Union[str, Path],
@@ -80,6 +78,8 @@ def should_skip_from_cmds(
     exclude_commands: Sequence[str] = None,
     verbose: bool = False
 ) -> bool:
+  from ltpylib import procs
+
   if not include_commands and not exclude_commands:
     return False
 
