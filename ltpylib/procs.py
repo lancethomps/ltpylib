@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
-import collections
-import logging
 import subprocess
 import sys
-from time import sleep
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 
-def run(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
   if 'stdout' not in kwargs:
     kwargs['stdout'] = subprocess.PIPE
@@ -17,11 +14,11 @@ def run(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=F
   return subprocess.run(*popenargs, input=input, timeout=timeout, check=check, **kwargs)
 
 
-def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> subprocess.CompletedProcess:
+def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
   return run(*popenargs, input=input, timeout=timeout, check=check, stdout=sys.stdout, stderr=sys.stderr, **kwargs)
 
 
-def run_and_parse_output(*popenargs, input: Union[bytes, str, None] = None, timeout=None, check=False, **kwargs) -> Tuple[int, str]:
+def run_and_parse_output(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
   kwargs['universal_newlines'] = True
   if 'stderr' not in kwargs:
@@ -48,6 +45,7 @@ def proc_debug_string(proc) -> str:
   """
   :type proc: psutil.Process
   """
+  import collections
   import psutil
 
   info = collections.OrderedDict()
@@ -96,8 +94,14 @@ def stop_proc_by_pid(pid: Any) -> bool:
   return True
 
 
-def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_level: int = logging.INFO):
+def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_level: int = 20):
+  """
+  :param log_level: default is logging.INFO
+  :return: None
+  """
+  import logging
   import psutil
+  from time import sleep
 
   if pid is None:
     return

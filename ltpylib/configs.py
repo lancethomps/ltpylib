@@ -8,14 +8,11 @@ from configparser import ConfigParser, NoOptionError, NoSectionError
 from pathlib import Path
 from typing import Union
 
+HOSTS_CONFIG: Union[ConfigParser, None] = None
+
 
 def get_host(key: str, use_key_as_default: bool = True) -> str:
-  hosts_dir = os.path.abspath('%s/config/hosts' % os.getenv('DOTFILES', '%s/.dotfiles' % os.getenv('HOME')))
-  hosts = ConfigParser()
-  host_files = glob.glob(hosts_dir + '/*.properties')
-  host_files.extend(glob.glob(hosts_dir + '/*/*.properties'))
-  for hosts_file in host_files:
-    hosts = read_properties(hosts_file, config=hosts)
+  hosts = get_or_create_hosts_config()
 
   if use_key_as_default:
     try:
@@ -28,15 +25,33 @@ def get_host(key: str, use_key_as_default: bool = True) -> str:
     return hosts.get('DEFAULT', key)
 
 
+def get_or_create_hosts_config() -> ConfigParser:
+  global HOSTS_CONFIG
+  if HOSTS_CONFIG is None:
+    hosts_dir = os.path.abspath('%s/config/hosts' % os.getenv('DOTFILES', '%s/.dotfiles' % os.getenv('HOME')))
+    HOSTS_CONFIG = ConfigParser()
+    host_files = glob.glob(hosts_dir + '/*.properties')
+    host_files.extend(glob.glob(hosts_dir + '/*/*.properties'))
+    for hosts_file in host_files:
+      HOSTS_CONFIG = read_properties(hosts_file, config=HOSTS_CONFIG)
+
+  return HOSTS_CONFIG
+
+
+def sort_config_parser_keys(config: ConfigParser) -> ConfigParser:
+  if config._defaults:
+    config._defaults = OrderedDict(sorted(config._defaults.items(), key=lambda t: t[0]))
+
+  for section in config._sections:
+    config._sections[section] = OrderedDict(sorted(config._sections[section].items(), key=lambda t: t[0]))
+
+  config._sections = OrderedDict(sorted(config._sections.items(), key=lambda t: t[0]))
+  return config
+
+
 def config_parser_to_string(config: ConfigParser, sort_keys: bool = False):
   if sort_keys:
-    if config._defaults:
-      config._defaults = OrderedDict(sorted(config._defaults.items(), key=lambda t: t[0]))
-
-    for section in config._sections:
-      config._sections[section] = OrderedDict(sorted(config._sections[section].items(), key=lambda t: t[0]))
-
-    config._sections = OrderedDict(sorted(config._sections.items(), key=lambda t: t[0]))
+    config = sort_config_parser_keys(config)
 
   sio = io.StringIO()
   config.write(sio)
@@ -65,13 +80,7 @@ def read_properties(file: Union[str, Path], use_mock_default_section: bool = Tru
 
 def write_properties(config: ConfigParser, file: Union[str, Path], sort_keys: bool = False):
   if sort_keys:
-    if config._defaults:
-      config._defaults = OrderedDict(sorted(config._defaults.items(), key=lambda t: t[0]))
-
-    for section in config._sections:
-      config._sections[section] = OrderedDict(sorted(config._sections[section].items(), key=lambda t: t[0]))
-
-    config._sections = OrderedDict(sorted(config._sections.items(), key=lambda t: t[0]))
+    config = sort_config_parser_keys(config)
 
   if isinstance(file, str):
     file = Path(file)
@@ -80,9 +89,16 @@ def write_properties(config: ConfigParser, file: Union[str, Path], sort_keys: bo
     config.write(configfile)
 
 
-if __name__ == "__main__":
+def _main():
   import sys
 
   result = globals()[sys.argv[1]](*sys.argv[2:])
   if result is not None:
     print(result)
+
+
+if __name__ == "__main__":
+  try:
+    _main()
+  except KeyboardInterrupt:
+    exit(130)
