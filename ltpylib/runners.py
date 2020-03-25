@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 # pylint: disable=C0111
-from __future__ import annotations
-
 import argparse
 import inspect
 import logging
@@ -10,7 +8,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Callable, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import psutil
 from ltpylib import files, logs, opts, procs
@@ -19,18 +17,21 @@ from ltpylib import files, logs, opts, procs
 class ProcessRunner(object):
 
   def __init__(
-      self,
-      proc_id: str,
-      start_cmd: List[str],
-      build_cmds: List[Union[List[str], Tuple[Union[str, List[str]], dict]]] = None,
-      force_build_before_start: Callable[[ProcessRunner], bool] = None,
-      log_file: str = None,
-      log_multitail_args: List[str] = None,
-      pid_file: str = None,
-      proc_name_matcher: str = None,
-      status_loop_wait_time: int = 30,
-      status_loop_sleep_time: int = 1
+    self,
+    proc_id: str,
+    start_cmd: List[str],
+    build_cmds: List[Union[List[str], Tuple[Union[str, List[str]], dict]]] = None,
+    force_build_before_start=None,
+    log_file: str = None,
+    log_multitail_args: List[str] = None,
+    pid_file: str = None,
+    proc_name_matcher: str = None,
+    status_loop_wait_time: int = 30,
+    status_loop_sleep_time: int = 1
   ):
+    """
+    :type force_build_before_start: Callable[[ProcessRunner], bool]
+    """
     self.proc_id = proc_id
     self.start_cmd = start_cmd
     self.build_cmds = build_cmds

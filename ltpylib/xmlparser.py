@@ -14,9 +14,7 @@ def xq(file: Union[str, Path], expr: str, remove_null: bool = True, raw_output: 
   if isinstance(file, str):
     file = Path(file)
 
-  xq_command: List[str] = [
-    'xq'
-  ]
+  xq_command: List[str] = ['xq']
 
   if remove_null:
     expr += ' | select (.!=null)'
@@ -24,10 +22,7 @@ def xq(file: Union[str, Path], expr: str, remove_null: bool = True, raw_output: 
   if raw_output:
     xq_command.append('--raw-output')
 
-  xq_command.extend([
-    expr,
-    file.as_posix()
-  ])
+  xq_command.extend([expr, file.as_posix()])
 
   result: str = procs.run_and_parse_output(xq_command, check=True)[1].strip()
 

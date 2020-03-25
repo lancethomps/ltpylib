@@ -25,7 +25,7 @@ def replace_templates_in_files(
   candidate_files: List[Path] = files.filter_files_with_matching_line(
     files.list_files(candidate_files_dir, candidate_files_globs),
     [SKIP_FILE_REGEX],
-    check_n_lines=2
+    check_n_lines=2,
   )
   if not candidate_files:
     logging.warning("No candidate files found: candidate_files_dir=%s candidate_files_globs=%s", candidate_files_dir.as_posix(), candidate_files_globs)
@@ -72,6 +72,7 @@ def replace_template(candidate_files: List[Path], template_file: Path, debug_mod
 
   search_string_groups = re.compile(search_string).groups
   if search_string_groups > 0:
+
     def repl(match: Match) -> str:
       groups = match.groupdict()
       repl_string = ""

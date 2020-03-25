@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import time
-from typing import List
 
 from ltpylib.common_types import DataWithUnknownProperties
 

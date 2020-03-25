@@ -25,9 +25,9 @@ def diff_git(initial: str, updated: str, add_suffix: str = None):
       '--color-words',
       '-w',
       initial_temp_file,
-      updated_temp_file
+      updated_temp_file,
     ],
-    check=False
+    check=False,
   )
 
   os.remove(initial_temp_file)

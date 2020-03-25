@@ -1,18 +1,9 @@
 #!/usr/bin/env python3
-import functools
-
 import argparse
-import itertools
-import logging
 import os
-import select
-import shutil
-import sys
 from typing import List, Optional, Sequence
 
-import argcomplete
-
-from ltpylib import logs
+from ltpylib.logs import init_logging, log_with_title_sep
 
 TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
 DEFAULT_POSITIONALS_KEY = 'command'
@@ -20,22 +11,28 @@ DEFAULT_POSITIONALS_KEY = 'command'
 
 class PositionalsHelpFormatter(argparse.HelpFormatter):
 
-  def __init__(self,
-               prog,
-               indent_increment=2,
-               max_help_position=24,
-               width=None,
-               positionals_key: str = DEFAULT_POSITIONALS_KEY):
+  def __init__(
+    self,
+    prog,
+    indent_increment=2,
+    max_help_position=24,
+    width=None,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
+  ):
     super().__init__(prog, indent_increment, max_help_position, width)
     self.positionals_key = positionals_key
     self.positionals_action = argparse._StoreAction([], self.positionals_key, nargs='+')
 
   def add_usage(self, usage, actions, groups, prefix=None):
-    super().add_usage(usage, itertools.chain(actions, [self.positionals_action]), groups, prefix)
+    from itertools import chain
+
+    super().add_usage(usage, chain(actions, [self.positionals_action]), groups, prefix)
 
   def add_arguments(self, actions):
+    from itertools import chain
+
     if self._current_section.heading == 'positional arguments':
-      super().add_arguments(itertools.chain(actions, [self.positionals_action]))
+      super().add_arguments(chain(actions, [self.positionals_action]))
     else:
       super().add_arguments(actions)
 
@@ -60,11 +57,15 @@ def create_default_arg_parser() -> argparse.ArgumentParser:
 
 
 def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
+  import functools
+
   arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
   return add_default_arguments_to_parser(arg_parser)
 
 
 def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+  import argcomplete
+
   argcomplete.autocomplete(arg_parser)
   args = arg_parser.parse_args(args=argv)
   return args
@@ -72,21 +73,29 @@ def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]
 
 def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
   args = parse_args(arg_parser, argv=argv)
-  logs.init_logging(args=args)
+  init_logging(args=args)
   return args
 
 
-def parse_args_with_positionals_and_init_others(arg_parser: argparse.ArgumentParser, positionals_key: str = DEFAULT_POSITIONALS_KEY,
-                                                argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args_with_positionals_and_init_others(
+    arg_parser: argparse.ArgumentParser,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
+    argv: Optional[Sequence[str]] = None,
+) -> argparse.Namespace:
+  import argcomplete
+
   argcomplete.autocomplete(arg_parser)
   args, positionals = arg_parser.parse_known_intermixed_args(args=argv)
   args.__setattr__(positionals_key, positionals)
-  logs.init_logging(args=args)
+  init_logging(args=args)
   return args
 
 
 def does_stdin_have_data() -> bool:
-  if select.select([sys.stdin, ], [], [], 0.0)[0]:
+  import sys
+  import select
+
+  if select.select([sys.stdin], [], [], 0.0)[0]:
     return True
   elif sys.stdin.isatty():
     return True
@@ -95,6 +104,8 @@ def does_stdin_have_data() -> bool:
 
 
 def check_command(cmd: str) -> bool:
+  import shutil
+
   return shutil.which(cmd) is not None
 
 
@@ -179,6 +190,8 @@ class PagerArgs(object):
 
 
 def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] = None):
+  import logging
+
   for item in sorted(args.__dict__.items()):
     if item[0] == '_args':
       continue
@@ -187,4 +200,4 @@ def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] =
     elif skip_keys and item[0] in skip_keys:
       continue
 
-    logs.log_with_title_sep(logging.INFO, item[0], item[1])
+    log_with_title_sep(logging.INFO, item[0], item[1])

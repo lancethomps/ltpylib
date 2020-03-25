@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 from datetime import datetime
 
-from dateutil import parser
-
 
 def from_millis(millis: int) -> datetime:
   return datetime.fromtimestamp(millis / 1000.0)
 
 
 def parse_iso_date(date_string: str) -> datetime:
+  from dateutil import parser
+
   return parser.isoparse(date_string)
 
 
 def parse_date(date_string: str, format: str = None) -> datetime:
+  from dateutil import parser
+
   if not format:
     return parser.parse(date_string)
   return datetime.strptime(date_string, format)

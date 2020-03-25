@@ -46,7 +46,11 @@ def init_logging(verbose: bool = None, log_level: str = None, log_format: str = 
     log_level = DEFAULT_LOG_LEVEL
 
   logging.basicConfig(
-    level=log_level, style=DEFAULT_LOG_STYLE, format=(log_format or DEFAULT_LOG_FORMAT), handlers=[StdoutStreamHandler()])
+    level=log_level,
+    style=DEFAULT_LOG_STYLE,
+    format=(log_format or DEFAULT_LOG_FORMAT),
+    handlers=[StdoutStreamHandler()],
+  )
 
 
 def is_debug_enabled():
@@ -106,7 +110,16 @@ def tail_log_file(file: str, *func_args):
   subprocess.check_call(log_cmd, universal_newlines=True)
 
 
-if __name__ == "__main__":
+def _main():
+  import sys
+
   result = globals()[sys.argv[1]](*sys.argv[2:])
   if result is not None:
     print(result)
+
+
+if __name__ == "__main__":
+  try:
+    _main()
+  except KeyboardInterrupt:
+    exit(130)

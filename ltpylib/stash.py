@@ -21,7 +21,7 @@ class StashApi(object):
     api_url = '%s/rest/build-status/latest/commits/%s?limit=%s' % (
       self.stash._client._base_url,
       commit,
-      str(limit)
+      str(limit),
     )
     kw = requests_helper.add_json_headers()
     result: Builds = Builds(requests_helper.parse_raw_response(self.stash._client._session.get(api_url, **kw)))
@@ -36,7 +36,7 @@ class StashApi(object):
       to_ref: str,
       title: str,
       description: str,
-      reviewers: List[str]
+      reviewers: List[str],
   ) -> PullRequestStatus:
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
     response: dict = prs.create(
@@ -44,7 +44,7 @@ class StashApi(object):
       fromRef=from_ref,
       toRef=to_ref,
       description=description,
-      reviewers=reviewers
+      reviewers=reviewers,
     )
 
     return PullRequestStatus(response)
@@ -59,13 +59,16 @@ class StashApi(object):
       self.stash._client._base_url,
       project,
       repo,
-      str(pr_id)
+      str(pr_id),
     )
     kw = requests_helper.add_json_headers()
     response = self.stash._client._session.post(
       api_url,
-      json={"deleteSourceRef": True, "retargetDependents": True},
-      **kw
+      json={
+        "deleteSourceRef": True,
+        "retargetDependents": True,
+      },
+      **kw,
     )
     return response
 
@@ -76,7 +79,7 @@ class StashApi(object):
       pr_id: int,
       delete_source_branch: bool = True,
       commit_message: str = "",
-      version: int = None
+      version: int = None,
   ) -> PullRequestMergeStatus:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     if version is None:
@@ -84,7 +87,8 @@ class StashApi(object):
       version = pr_info.version
 
     result: PullRequestMergeStatus = PullRequestMergeStatus(
-      requests_helper.parse_raw_response(pr._client.post(pr.url("/merge"), data=dict(message=commit_message, version=version))))
+      requests_helper.parse_raw_response(pr._client.post(pr.url("/merge"), data=dict(message=commit_message, version=version)))
+    )
     if delete_source_branch and result.state == "MERGED":
       delete_source_branch_response = self.delete_pull_request_source_branch(project, repo, pr_id)
       result.sourceBranchDeleted = delete_source_branch_response.status_code == 200 or delete_source_branch_response.status_code == 204
@@ -97,7 +101,7 @@ class StashApi(object):
       repo: str,
       pr_id: int,
       include_merge_info: bool = True,
-      include_builds: bool = False
+      include_builds: bool = False,
   ) -> PullRequestStatus:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     result: PullRequestStatus = PullRequestStatus(pr.get())
@@ -115,7 +119,7 @@ class StashApi(object):
       self,
       project: str,
       repo: str,
-      pr_id: int
+      pr_id: int,
   ) -> PullRequestActivities:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     result: PullRequestActivities = PullRequestActivities(requests_helper.parse_raw_response(pr._client.get(pr.url() + "/activities")))
@@ -139,40 +143,36 @@ class StashApi(object):
       at: str = None,
       state: str = 'OPEN',
       order: str = None,
-      author: str = None
+      author: str = None,
   ) -> List[PullRequestStatus]:
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
-    return [
-      PullRequestStatus(pr) for pr in prs.all(
-        direction=direction,
-        at=at,
-        state=state,
-        order=order,
-        author=author,
-      )
-    ]
+    return [PullRequestStatus(pr) for pr in prs.all(
+      direction=direction,
+      at=at,
+      state=state,
+      order=order,
+      author=author,
+    )]
 
   def repos_for_project(self, project: str) -> List[Repository]:
     repos: Repos = self.stash.projects[project].repos
-    return [
-      Repository(repo) for repo in repos.list()
-    ]
+    return [Repository(repo) for repo in repos.list()]
 
   def search(self, query: str, limit: int = 25) -> SearchResults:
     api_json = {
       "entities": {
         "code": {}
       },
-      "limits"  : {
+      "limits": {
         "primary": limit
       },
-      "query"   : query
+      "query": query,
     }
     kw = requests_helper.add_json_headers()
     return SearchResults(requests_helper.parse_raw_response(self.stash._client._session.post(
       '%s/rest/search/latest/search' % self.stash._client._base_url,
       json=api_json,
-      **kw
+      **kw,
     )))
 
 

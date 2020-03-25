@@ -4,9 +4,8 @@ from typing import List, Sequence
 
 from ltpylib import files, filters
 
-
 FIND_REPOS_RECURSION_EXCLUDES = frozenset([
-  'node_modules'
+  'node_modules',
 ])
 
 
@@ -48,9 +47,7 @@ def find_git_repos(
     recursion_includes=recursion_includes,
     recursion_excludes=recursion_excludes
   )
-  return [
-    dotgit.parent for dotgit in dotgit_dirs
-  ]
+  return [dotgit.parent for dotgit in dotgit_dirs]
 
 
 def add_git_dirs(

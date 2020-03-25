@@ -50,8 +50,8 @@ def add_json_headers(kw: dict = None) -> dict:
     kw["headers"] = {}
 
   headers = {
-    "Content-type": "application/json", 
-    "Accept": "application/json"
+    "Content-type": "application/json",
+    "Accept": "application/json",
   }
 
   for header, value in headers.items():
@@ -75,7 +75,7 @@ def maybe_throw(response: Response):
       raise e
 
 
-def parse_raw_response(response: Response) -> dict:
+def parse_raw_response(response: Response) -> Union[dict, list]:
   maybe_throw(response)
   try:
     return response.json()

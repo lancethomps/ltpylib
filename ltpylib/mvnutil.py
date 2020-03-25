@@ -52,7 +52,7 @@ def get_project_version(pom: Union[str, Path], use_mvn_expression: bool = False)
 
 
 def parse_mvn_expression_output(mvn_out: str) -> str:
-  return [line for line in mvn_out.splitlines() if not '[INFO]' in line][-1]
+  return [line for line in mvn_out.splitlines() if '[INFO]' not in line][-1]
 
 
 def run_mvn_expression(pom: Union[str, Path], expression: str) -> str:

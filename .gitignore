@@ -39,8 +39,14 @@ out/
 ## Python
 *.egg-info
 *.pyc
-build/
-dist/
+/.coverage
+/.eggs
+/.pytest_cache
+/.tox
+/build
+/coverage.xml
+/dist
+/report.xml
 
 ############################
 # Libraries

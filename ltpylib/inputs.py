@@ -18,8 +18,11 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
   The "answer" return value is True for "yes" or False for "no".
   """
   valid = {
-    "yes": True, "y": True, "ye": True,
-    "no" : False, "n": False
+    "yes": True,
+    "y": True,
+    "ye": True,
+    "no": False,
+    "n": False,
   }
   if default is None:
     prompt = "\n[y/n]> "
@@ -37,8 +40,7 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
     elif choice in valid:
       return valid[choice]
     else:
-      logging.error("Please respond with 'yes' or 'no' "
-                    "(or 'y' or 'n').\n")
+      logging.error("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
 
 
 def ask_for_input(prompt: str = 'Please input value.') -> str:
@@ -62,7 +64,7 @@ def select_prompt(choices: Sequence[str], header: str = None, no_sort: bool = Tr
     command,
     universal_newlines=True,
     stderr=sys.stderr,
-    input="\n".join(choices)
+    input="\n".join(choices),
   )
 
   if result.returncode == 130:

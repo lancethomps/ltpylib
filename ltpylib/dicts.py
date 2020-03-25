@@ -31,15 +31,11 @@ def find(key: str, obj: dict) -> List[dict]:
 
 
 def remove_nulls(dict_with_nulls: dict) -> dict:
-  return {
-    key: val for (key, val) in dict_with_nulls.items() if val is not None
-  }
+  return {key: val for (key, val) in dict_with_nulls.items() if val is not None}
 
 
 def remove_nulls_and_empty(dict_with_nulls: dict) -> dict:
-  return {
-    key: val for (key, val) in dict_with_nulls.items() if checks.is_not_empty(val)
-  }
+  return {key: val for (key, val) in dict_with_nulls.items() if checks.is_not_empty(val)}
 
 
 if __name__ == "__main__":
