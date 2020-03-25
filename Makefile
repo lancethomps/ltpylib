@@ -13,9 +13,6 @@ coverage:
 lint-flake8:
 	pipenv run flake8
 
-lint-pylint:
-	@pipenv run pylint **/*.py
-
 lint-python-style:
 	# Fail if yapf formatter needs to reformat code
 	pipenv run yapf --diff --recursive ltpylib ltpylibtests setup.py
