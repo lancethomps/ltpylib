@@ -56,7 +56,7 @@ setup(
   author='Lance Thompson',
   license='MIT',
   keywords='utils',
-  python_requires='>=3',
+  python_requires='>=3.6',
   packages=['ltpylib', 'ltpylibtests'],
   install_requires=requirements,
   classifiers=[],
