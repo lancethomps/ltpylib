@@ -4,8 +4,7 @@
 class DataWithUnknownProperties(object):
 
   def __init__(self, values: dict = None):
-    if values:
-      self.unknownProperties: dict = values
+    self.unknownProperties: dict = values if values else None
 
 
 class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
