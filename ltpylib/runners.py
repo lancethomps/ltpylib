@@ -8,7 +8,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Callable, List, Tuple, Union
+from typing import List, Tuple, Union
 
 import psutil
 from ltpylib import files, logs, opts, procs
@@ -21,7 +21,7 @@ class ProcessRunner(object):
     proc_id: str,
     start_cmd: List[str],
     build_cmds: List[Union[List[str], Tuple[Union[str, List[str]], dict]]] = None,
-    force_build_before_start = None,
+    force_build_before_start=None,
     log_file: str = None,
     log_multitail_args: List[str] = None,
     pid_file: str = None,
