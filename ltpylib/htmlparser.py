@@ -23,20 +23,19 @@ def parse_table(
     header_replacements: Dict[str, str] = None,
     header_converters: List[StrConverter] = None,
     val_converters: List[StrConverter] = None,
-    row_data_predicate: Callable[[dict], bool] = None) -> List[dict]:
+    row_data_predicate: Callable[[dict], bool] = None
+) -> List[dict]:
   soup = BeautifulSoup(html, 'html5lib')
   table: BeautifulSoup = soup.select_one(table_selector)
   if not table:
     return None
 
-  table_headers = _find_table_headers(table, header_replacements,
-                                      header_converters)
+  table_headers = _find_table_headers(table, header_replacements, header_converters)
   rows = _find_table_rows(table)
   results: List[dict] = []
   for row in rows:
     if not table_headers:
-      table_headers = _parse_header_row(row, header_replacements,
-                                        header_converters)
+      table_headers = _parse_header_row(row, header_replacements, header_converters)
       continue
 
     table_data = row.find_all('td')
@@ -63,9 +62,7 @@ def parse_table(
   return results
 
 
-def _find_table_headers(
-    table: BeautifulSoup, header_replacements: Dict[str, str],
-    header_converters: List[StrConverter]) -> Dict[int, str]:
+def _find_table_headers(table: BeautifulSoup, header_replacements: Dict[str, str], header_converters: List[StrConverter]) -> Dict[int, str]:
   header_row = table.select_one('thead > tr')
   if not header_row:
     return None
@@ -81,9 +78,7 @@ def _find_table_rows(table: BeautifulSoup) -> List[BeautifulSoup]:
   return table.find_all('tr')
 
 
-def _parse_header_row(header_row: BeautifulSoup,
-                      header_replacements: Dict[str, str],
-                      header_converters: List[StrConverter]) -> Dict[int, str]:
+def _parse_header_row(header_row: BeautifulSoup, header_replacements: Dict[str, str], header_converters: List[StrConverter]) -> Dict[int, str]:
   header_cols: BeautifulSoup = header_row.select('td, th')
   if not header_cols:
     return None

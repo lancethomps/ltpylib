@@ -6,7 +6,7 @@ def is_empty(val) -> bool:
   if val is None:
     return True
 
-  if isinstance(val, list) or isinstance(val, dict):
+  if isinstance(val, (dict, list)):
     return not val
 
   return False

@@ -50,8 +50,8 @@ def add_json_headers(kw: dict = None) -> dict:
     kw["headers"] = {}
 
   headers = {
-    "Content-type": "application/json", 
-    "Accept": "application/json"
+    "Content-type": "application/json",
+    "Accept": "application/json",
   }
 
   for header, value in headers.items():

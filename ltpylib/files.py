@@ -159,9 +159,10 @@ def find_children(
   else:
     top = base_dir.as_posix()
 
+  found_dirs = []
   return _find_children(
     top,
-    [],
+    found_dirs,
     1,
     break_after_match,
     max_depth,
@@ -210,7 +211,7 @@ def _find_children(
           entry = next(scandir_it)
         except StopIteration:
           break
-      except OSError as error:
+      except OSError:
         return found_match, found_dirs
 
       try:
@@ -233,7 +234,7 @@ def _find_children(
         include_patterns=include_patterns,
         exclude_patterns=exclude_patterns,
         includes=includes,
-        excludes=excludes
+        excludes=excludes,
       )
 
       if include:
@@ -248,7 +249,7 @@ def _find_children(
           include_patterns=recursion_include_patterns,
           exclude_patterns=recursion_exclude_patterns,
           includes=recursion_includes,
-          excludes=recursion_excludes
+          excludes=recursion_excludes,
         )
         if include_child:
           dirs.append(child)

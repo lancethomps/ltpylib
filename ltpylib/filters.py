@@ -20,7 +20,7 @@ def should_include(
     exclude_patterns=exclude_patterns,
     includes=includes,
     excludes=excludes,
-    verbose=verbose
+    verbose=verbose,
   )
 
 
@@ -76,7 +76,7 @@ def should_skip_from_cmds(
     test_value: Union[str, Path],
     include_commands: Sequence[str] = None,
     exclude_commands: Sequence[str] = None,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> bool:
   from ltpylib import procs
 

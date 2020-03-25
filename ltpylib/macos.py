@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import logging
-import os
-import sys
 from getpass import getpass, getuser
 
 from ltpylib import inputs, procs
@@ -15,9 +13,9 @@ def notify(message: str, title: str = "Terminal Notification", sound_name: str =
 
   js_function = f"""
 var app = Application.currentApplication()
- 
+
 app.includeStandardAdditions = true
- 
+
 app.displayNotification("{message}", {{
     withTitle: "{title}",
     subtitle: "{subtitle}",
@@ -29,7 +27,7 @@ app.displayNotification("{message}", {{
     "-l",
     "JavaScript",
     "-e",
-    js_function
+    js_function,
   ])
   if __name__ == "__main__":
     exit(result.returncode)
@@ -39,7 +37,7 @@ def pbcopy(val: str):
   procs.run_with_regular_stdout(
     ["pbcopy"],
     input=val,
-    check=True
+    check=True,
   )
 
 
@@ -55,7 +53,7 @@ def add_generic_password(label: str, pw: str, account: str = None) -> bool:
     "-s",
     label,
     "-w",
-    pw
+    pw,
   ])
   if result.returncode != 0:
     raise Exception("Could not add generic keychain password: label=%s account=%s" % (label, account))
@@ -88,10 +86,15 @@ def find_generic_password(label: str, ask_if_missing: bool = True, add_if_missin
 
 
 def _main():
+  import sys
+
   result = globals()[sys.argv[1]](*sys.argv[2:])
   if result is not None:
     print(result)
 
 
 if __name__ == "__main__":
-  _main()
+  try:
+    _main()
+  except KeyboardInterrupt:
+    exit(130)

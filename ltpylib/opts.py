@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import os
-
 import argparse
+import os
 from typing import List, Optional, Sequence
 
 from ltpylib.logs import init_logging, log_with_title_sep
@@ -12,12 +11,14 @@ DEFAULT_POSITIONALS_KEY = 'command'
 
 class PositionalsHelpFormatter(argparse.HelpFormatter):
 
-  def __init__(self,
-               prog,
-               indent_increment=2,
-               max_help_position=24,
-               width=None,
-               positionals_key: str = DEFAULT_POSITIONALS_KEY):
+  def __init__(
+    self,
+    prog,
+    indent_increment=2,
+    max_help_position=24,
+    width=None,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
+  ):
     super().__init__(prog, indent_increment, max_help_position, width)
     self.positionals_key = positionals_key
     self.positionals_action = argparse._StoreAction([], self.positionals_key, nargs='+')
@@ -76,8 +77,11 @@ def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Option
   return args
 
 
-def parse_args_with_positionals_and_init_others(arg_parser: argparse.ArgumentParser, positionals_key: str = DEFAULT_POSITIONALS_KEY,
-                                                argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args_with_positionals_and_init_others(
+    arg_parser: argparse.ArgumentParser,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
+    argv: Optional[Sequence[str]] = None,
+) -> argparse.Namespace:
   import argcomplete
 
   argcomplete.autocomplete(arg_parser)
@@ -91,7 +95,7 @@ def does_stdin_have_data() -> bool:
   import sys
   import select
 
-  if select.select([sys.stdin, ], [], [], 0.0)[0]:
+  if select.select([sys.stdin], [], [], 0.0)[0]:
     return True
   elif sys.stdin.isatty():
     return True

@@ -24,10 +24,7 @@ class JiraApi(object):
     if api is not None:
       self.api: JIRA = api
     elif url is not None and auth is not None:
-      self.api: JIRA = JIRA(
-        url,
-        auth=auth
-      )
+      self.api: JIRA = JIRA(url, auth=auth)
     else:
       raise Exception("Must be initialized with 'api: JIRA' instance or both 'url' and 'auth'")
 
@@ -51,20 +48,22 @@ class JiraApi(object):
       join_array_fields: List[str] = EMPTY_LIST,
       date_fields: List[str] = EMPTY_LIST
   ) -> Issue:
-    return Issue(values=JiraApi.parse_api_response_with_names(
-      self.api.issue(
-        id,
-        fields=to_csv(fields),
-        expand=JiraApi.expand_with_names(expand)
-      ).raw,
-      no_convert=no_convert,
-      convert_single_value_arrays=convert_single_value_arrays,
-      create_new_result=create_new_result,
-      skip_fields=skip_fields,
-      dict_field_to_inner_field=dict_field_to_inner_field,
-      join_array_fields=join_array_fields,
-      date_fields=date_fields
-    ))
+    return Issue(
+      values=JiraApi.parse_api_response_with_names(
+        self.api.issue(
+          id,
+          fields=to_csv(fields),
+          expand=JiraApi.expand_with_names(expand),
+        ).raw,
+        no_convert=no_convert,
+        convert_single_value_arrays=convert_single_value_arrays,
+        create_new_result=create_new_result,
+        skip_fields=skip_fields,
+        dict_field_to_inner_field=dict_field_to_inner_field,
+        join_array_fields=join_array_fields,
+        date_fields=date_fields
+      )
+    )
 
   def search_issues(
       self,
@@ -84,25 +83,27 @@ class JiraApi(object):
       join_array_fields: List[str] = EMPTY_LIST,
       date_fields: List[str] = EMPTY_LIST
   ) -> IssueSearchResult:
-    return IssueSearchResult(values=JiraApi.parse_api_response_with_names(
-      self.api.search_issues(
-        jql,
-        startAt=start_at,
-        maxResults=max_results,
-        validate_query=validate_query,
-        fields=to_csv(fields),
-        expand=JiraApi.expand_with_names(expand),
-        json_result=json_result
-      ),
-      "issues",
-      no_convert=no_convert,
-      convert_single_value_arrays=convert_single_value_arrays,
-      create_new_result=create_new_result,
-      skip_fields=skip_fields,
-      dict_field_to_inner_field=dict_field_to_inner_field,
-      join_array_fields=join_array_fields,
-      date_fields=date_fields
-    ))
+    return IssueSearchResult(
+      values=JiraApi.parse_api_response_with_names(
+        self.api.search_issues(
+          jql,
+          startAt=start_at,
+          maxResults=max_results,
+          validate_query=validate_query,
+          fields=to_csv(fields),
+          expand=JiraApi.expand_with_names(expand),
+          json_result=json_result,
+        ),
+        "issues",
+        no_convert=no_convert,
+        convert_single_value_arrays=convert_single_value_arrays,
+        create_new_result=create_new_result,
+        skip_fields=skip_fields,
+        dict_field_to_inner_field=dict_field_to_inner_field,
+        join_array_fields=join_array_fields,
+        date_fields=date_fields
+      )
+    )
 
   def issue_summaries(self, issues: List[str], markdown: bool = False) -> List[str]:
     summaries = []

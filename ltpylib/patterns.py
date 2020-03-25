@@ -19,7 +19,7 @@ def pull_matches_from_file(
     file: Union[str, Path],
     search_string: str,
     group: int = 0,
-    flags: Union[int, re.RegexFlag] = 0
+    flags: Union[int, re.RegexFlag] = 0,
 ) -> List[str]:
   from ltpylib import files
 

@@ -1,0 +1,16 @@
+[flake8]
+max-line-length=180
+
+ignore =
+    # indentation is not a multiple of four,
+    E111,E114,
+    # continuation line under-indented for hanging indent
+    E121,
+    # visually indented line with same indent as next logical line,
+    E129,
+    # whitespace before ':'
+    E203
+
+per-file-ignores=
+    ltpylib/configs_compat.py:E722
+    ltpylib/terminals.py:E722

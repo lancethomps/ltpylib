@@ -86,9 +86,13 @@ function increment_semver() {
     awk -F. -v a="$major" -v b="$minor" -v c="$patch" '{printf("%d.%d.%d", $1+a, $2+b , $3+c)}'
 }
 
+function clean_publish() {
+  git clean -Xd --force -- build dist
+}
+
 function publish_and_tag() {
   check_git_dirty
-  git clean -Xd --force -- build dist
+  clean_publish
   python3 setup.py sdist bdist_wheel
   python3 -m twine upload dist/*
 
@@ -113,3 +117,4 @@ export NEXT_VERSION="$(increment_semver --patch 1 "$CURR_VERSION")"
 check_git_default_branch
 publish_and_tag
 next_vers
+clean_publish

@@ -39,9 +39,7 @@ def _get_terminal_size_windows():
     csbi = create_string_buffer(22)
     res = windll.kernel32.GetConsoleScreenBufferInfo(h, csbi)
     if res:
-      (bufx, bufy, curx, cury, wattr,
-       left, top, right, bottom,
-       maxx, maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
+      (bufx, bufy, curx, cury, wattr, left, top, right, bottom, maxx, maxy) = struct.unpack("hhhhHhhhhhh", csbi.raw)
       sizex = right - left + 1
       sizey = bottom - top + 1
       return sizex, sizey
@@ -59,31 +57,31 @@ def _get_terminal_size_tput():
 
 
 def _get_terminal_size_linux():
-  def ioctl_GWINSZ(fd):
+
+  def ioctl_gwinsz(fd):
     try:
       import fcntl
       import termios
 
-      cr = struct.unpack('hh',
-                         fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-      return cr
+      maybe_cols_rows = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+      return maybe_cols_rows
     except:
       pass
 
-  cr = ioctl_GWINSZ(0) or ioctl_GWINSZ(1) or ioctl_GWINSZ(2)
-  if not cr:
+  cols_rows = ioctl_gwinsz(0) or ioctl_gwinsz(1) or ioctl_gwinsz(2)
+  if not cols_rows:
     try:
-      fd = os.open(os.ctermid(), os.O_RDONLY)
-      cr = ioctl_GWINSZ(fd)
-      os.close(fd)
+      file_desc = os.open(os.ctermid(), os.O_RDONLY)
+      cols_rows = ioctl_gwinsz(file_desc)
+      os.close(file_desc)
     except:
       pass
-  if not cr:
+  if not cols_rows:
     try:
-      cr = (os.environ['LINES'], os.environ['COLUMNS'])
+      cols_rows = (os.environ['LINES'], os.environ['COLUMNS'])
     except:
       return None
-  return int(cr[1]), int(cr[0])
+  return int(cols_rows[1]), int(cols_rows[0])
 
 
 if __name__ == "__main__":

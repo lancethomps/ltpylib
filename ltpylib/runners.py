@@ -19,17 +19,17 @@ from ltpylib import files, logs, opts, procs
 class ProcessRunner(object):
 
   def __init__(
-      self,
-      proc_id: str,
-      start_cmd: List[str],
-      build_cmds: List[Union[List[str], Tuple[Union[str, List[str]], dict]]] = None,
-      force_build_before_start: Callable[[ProcessRunner], bool] = None,
-      log_file: str = None,
-      log_multitail_args: List[str] = None,
-      pid_file: str = None,
-      proc_name_matcher: str = None,
-      status_loop_wait_time: int = 30,
-      status_loop_sleep_time: int = 1
+    self,
+    proc_id: str,
+    start_cmd: List[str],
+    build_cmds: List[Union[List[str], Tuple[Union[str, List[str]], dict]]] = None,
+    force_build_before_start: Callable[[ProcessRunner], bool] = None,
+    log_file: str = None,
+    log_multitail_args: List[str] = None,
+    pid_file: str = None,
+    proc_name_matcher: str = None,
+    status_loop_wait_time: int = 30,
+    status_loop_sleep_time: int = 1
   ):
     self.proc_id = proc_id
     self.start_cmd = start_cmd

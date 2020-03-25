@@ -23,7 +23,7 @@ def type_name(val) -> str:
 def get_functions_of_class(
     inspect_class: ClassVar,
     include_private: bool = False,
-    include_signature: bool = False
+    include_signature: bool = False,
 ) -> List[str]:
   result: List[str] = []
   functions = inspect.getmembers(inspect_class, predicate=inspect.isfunction)
