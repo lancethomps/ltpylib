@@ -1,8 +1,6 @@
-.PHONY: docs
-
 init:
 	pip install pipenv --upgrade
-	pipenv install --dev
+	pipenv install --dev --skip-lock
 
 format-python:
 	pipenv run yapf --in-place --parallel --recursive --verbose ltpylib ltpylibtests setup.py
