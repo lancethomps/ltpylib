@@ -112,7 +112,9 @@ cd "$_SCRIPT_DIR"
 
 export VERSION_FILE="VERSION"
 export CURR_VERSION="$(cat "$VERSION_FILE" | sed -E 's/ *$//g' | sed -E 's/^ *//g')"
-export NEXT_VERSION="$(increment_semver --patch 1 "$CURR_VERSION")"
+if test -z "${NEXT_VERSION-}"; then
+  export NEXT_VERSION="$(increment_semver --minor 1 "$CURR_VERSION")"
+fi
 
 check_git_default_branch
 publish_and_tag
