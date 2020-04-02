@@ -8,6 +8,7 @@ pandas
 psutil
 python-dateutil
 requests
+semver
 stashy
 tabulate
 urllib3
