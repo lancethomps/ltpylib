@@ -9,6 +9,41 @@ MVN_EXPR_PROJECT_ARTIFACT_ID = 'project.artifactId'
 MVN_EXPR_PROJECT_VERSION = 'project.version'
 
 
+class MavenArtifact(object):
+
+  def __init__(self, group_id: str, artifact_id: str, version: str = None, packaging: str = None, classifier: str = None):
+    self.group_id: str = group_id
+    self.artifact_id: str = artifact_id
+    self.version: str = version
+    self.packaging: str = packaging
+    self.classifier: str = classifier
+
+  @staticmethod
+  def from_artifact_string(artifact: str):
+    artifact_parts = artifact.split(":")
+
+    parts_len = len(artifact_parts)
+    if parts_len < 2:
+      raise Exception("Artifact should be in the form of groupId:artifactId:version[:packaging[:classifier]]")
+
+    return MavenArtifact(
+      artifact_parts[0],
+      artifact_parts[1],
+      version=(artifact_parts[2] if parts_len > 2 else None),
+      packaging=(artifact_parts[3] if parts_len > 3 else None),
+      classifier=(artifact_parts[4] if parts_len > 4 else None),
+    )
+
+
+def get_artifact_repository_path(artifact: Union[MavenArtifact, str]) -> Path:
+  import os
+
+  if isinstance(artifact, str):
+    artifact = MavenArtifact.from_artifact_string(artifact)
+
+  return Path(os.getenv("HOME")).joinpath(".m2/repository").joinpath(artifact.group_id.replace(".", "/")).joinpath(artifact.artifact_id)
+
+
 def get_project_artifact_id(pom: Union[str, Path], use_mvn_expression: bool = False) -> str:
   result: str = None
 
