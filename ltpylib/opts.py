@@ -10,12 +10,12 @@ DEFAULT_POSITIONALS_KEY = 'command'
 class PositionalsHelpFormatter(argparse.HelpFormatter):
 
   def __init__(
-      self,
-      prog,
-      indent_increment=2,
-      max_help_position=24,
-      width=None,
-      positionals_key: str = DEFAULT_POSITIONALS_KEY,
+    self,
+    prog,
+    indent_increment=2,
+    max_help_position=24,
+    width=None,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
   ):
     super().__init__(prog, indent_increment, max_help_position, width)
     self.positionals_key = positionals_key
