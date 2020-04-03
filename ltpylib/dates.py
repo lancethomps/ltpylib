@@ -20,6 +20,16 @@ def parse_date(date_string: str, format: str = None) -> datetime:
   return datetime.strptime(date_string, format)
 
 
+def parse_possibly_relative_date(date_string: str) -> datetime:
+  import dateparser
+
+  return dateparser.parse(date_string)
+
+
+def to_json_isoformat(date: datetime) -> str:
+  return date.isoformat(sep="T", timespec="milliseconds") + "Z"
+
+
 def _main():
   import sys
 

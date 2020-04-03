@@ -2,6 +2,7 @@ argcomplete
 bs4
 colorama
 configparser
+dateparser
 html5lib
 jira
 pandas
