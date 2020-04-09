@@ -10,7 +10,7 @@ def replace_matches(
     search_string: str,
     replacement: Union[str, Callable[[Match], str]],
     quote_replacement: Union[bool, str] = False,
-    flags: Union[int, re.RegexFlag] = 0
+    flags: Union[int, re.RegexFlag] = 0,
 ) -> str:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
