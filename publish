@@ -30,7 +30,7 @@ function confirm_with_auto() {
 
 function check_git_default_branch() {
   if git is-side-branch; then
-    echo "Git repo not on master branch!"
+    echo "Git repo not on master branch! Make a PR to master first"
     git status
     exit 1
   fi

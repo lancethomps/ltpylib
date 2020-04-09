@@ -18,6 +18,18 @@ class MavenArtifact(object):
     self.packaging: str = packaging
     self.classifier: str = classifier
 
+  def to_artifact_string(self) -> str:
+    parts: List[str] = [
+      self.group_id,
+      self.artifact_id
+    ]
+    for val in [self.version, self.packaging, self.classifier]:
+      if val:
+        parts.append(val)
+
+    return ":".join(parts)
+
+
   @staticmethod
   def from_artifact_string(artifact: str):
     artifact_parts = artifact.split(":")
