@@ -1,17 +1,77 @@
 #!/usr/bin/env bash
 ################################################################### SETUP ########################################################################
-if ! _SCRIPT_DIR="$(get_script_dir "${BASH_SOURCE[0]}")"; then echo "Error while running: _SCRIPT_DIR=\"\$(get_script_dir \"${BASH_SOURCE[0]}\")\"" && exit 1; fi
+S="${BASH_SOURCE[0]}" && while [ -h "$S" ]; do D="$(cd -P "$(dirname "$S")" && pwd)" && S="$(readlink "$S")" && [[ $S != /* ]] && S="$D/$S"; done && _SCRIPT_DIR="$(cd -P "$(dirname "$S")" && pwd)" && unset S D
 set -o errexit -o errtrace -o nounset
+##################################################################################################################################################
+
+MAIN_REPOSITORY='pypi'
+TEST_REPOSITORY='pypitest'
+REPOSITORY="$MAIN_REPOSITORY"
+
+################################################################### USAGE ########################################################################
+_SCRIPT_NAME="$(basename "$0")"
+
+function _usage() {
+  cat << EOF
+NAME
+       ${_SCRIPT_NAME}
+
+SYNOPSIS
+       ${_SCRIPT_NAME} [--help] [--debug] [--verbose] [--test]
+
+EXAMPLES
+       ${_SCRIPT_NAME}
+       ${_SCRIPT_NAME} --test
+EOF
+}
+##################################################################################################################################################
+
+################################################################# SCRIPTARGS #####################################################################
+while test $# -gt 0; do
+  case "$1" in
+    -h | --help)
+      _usage
+      exit 0
+      ;;
+    --debug)
+      shift
+      export debug_mode=true
+      ;;
+    --verbose)
+      shift
+      export verbose=true
+      ;;
+    --test)
+      shift
+      REPOSITORY="$TEST_REPOSITORY"
+      ;;
+    --)
+      shift
+      break
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      _usage
+      exit 1
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 ##################################################################################################################################################
 
 function exiting() {
   echo "Exiting..."
   exit "${1:-1}"
 }
+function check_debug() {
+  test "${debug_mode:-}" = "true"
+}
 function confirm() {
   local response=""
   read -r -p "${1:-Are you sure?}"$'\n'"[Y/n]> " response
-  case $response in
+  case "$response" in
     [yY][eE][sS] | [yY] | "") true ;;
     [nN][oO] | [nN]) false ;;
     *)
@@ -32,7 +92,7 @@ function check_git_default_branch() {
   if git is-side-branch; then
     echo "Git repo not on master branch! Make a PR to master first"
     git status
-    exit 1
+    exiting 1
   fi
   return 0
 }
@@ -41,7 +101,7 @@ function check_git_dirty() {
   if git is-dirty; then
     echo "Git repo is dirty!"
     git status
-    exit 1
+    exiting 1
   fi
   return 0
 }
@@ -90,22 +150,61 @@ function clean_publish() {
   git clean -Xd --force -- build dist
 }
 
+function publish_with_twine() {
+  if check_debug; then
+    echo python3 -m twine upload --repository "$REPOSITORY" dist/*
+  else
+    python3 -m twine upload --repository "$REPOSITORY" dist/*
+  fi
+}
+
 function publish_and_tag() {
   check_git_dirty
   clean_publish
   python3 setup.py sdist bdist_wheel
-  python3 -m twine upload dist/*
 
-  git tag "v$CURR_VERSION"
-  git push --tags
+  if ! confirm_with_auto "Publish version ${CURR_VERSION}?"; then
+    exiting 1
+  fi
+
+  publish_with_twine
+
+  if ! confirm_with_auto "Tag version ${CURR_VERSION}?"; then
+    exiting 1
+  fi
+
+  if check_debug; then
+    echo git tag "v$CURR_VERSION"
+    echo git push --tags
+  else
+    git tag "v$CURR_VERSION"
+    git push --tags
+  fi
 }
 
 function next_vers() {
   check_git_dirty
-  git checkout -b "dev-v${NEXT_VERSION}"
-  echo -n "${NEXT_VERSION}" > "$VERSION_FILE"
-  git commit -m "Prepare next version" -- "$VERSION_FILE"
-  git push --set-upstream origin "$(git current-branch)"
+
+  if ! confirm_with_auto "Bump ${CURR_VERSION} to next minor version (${NEXT_VERSION})?"; then
+    exiting 0
+  fi
+
+  if check_debug; then
+    echo git checkout -b "dev-v${NEXT_VERSION}"
+    echo echo -n "${NEXT_VERSION}" '>' "$VERSION_FILE"
+    echo git commit -m "Prepare next version" '--' "$VERSION_FILE"
+    echo git push --set-upstream origin "$(git current-branch)"
+  else
+    git checkout -b "dev-v${NEXT_VERSION}"
+    echo -n "${NEXT_VERSION}" > "$VERSION_FILE"
+    git commit -m "Prepare next version" -- "$VERSION_FILE"
+
+    if ! confirm_with_auto "Push updates for next minor version ${NEXT_VERSION}?"; then
+      exiting 1
+    fi
+
+    git push --set-upstream origin "$(git current-branch)"
+  fi
 }
 
 cd "$_SCRIPT_DIR"
