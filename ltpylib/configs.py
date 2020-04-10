@@ -58,7 +58,12 @@ def config_parser_to_string(config: ConfigParser, sort_keys: bool = False):
   return sio.getvalue()
 
 
-def read_properties(file: Union[str, Path], use_mock_default_section: bool = True, config: ConfigParser = None, allow_missing_file: bool = False,) -> ConfigParser:
+def read_properties(
+    file: Union[str, Path],
+    use_mock_default_section: bool = True,
+    config: ConfigParser = None,
+    allow_missing_file: bool = False,
+) -> ConfigParser:
   if isinstance(file, str):
     file = Path(file)
 
