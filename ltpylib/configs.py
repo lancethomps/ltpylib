@@ -58,16 +58,18 @@ def config_parser_to_string(config: ConfigParser, sort_keys: bool = False):
   return sio.getvalue()
 
 
-def read_properties(file: Union[str, Path], use_mock_default_section: bool = True, config: ConfigParser = None) -> ConfigParser:
+def read_properties(file: Union[str, Path], use_mock_default_section: bool = True, config: ConfigParser = None, allow_missing_file: bool = False,) -> ConfigParser:
   if isinstance(file, str):
     file = Path(file)
-
-  if not file.is_file():
-    raise ValueError("File does not exist: %s" % file)
 
   if config is None:
     config = ConfigParser(allow_no_value=True)
     config.optionxform = str
+
+  if not file.is_file():
+    if not allow_missing_file:
+      raise ValueError("File does not exist: %s" % file)
+    return config
 
   if use_mock_default_section:
     with open(file.as_posix(), 'r') as configfile:
