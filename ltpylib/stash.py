@@ -3,13 +3,26 @@ from typing import List, Tuple
 
 import stashy
 from requests import Response
+from stashy import repos
 from stashy.pullrequests import PullRequest, PullRequests
 from stashy.repos import Repos
 
 from ltpylib import requests_helper
-from ltpylib.stash_types import Builds, PullRequestActivities, PullRequestMergeability, PullRequestMergeStatus, PullRequestStatus, Repository, SearchResults
+from ltpylib.stash_types import (
+  Branch,
+  Branches,
+  Builds,
+  PullRequestActivities,
+  PullRequestMergeability,
+  PullRequestMergeStatus,
+  PullRequestState,
+  PullRequestStatus,
+  Repository,
+  SearchResults,
+)
 
 STASH_URL: str = "https://stash.wlth.fr"
+BRANCH_PR_META_KEY: str = "com.atlassian.bitbucket.server.bitbucket-ref-metadata:outgoing-pull-request-metadata"
 
 
 class StashApi(object):
@@ -154,9 +167,82 @@ class StashApi(object):
       author=author,
     )]
 
+  def repo(self, project: str, repo: str) -> Repository:
+    return Repository(self.stash.projects[project].repos[repo].get())
+
+  def repo_branches(self, project: str, repo: str, limit: int = None, details: bool = True) -> Branches:
+    if isinstance(limit, str):
+      limit = int(limit)
+    elif limit is None:
+      limit = 1000
+
+    if isinstance(details, str):
+      details = details.lower() == "true" or details.lower() == "yes"
+
+    repo: repos.Repository = self.stash.projects[project].repos[repo]
+
+    limit_above_max = limit > 1000 or limit <= -1
+    if details and limit_above_max:
+      branches = Branches(values={
+        "limit": limit,
+        "start": 0,
+        "values": [],
+      })
+      branches.isLastPage = True
+
+      for branch in repo.branches(details=details):
+        branches.values.append(Branch(values=branch))
+        if 0 <= limit <= len(branches.values):
+          branches.isLastPage = False
+          break
+
+      branches.size = len(branches.values)
+      return branches
+
+    details_str = "true" if details else "false"
+    if limit <= -1:
+      limit = 999999
+
+    return Branches(values=requests_helper.parse_raw_response(self.stash._client.get(repo.url('/branches?limit=%s&details=%s' % (limit, details_str)))))
+
+  def repo_branches_with_pr_in_states(self, project: str, repo: str, states: List[PullRequestState], limit: int = None) -> Branches:
+    if isinstance(limit, str):
+      limit = int(limit)
+
+    if isinstance(states, str):
+      states = [PullRequestState.from_string(state) for state in states.split(",")]
+    else:
+      states = [PullRequestState.from_string(state) for state in states]
+
+    branches = self.repo_branches(project, repo, limit=limit, details=True)
+
+    merged_branches: Branches = Branches(values={
+      "isLastPage": branches.isLastPage,
+      "limit": branches.limit,
+      "start": branches.start,
+    })
+    merged_branches.values = []
+
+    for branch in branches.values:
+      if branch.metadata is None or BRANCH_PR_META_KEY not in branch.metadata or "pullRequest" not in branch.metadata.get(BRANCH_PR_META_KEY):
+        continue
+
+      branch_pr_meta = branch.metadata.get(BRANCH_PR_META_KEY)
+      pr_meta_raw: dict = branch_pr_meta.pop("pullRequest")
+      pr_meta = PullRequestStatus(values=pr_meta_raw)
+      branch_pr_meta["pullRequest"] = pr_meta
+      if pr_meta.state in states:
+        merged_branches.values.append(branch)
+
+    merged_branches.size = len(merged_branches.values)
+    return merged_branches
+
+  def repo_merged_branches(self, project: str, repo: str, limit: int = None) -> Branches:
+    return self.repo_branches_with_pr_in_states(project, repo, [PullRequestState.MERGED], limit=limit)
+
   def repos_for_project(self, project: str) -> List[Repository]:
-    repos: Repos = self.stash.projects[project].repos
-    return [Repository(repo) for repo in repos.list()]
+    project_repos: Repos = self.stash.projects[project].repos
+    return [Repository(repo) for repo in project_repos.list()]
 
   def search(self, query: str, limit: int = 25) -> SearchResults:
     api_json = {

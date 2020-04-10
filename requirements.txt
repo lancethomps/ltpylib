@@ -2,12 +2,14 @@ argcomplete
 bs4
 colorama
 configparser
+dateparser
 html5lib
 jira
 pandas
 psutil
 python-dateutil
 requests
+semver
 stashy
 tabulate
 urllib3

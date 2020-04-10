@@ -6,7 +6,7 @@ format-python:
 	pipenv run yapf --in-place --parallel --recursive --verbose ltpylib ltpylibtests setup.py
 
 coverage:
-	pipenv run pytest --verbose
+	pipenv run pytest --verbose --cov=ltpylib --cov-report=xml --junit-xml=report.xml
 
 lint-flake8:
 	pipenv run flake8
@@ -18,10 +18,10 @@ lint-python-style:
 lint: lint-flake8 lint-python-style
 
 test:
-	python setup.py test
+	pipenv run pytest --cov=ltpylib
 
 tests:
 	pipenv run tox
 
 ci: lint
-	pipenv run pytest -n 8 --boxed
+	pipenv run pytest -n 8 --boxed --cov=ltpylib --cov-report=xml --junit-xml=report.xml

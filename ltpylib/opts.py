@@ -3,8 +3,6 @@ import argparse
 import os
 from typing import List, Optional, Sequence
 
-from ltpylib.logs import init_logging, log_with_title_sep
-
 TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
 DEFAULT_POSITIONALS_KEY = 'command'
 
@@ -37,84 +35,12 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
       super().add_arguments(actions)
 
 
-def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  arg_parser.add_argument('-v', '--verbose', action='store_true')
-  arg_parser.add_argument('--dry-run', action='store_true')
-  return arg_parser
-
-
-def check_debug_mode() -> bool:
-  return os.getenv('debug_mode', 'false').lower() in TRUE_VALUES
-
-
-def check_verbose() -> bool:
-  return os.getenv('verbose', 'false').lower() in TRUE_VALUES
-
-
-def create_default_arg_parser() -> argparse.ArgumentParser:
-  arg_parser = argparse.ArgumentParser()
-  return add_default_arguments_to_parser(arg_parser)
-
-
-def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
-  import functools
-
-  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
-  return add_default_arguments_to_parser(arg_parser)
-
-
-def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-  import argcomplete
-
-  argcomplete.autocomplete(arg_parser)
-  args = arg_parser.parse_args(args=argv)
-  return args
-
-
-def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-  args = parse_args(arg_parser, argv=argv)
-  init_logging(args=args)
-  return args
-
-
-def parse_args_with_positionals_and_init_others(
-    arg_parser: argparse.ArgumentParser,
-    positionals_key: str = DEFAULT_POSITIONALS_KEY,
-    argv: Optional[Sequence[str]] = None,
-) -> argparse.Namespace:
-  import argcomplete
-
-  argcomplete.autocomplete(arg_parser)
-  args, positionals = arg_parser.parse_known_intermixed_args(args=argv)
-  args.__setattr__(positionals_key, positionals)
-  init_logging(args=args)
-  return args
-
-
-def does_stdin_have_data() -> bool:
-  import sys
-  import select
-
-  if select.select([sys.stdin], [], [], 0.0)[0]:
-    return True
-  elif sys.stdin.isatty():
-    return True
-  else:
-    return False
-
-
-def check_command(cmd: str) -> bool:
-  import shutil
-
-  return shutil.which(cmd) is not None
-
-
 class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
     self._args: argparse.Namespace = args
-    self.verbose: bool = args.verbose
     self.dry_run: bool = args.dry_run
+    self.verbose: bool = args.verbose
 
 
 class ColorArgs(object):
@@ -189,8 +115,90 @@ class PagerArgs(object):
     return arg_parser
 
 
+def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+  arg_parser.add_argument('-v', '--verbose', action='store_true')
+  arg_parser.add_argument('--dry-run', "--debug", action='store_true')
+  return arg_parser
+
+
+def check_debug_mode() -> bool:
+  return os.getenv('debug_mode', 'false').lower() in TRUE_VALUES
+
+
+def check_verbose() -> bool:
+  return os.getenv('verbose', 'false').lower() in TRUE_VALUES
+
+
+def create_default_arg_parser() -> argparse.ArgumentParser:
+  arg_parser = argparse.ArgumentParser()
+  return add_default_arguments_to_parser(arg_parser)
+
+
+def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
+  import functools
+
+  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
+  return add_default_arguments_to_parser(arg_parser)
+
+
+def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+  import argcomplete
+
+  argcomplete.autocomplete(arg_parser)
+  args = arg_parser.parse_args(args=argv)
+  return args
+
+
+def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+  from ltpylib.logs import init_logging
+
+  args = parse_args(arg_parser, argv=argv)
+  init_logging(args=args)
+  return args
+
+
+def parse_args_with_positionals_and_init_others(
+    arg_parser: argparse.ArgumentParser,
+    positionals_key: str = DEFAULT_POSITIONALS_KEY,
+    argv: Optional[Sequence[str]] = None,
+) -> argparse.Namespace:
+  import argcomplete
+  from ltpylib.logs import init_logging
+
+  argcomplete.autocomplete(arg_parser)
+  args, positionals = arg_parser.parse_known_intermixed_args(args=argv)
+  args.__setattr__(positionals_key, positionals)
+  init_logging(args=args)
+  return args
+
+
+def does_stdin_have_data() -> bool:
+  import sys
+  import select
+
+  if select.select([sys.stdin], [], [], 0.0)[0]:
+    return True
+  elif sys.stdin.isatty():
+    return True
+  else:
+    return False
+
+
+def check_command(cmd: str) -> bool:
+  import shutil
+
+  return shutil.which(cmd) is not None
+
+
+def check_for_debug_and_log_args(args: BaseArgs, exit_code: int = 0):
+  if args.dry_run:
+    log_args(args)
+    exit(exit_code)
+
+
 def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] = None):
   import logging
+  from ltpylib.logs import log_with_title_sep
 
   for item in sorted(args.__dict__.items()):
     if item[0] == '_args':

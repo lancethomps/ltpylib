@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from typing import List
+from enum import auto
+from typing import Dict, List
 
 from ltpylib.common_types import DataWithUnknownProperties
+from ltpylib.enums import EnumAutoName
 
 
 class DisplayIdAndId(object):
@@ -22,6 +24,23 @@ class PaginatedValues(object):
     self.limit: int = values.pop("limit", None)
     self.size: int = values.pop("size", None)
     self.start: int = values.pop("start", None)
+
+
+class PullRequestState(EnumAutoName):
+  DECLINED = auto()
+  MERGED = auto()
+  OPEN = auto()
+  UNKNOWN = auto()
+
+  @staticmethod
+  def from_string(state: str, allow_unknown: bool = True):
+    try:
+      return PullRequestState[state.upper()] if state else None
+    except KeyError as e:
+      if allow_unknown:
+        return PullRequestState.UNKNOWN
+
+      raise e
 
 
 class ApplicationProperties(DataWithUnknownProperties):
@@ -46,6 +65,21 @@ class Branch(DataWithUnknownProperties, DisplayIdAndId):
 
     self.isDefault: bool = values.pop("isDefault", None)
     self.latestChangeset: str = values.pop("latestChangeset", None)
+    self.latestCommit: str = values.pop("latestCommit", None)
+    self.type: str = values.pop("type", None)
+    self.metadata: Dict[str, dict] = values.pop("metadata", None)
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class Branches(DataWithUnknownProperties, PaginatedValues):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    PaginatedValues.__init__(self, values)
+
+    self.values: List[Branch] = list(map(Branch, values.pop("values", []))) if "values" in values else None
 
     DataWithUnknownProperties.__init__(self, values)
 
@@ -235,7 +269,7 @@ class PullRequestStatus(DataWithUnknownProperties):
     self.participants: List[PullRequestParticipant] = list(map(PullRequestParticipant, values.pop("participants", []))) if "participants" in values else None
     self.properties: PullRequestProperties = PullRequestProperties(values=values.pop("properties")) if "properties" in values else None
     self.reviewers: List[PullRequestParticipant] = list(map(PullRequestParticipant, values.pop("reviewers", []))) if "reviewers" in values else None
-    self.state: str = values.pop("state", None)
+    self.state: PullRequestState = PullRequestState.from_string(values.pop("state")) if "state" in values else None
     self.title: str = values.pop("title", None)
     self.toRef: PullRequestRef = PullRequestRef(values=values.pop("toRef")) if "toRef" in values else None
     self.updatedDate: int = values.pop("updatedDate", None)
