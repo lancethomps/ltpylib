@@ -26,6 +26,21 @@ class PaginatedValues(object):
     self.start: int = values.pop("start", None)
 
 
+class PullRequestRole(EnumAutoName):
+  AUTHOR = auto()
+  REVIEWER = auto()
+
+  @staticmethod
+  def from_string(val: str, allow_unknown: bool = False):
+    try:
+      return PullRequestRole[val.upper()] if val else None
+    except KeyError as e:
+      if allow_unknown:
+        return None
+
+      raise e
+
+
 class PullRequestState(EnumAutoName):
   DECLINED = auto()
   MERGED = auto()
@@ -277,6 +292,18 @@ class PullRequestStatus(DataWithUnknownProperties):
 
     self.builds: Builds = None
     self.mergeInfo: PullRequestMergeability = None
+
+    DataWithUnknownProperties.__init__(self, values)
+
+
+class PullRequestStatuses(DataWithUnknownProperties, PaginatedValues):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    PaginatedValues.__init__(self, values)
+
+    self.values: List[PullRequestStatus] = list(map(PullRequestStatus, values.pop("values", []))) if "values" in values else None
 
     DataWithUnknownProperties.__init__(self, values)
 

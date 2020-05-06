@@ -15,8 +15,10 @@ from ltpylib.stash_types import (
   PullRequestActivities,
   PullRequestMergeability,
   PullRequestMergeStatus,
+  PullRequestRole,
   PullRequestState,
   PullRequestStatus,
+  PullRequestStatuses,
   Repository,
   SearchResults,
 )
@@ -107,6 +109,39 @@ class StashApi(object):
       result.sourceBranchDeleted = delete_source_branch_response.status_code == 200 or delete_source_branch_response.status_code == 204
 
     return result
+
+  def my_pull_requests(
+    self,
+    role: PullRequestRole = PullRequestRole.AUTHOR,
+    state: PullRequestState = PullRequestState.OPEN,
+    start: int = 0,
+    limit: int = 100,
+    with_attributes: bool = True,
+    order: str = None,
+  ) -> PullRequestStatuses:
+    if isinstance(role, str):
+      role = PullRequestRole.from_string(role)
+
+    if isinstance(state, str):
+      state = PullRequestState.from_string(state)
+
+    api_params = {
+      "start": str(start),
+      "limit": str(limit),
+      "role": role.name,
+      "state": state.name,
+      "withAttributes": str(with_attributes).lower(),
+    }
+
+    if order is not None:
+      api_params["order"] = order
+
+    api_url = '%s/rest/api/latest/inbox/pull-requests?%s' % (
+      self.stash._client._base_url,
+      "&".join((k + "=" + v) for (k, v) in api_params.items()),
+    )
+    kw = requests_helper.add_json_headers()
+    return PullRequestStatuses(values=requests_helper.parse_raw_response(self.stash._client._session.get(api_url, **kw)))
 
   def pull_request(
     self,
