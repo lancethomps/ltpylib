@@ -11,6 +11,7 @@ class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
 
   def __init__(self, values: dict = None):
     if values:
+      self.hasUnknownProperties: bool = True
       for item in values.items():
         setattr(self, str(item[0]), item[1])
 

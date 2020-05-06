@@ -152,16 +152,16 @@ class StashApi(object):
       self,
       project: str,
       repo: str,
-      direction: str = 'INCOMING',
-      at: str = None,
       state: str = 'OPEN',
-      order: str = None,
       author: str = None,
+      order: str = None,
+      target_branch: str = None,
+      direction: str = 'INCOMING',
   ) -> List[PullRequestStatus]:
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
     return [PullRequestStatus(pr) for pr in prs.all(
       direction=direction,
-      at=at,
+      at=target_branch,
       state=state,
       order=order,
       author=author,
