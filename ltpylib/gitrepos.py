@@ -29,12 +29,12 @@ def print_repos(git_repos: List[Path]):
 
 
 def find_git_repos(
-    base_dir: Path,
-    max_depth: int = -1,
-    recursion_include_patterns: Sequence[str] = None,
-    recursion_exclude_patterns: Sequence[str] = None,
-    recursion_includes: Sequence[str] = None,
-    recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES
+  base_dir: Path,
+  max_depth: int = -1,
+  recursion_include_patterns: Sequence[str] = None,
+  recursion_exclude_patterns: Sequence[str] = None,
+  recursion_includes: Sequence[str] = None,
+  recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES
 ) -> List[Path]:
   dotgit_dirs = files.find_children(
     base_dir,
@@ -51,14 +51,14 @@ def find_git_repos(
 
 
 def add_git_dirs(
-    git_repos: List[Path],
-    add_dir: List[Path],
-    exclude_patterns: List[str] = None,
-    max_depth: int = -1,
-    recursion_include_patterns: Sequence[str] = None,
-    recursion_exclude_patterns: Sequence[str] = None,
-    recursion_includes: Sequence[str] = None,
-    recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES
+  git_repos: List[Path],
+  add_dir: List[Path],
+  exclude_patterns: List[str] = None,
+  max_depth: int = -1,
+  recursion_include_patterns: Sequence[str] = None,
+  recursion_exclude_patterns: Sequence[str] = None,
+  recursion_includes: Sequence[str] = None,
+  recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES
 ) -> List[Path]:
   for git_dir in add_dir:
     if not git_dir.is_dir():

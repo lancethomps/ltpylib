@@ -193,10 +193,10 @@ def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Option
 
 
 def parse_args_with_positionals_and_init_others(
-    arg_parser: argparse.ArgumentParser,
-    positionals_key: str = None,
-    argv: Optional[Sequence[str]] = None,
-    positionals_type: Callable = None,
+  arg_parser: argparse.ArgumentParser,
+  positionals_key: str = None,
+  argv: Optional[Sequence[str]] = None,
+  positionals_type: Callable = None,
 ) -> argparse.Namespace:
   import argcomplete
   import functools

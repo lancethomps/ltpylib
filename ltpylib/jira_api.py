@@ -35,18 +35,18 @@ class JiraApi(object):
     return self.get_session().get(self.api.client_info() + JIRA_API_EPICS + "?rapidViewId=" + str(board_id)).json()
 
   def issue(
-      self,
-      id: str,
-      fields: List[str] = None,
-      expand: List[str] = None,
-      # parse response config
-      no_convert: bool = False,
-      convert_single_value_arrays: bool = False,
-      create_new_result: bool = False,
-      skip_fields: List[str] = EMPTY_LIST,
-      dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
-      join_array_fields: List[str] = EMPTY_LIST,
-      date_fields: List[str] = EMPTY_LIST
+    self,
+    id: str,
+    fields: List[str] = None,
+    expand: List[str] = None,
+    # parse response config
+    no_convert: bool = False,
+    convert_single_value_arrays: bool = False,
+    create_new_result: bool = False,
+    skip_fields: List[str] = EMPTY_LIST,
+    dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
+    join_array_fields: List[str] = EMPTY_LIST,
+    date_fields: List[str] = EMPTY_LIST
   ) -> Issue:
     return Issue(
       values=JiraApi.parse_api_response_with_names(
@@ -66,22 +66,22 @@ class JiraApi(object):
     )
 
   def search_issues(
-      self,
-      jql: str,
-      start_at: int = 0,
-      max_results: int = 50,
-      validate_query: bool = True,
-      fields: List[str] = None,
-      expand: List[str] = None,
-      json_result: bool = True,
-      # parse response config
-      no_convert: bool = False,
-      convert_single_value_arrays: bool = False,
-      create_new_result: bool = False,
-      skip_fields: List[str] = EMPTY_LIST,
-      dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
-      join_array_fields: List[str] = EMPTY_LIST,
-      date_fields: List[str] = EMPTY_LIST
+    self,
+    jql: str,
+    start_at: int = 0,
+    max_results: int = 50,
+    validate_query: bool = True,
+    fields: List[str] = None,
+    expand: List[str] = None,
+    json_result: bool = True,
+    # parse response config
+    no_convert: bool = False,
+    convert_single_value_arrays: bool = False,
+    create_new_result: bool = False,
+    skip_fields: List[str] = EMPTY_LIST,
+    dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
+    join_array_fields: List[str] = EMPTY_LIST,
+    date_fields: List[str] = EMPTY_LIST
   ) -> IssueSearchResult:
     return IssueSearchResult(
       values=JiraApi.parse_api_response_with_names(
@@ -135,17 +135,17 @@ class JiraApi(object):
 
   @staticmethod
   def parse_api_response_with_names(
-      result: dict,
-      convert_values_field: str = None,
-      names_field: str = "names",
-      fields_field: str = "fields",
-      no_convert: bool = False,
-      convert_single_value_arrays: bool = False,
-      create_new_result: bool = False,
-      skip_fields: List[str] = EMPTY_LIST,
-      dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
-      join_array_fields: List[str] = EMPTY_LIST,
-      date_fields: List[str] = EMPTY_LIST
+    result: dict,
+    convert_values_field: str = None,
+    names_field: str = "names",
+    fields_field: str = "fields",
+    no_convert: bool = False,
+    convert_single_value_arrays: bool = False,
+    create_new_result: bool = False,
+    skip_fields: List[str] = EMPTY_LIST,
+    dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
+    join_array_fields: List[str] = EMPTY_LIST,
+    date_fields: List[str] = EMPTY_LIST
   ) -> dict:
     if not convert_values_field:
       convert_values: List[Dict] = [result]

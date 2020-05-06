@@ -6,11 +6,11 @@ from typing import Callable, List, Match, Union
 
 
 def replace_matches(
-    content: str,
-    search_string: str,
-    replacement: Union[str, Callable[[Match], str]],
-    quote_replacement: Union[bool, str] = False,
-    flags: Union[int, re.RegexFlag] = 0,
+  content: str,
+  search_string: str,
+  replacement: Union[str, Callable[[Match], str]],
+  quote_replacement: Union[bool, str] = False,
+  flags: Union[int, re.RegexFlag] = 0,
 ) -> str:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
@@ -22,10 +22,10 @@ def replace_matches(
 
 
 def pull_matches_from_file(
-    file: Union[str, Path],
-    search_string: str,
-    group: int = 0,
-    flags: Union[int, re.RegexFlag] = 0,
+  file: Union[str, Path],
+  search_string: str,
+  group: int = 0,
+  flags: Union[int, re.RegexFlag] = 0,
 ) -> List[str]:
   from ltpylib import files
 

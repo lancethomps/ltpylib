@@ -10,12 +10,12 @@ from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple,
 
 # NB: replacement matching groups should be in the \1 format instead of $1
 def replace_matches_in_file(
-    file: Union[str, Path],
-    search_string: str,
-    replacement: Union[str, Callable[[Match], str]],
-    quote_replacement: Union[bool, str] = False,
-    force_replace: bool = False,
-    flags: Union[int, re.RegexFlag] = 0
+  file: Union[str, Path],
+  search_string: str,
+  replacement: Union[str, Callable[[Match], str]],
+  quote_replacement: Union[bool, str] = False,
+  force_replace: bool = False,
+  flags: Union[int, re.RegexFlag] = 0
 ) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
@@ -139,20 +139,20 @@ def filter_files_with_matching_line(files: List[Union[str, Path]], regexes: List
 
 
 def find_children(
-    base_dir: Union[Path, str],
-    break_after_match: bool = False,
-    max_depth: int = -1,
-    include_dirs: bool = True,
-    include_files: bool = True,
-    match_absolute_path: bool = False,
-    include_patterns: Sequence[str] = None,
-    exclude_patterns: Sequence[str] = None,
-    includes: Sequence[str] = None,
-    excludes: Sequence[str] = None,
-    recursion_include_patterns: Sequence[str] = None,
-    recursion_exclude_patterns: Sequence[str] = None,
-    recursion_includes: Sequence[str] = None,
-    recursion_excludes: Sequence[str] = None
+  base_dir: Union[Path, str],
+  break_after_match: bool = False,
+  max_depth: int = -1,
+  include_dirs: bool = True,
+  include_files: bool = True,
+  match_absolute_path: bool = False,
+  include_patterns: Sequence[str] = None,
+  exclude_patterns: Sequence[str] = None,
+  includes: Sequence[str] = None,
+  excludes: Sequence[str] = None,
+  recursion_include_patterns: Sequence[str] = None,
+  recursion_exclude_patterns: Sequence[str] = None,
+  recursion_includes: Sequence[str] = None,
+  recursion_excludes: Sequence[str] = None
 ) -> List[Path]:
   if isinstance(base_dir, str):
     top = str(base_dir)
@@ -181,22 +181,22 @@ def find_children(
 
 
 def _find_children(
-    top: str,
-    found_dirs: List[Path],
-    current_depth: int,
-    break_after_match: bool,
-    max_depth: int,
-    include_dirs: bool,
-    include_files: bool,
-    match_absolute_path: bool,
-    include_patterns: Sequence[str],
-    exclude_patterns: Sequence[str],
-    includes: Sequence[str],
-    excludes: Sequence[str],
-    recursion_include_patterns: Sequence[str],
-    recursion_exclude_patterns: Sequence[str],
-    recursion_includes: Sequence[str],
-    recursion_excludes: Sequence[str]
+  top: str,
+  found_dirs: List[Path],
+  current_depth: int,
+  break_after_match: bool,
+  max_depth: int,
+  include_dirs: bool,
+  include_files: bool,
+  match_absolute_path: bool,
+  include_patterns: Sequence[str],
+  exclude_patterns: Sequence[str],
+  includes: Sequence[str],
+  excludes: Sequence[str],
+  recursion_include_patterns: Sequence[str],
+  recursion_exclude_patterns: Sequence[str],
+  recursion_includes: Sequence[str],
+  recursion_excludes: Sequence[str]
 ) -> Tuple[bool, List[Path]]:
   from ltpylib import filters
 

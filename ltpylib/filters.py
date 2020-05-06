@@ -7,12 +7,12 @@ from typing import Sequence, Union
 
 
 def should_include(
-    test_value: Union[str, Path],
-    include_patterns: Sequence[str] = None,
-    exclude_patterns: Sequence[str] = None,
-    includes: Sequence[str] = None,
-    excludes: Sequence[str] = None,
-    verbose: bool = False
+  test_value: Union[str, Path],
+  include_patterns: Sequence[str] = None,
+  exclude_patterns: Sequence[str] = None,
+  includes: Sequence[str] = None,
+  excludes: Sequence[str] = None,
+  verbose: bool = False
 ) -> bool:
   return not should_skip(
     test_value,
@@ -25,12 +25,12 @@ def should_include(
 
 
 def should_skip(
-    test_value: Union[str, Path],
-    include_patterns: Sequence[str] = None,
-    exclude_patterns: Sequence[str] = None,
-    includes: Sequence[str] = None,
-    excludes: Sequence[str] = None,
-    verbose: bool = False
+  test_value: Union[str, Path],
+  include_patterns: Sequence[str] = None,
+  exclude_patterns: Sequence[str] = None,
+  includes: Sequence[str] = None,
+  excludes: Sequence[str] = None,
+  verbose: bool = False
 ) -> bool:
   if not include_patterns and not exclude_patterns and not includes and not excludes:
     return False
@@ -73,10 +73,10 @@ def should_skip(
 
 
 def should_skip_from_cmds(
-    test_value: Union[str, Path],
-    include_commands: Sequence[str] = None,
-    exclude_commands: Sequence[str] = None,
-    verbose: bool = False,
+  test_value: Union[str, Path],
+  include_commands: Sequence[str] = None,
+  exclude_commands: Sequence[str] = None,
+  verbose: bool = False,
 ) -> bool:
   from ltpylib import procs
 

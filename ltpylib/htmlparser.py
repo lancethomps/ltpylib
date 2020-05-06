@@ -18,12 +18,12 @@ def extract_text_from_html(html: str, selector: str) -> Union[str, None]:
 
 
 def parse_table(
-    html: str,
-    table_selector: str,
-    header_replacements: Dict[str, str] = None,
-    header_converters: List[StrConverter] = None,
-    val_converters: List[StrConverter] = None,
-    row_data_predicate: Callable[[dict], bool] = None
+  html: str,
+  table_selector: str,
+  header_replacements: Dict[str, str] = None,
+  header_converters: List[StrConverter] = None,
+  val_converters: List[StrConverter] = None,
+  row_data_predicate: Callable[[dict], bool] = None
 ) -> List[dict]:
   soup = BeautifulSoup(html, 'html5lib')
   table: BeautifulSoup = soup.select_one(table_selector)
