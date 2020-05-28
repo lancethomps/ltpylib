@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import stashy
 from requests import Response
@@ -15,8 +15,11 @@ from ltpylib.stash_types import (
   PullRequestActivities,
   PullRequestMergeability,
   PullRequestMergeStatus,
+  PullRequestParticipantStatus,
+  PullRequestRole,
   PullRequestState,
   PullRequestStatus,
+  PullRequestStatuses,
   Repository,
   SearchResults,
 )
@@ -42,14 +45,14 @@ class StashApi(object):
     return result
 
   def create_pull_request(
-      self,
-      project: str,
-      repo: str,
-      from_ref: str,
-      to_ref: str,
-      title: str,
-      description: str,
-      reviewers: List[str],
+    self,
+    project: str,
+    repo: str,
+    from_ref: str,
+    to_ref: str,
+    title: str,
+    description: str,
+    reviewers: List[str],
   ) -> PullRequestStatus:
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
     response: dict = prs.create(
@@ -63,10 +66,10 @@ class StashApi(object):
     return PullRequestStatus(response)
 
   def delete_pull_request_source_branch(
-      self,
-      project: str,
-      repo: str,
-      pr_id: int,
+    self,
+    project: str,
+    repo: str,
+    pr_id: int,
   ) -> Response:
     api_url = '%s/rest/pull-request-cleanup/latest/projects/%s/repos/%s/pull-requests/%s' % (
       self.stash._client._base_url,
@@ -86,13 +89,13 @@ class StashApi(object):
     return response
 
   def merge_pull_request(
-      self,
-      project: str,
-      repo: str,
-      pr_id: int,
-      delete_source_branch: bool = True,
-      commit_message: str = "",
-      version: int = None,
+    self,
+    project: str,
+    repo: str,
+    pr_id: int,
+    delete_source_branch: bool = True,
+    commit_message: str = "",
+    version: int = None,
   ) -> PullRequestMergeStatus:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     if version is None:
@@ -108,13 +111,58 @@ class StashApi(object):
 
     return result
 
+  def my_pull_requests(
+    self,
+    state: PullRequestState = PullRequestState.OPEN,
+    role: PullRequestRole = None,
+    participant_status: PullRequestParticipantStatus = None,
+    start: int = 0,
+    limit: int = 100,
+    with_attributes: bool = True,
+    order: str = None,
+  ) -> PullRequestStatuses:
+
+    if isinstance(role, str):
+      role = PullRequestRole.from_string(role)
+
+    if isinstance(state, str):
+      state = PullRequestState.from_string(state)
+
+    if isinstance(participant_status, str):
+      participant_status = PullRequestParticipantStatus.from_string(participant_status)
+
+    api_params = {
+      "start": str(start),
+      "limit": str(limit),
+      "withAttributes": str(with_attributes).lower(),
+    }
+
+    if state is not None:
+      api_params["state"] = state.name
+
+    if role is not None:
+      api_params["role"] = role.name
+
+    if participant_status is not None:
+      api_params["participantStatus"] = participant_status.name
+
+    if order is not None:
+      api_params["order"] = order
+
+    api_url = '%s/rest/api/latest/dashboard/pull-requests?%s' % (
+      self.stash._client._base_url,
+      "&".join((k + "=" + v) for (k, v) in api_params.items()),
+    )
+    kw = requests_helper.add_json_headers()
+    return PullRequestStatuses(values=requests_helper.parse_raw_response(self.stash._client._session.get(api_url, **kw)))
+
   def pull_request(
-      self,
-      project: str,
-      repo: str,
-      pr_id: int,
-      include_merge_info: bool = True,
-      include_builds: bool = False,
+    self,
+    project: str,
+    repo: str,
+    pr_id: int,
+    include_merge_info: bool = True,
+    include_builds: bool = False,
   ) -> PullRequestStatus:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     result: PullRequestStatus = PullRequestStatus(pr.get())
@@ -129,10 +177,10 @@ class StashApi(object):
     return result
 
   def pull_request_activities(
-      self,
-      project: str,
-      repo: str,
-      pr_id: int,
+    self,
+    project: str,
+    repo: str,
+    pr_id: int,
   ) -> PullRequestActivities:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     result: PullRequestActivities = PullRequestActivities(requests_helper.parse_raw_response(pr._client.get(pr.url() + "/activities")))
@@ -140,29 +188,33 @@ class StashApi(object):
     return result
 
   def pull_request_merge_info(
-      self,
-      project: str,
-      repo: str,
-      pr_id: int,
+    self,
+    project: str,
+    repo: str,
+    pr_id: int,
   ) -> PullRequestMergeability:
     pr: PullRequest = self.stash.projects[project].repos[repo].pull_requests[str(pr_id)]
     return PullRequestMergeability(pr.merge_info())
 
   def pull_requests(
-      self,
-      project: str,
-      repo: str,
-      direction: str = 'INCOMING',
-      at: str = None,
-      state: str = 'OPEN',
-      order: str = None,
-      author: str = None,
+    self,
+    project: str,
+    repo: str,
+    state: Union[PullRequestState, str] = PullRequestState.OPEN,
+    author: str = None,
+    order: str = None,
+    target_branch: str = None,
+    direction: str = 'INCOMING',
   ) -> List[PullRequestStatus]:
+
+    if isinstance(state, str):
+      state = PullRequestState.from_string(state, allow_unknown=False)
+
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
     return [PullRequestStatus(pr) for pr in prs.all(
       direction=direction,
-      at=at,
-      state=state,
+      at=target_branch,
+      state=(state.name if state else None),
       order=order,
       author=author,
     )]

@@ -2,7 +2,23 @@
 # pylint: disable=C0111
 from typing import List
 
-from ltpylib import checks
+from ltpylib import checks, strings
+
+
+def convert_string_values_to_correct_type(
+  obj: dict,
+  convert_numbers: bool = True,
+  convert_booleans: bool = True,
+) -> dict:
+  for key in obj.keys():
+    val = obj.get(key)
+    if isinstance(val, str):
+      if convert_numbers and strings.is_number(val):
+        obj[key] = strings.convert_to_number(val)
+      elif convert_booleans and strings.is_boolean(val):
+        obj[key] = strings.convert_to_bool(val)
+
+  return obj
 
 
 def find(key: str, obj: dict) -> List[dict]:

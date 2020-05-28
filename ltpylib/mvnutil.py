@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import subprocess
 from pathlib import Path
 from typing import List, Tuple, Union
 
@@ -112,7 +113,7 @@ def run_mvn_expression(pom: Union[str, Path], expression: str) -> str:
   return mvn_out
 
 
-def update_dep_version(pom: Union[str, Path], dep: str, version: str, additional_arguments: List[str] = None, check: bool = False) -> Tuple[int, str]:
+def update_dep_version(pom: Union[str, Path], dep: str, version: str, additional_arguments: List[str] = None, check: bool = False) -> subprocess.CompletedProcess:
   if isinstance(pom, str):
     pom = Path(pom)
 
@@ -132,7 +133,7 @@ def update_dep_version(pom: Union[str, Path], dep: str, version: str, additional
   if additional_arguments:
     mvn_command.extend(additional_arguments)
 
-  return procs.run_and_parse_output(mvn_command, check=check)
+  return procs.run(mvn_command, check=check)
 
 
 def update_project_version(pom: Union[str, Path], version: str, additional_arguments: List[str] = None, check: bool = False) -> Tuple[int, str]:

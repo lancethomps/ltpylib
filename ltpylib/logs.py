@@ -6,8 +6,9 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Union
 
-DEFAULT_LOG_LEVEL = 'INFO'
+DEFAULT_LOG_LEVEL = logging.INFO
 DEFAULT_LOG_FORMAT = '{message}'
 DEFAULT_LOG_STYLE = '{'
 LOG_FORMAT_WITH_LEVEL = '{levelname:<8} {message}'
@@ -27,7 +28,13 @@ class StdoutStreamHandler(logging.StreamHandler):
     super().handleError(record)
 
 
-def init_logging(verbose: bool = None, log_level: str = None, log_format: str = None, args: argparse.Namespace = None):
+def init_logging(
+  verbose: bool = None,
+  quiet: bool = None,
+  log_level: Union[str, int] = None,
+  log_format: str = None,
+  args: argparse.Namespace = None,
+):
   if args:
     if verbose is None and 'verbose' in args:
       verbose = args.verbose
@@ -35,9 +42,13 @@ def init_logging(verbose: bool = None, log_level: str = None, log_format: str = 
       log_level = args.log_level
     if log_format is None and 'log_format' in args:
       log_format = args.log_format
+    if quiet is None and 'quiet' in args:
+      quiet = args.quiet
 
   if verbose:
-    log_level = 'DEBUG'
+    log_level = logging.DEBUG
+  elif quiet:
+    log_level = logging.WARNING
   elif log_level is not None:
     log_level = log_level
   elif os.environ.get('log_level') is not None:

@@ -18,12 +18,12 @@ def extract_text_from_html(html: str, selector: str) -> Union[str, None]:
 
 
 def parse_table(
-    html: str,
-    table_selector: str,
-    header_replacements: Dict[str, str] = None,
-    header_converters: List[StrConverter] = None,
-    val_converters: List[StrConverter] = None,
-    row_data_predicate: Callable[[dict], bool] = None
+  html: str,
+  table_selector: str,
+  header_replacements: Dict[str, str] = None,
+  header_converters: List[StrConverter] = None,
+  val_converters: List[StrConverter] = None,
+  row_data_predicate: Callable[[dict], bool] = None
 ) -> List[dict]:
   soup = BeautifulSoup(html, 'html5lib')
   table: BeautifulSoup = soup.select_one(table_selector)
@@ -46,7 +46,7 @@ def parse_table(
         if not header:
           continue
 
-        val: str = data.get_text()
+        val: str = data.get_text().strip()
         if val_converters:
           for val_converter in val_converters:
             val = val_converter(val)
@@ -85,7 +85,7 @@ def _parse_header_row(header_row: BeautifulSoup, header_replacements: Dict[str, 
 
   table_headers = {}
   for idx, header_elem in enumerate(header_cols):
-    header = header_elem.get_text()
+    header = header_elem.get_text().strip()
     if header_replacements:
       header = header_replacements.get(header)
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import os
-from typing import List, Optional, Sequence
+from pathlib import Path
+from typing import Callable, List, Optional, Sequence
+
+from ltpylib.opts_actions import APPEND, STORE_TRUE
 
 TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
 DEFAULT_POSITIONALS_KEY = 'command'
@@ -35,10 +38,44 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
       super().add_arguments(actions)
 
 
+class ActionValidatePath(argparse.Action):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+    super(ActionValidatePath, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, values: List[Path], option_string=None):
+    setattr(namespace, self.dest, values)
+
+    if values:
+      for item in values:
+        if not item.exists():
+          raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
+
+
+class ActionValidatePathAppend(argparse._AppendAction):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+    super(ActionValidatePathAppend, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, values, option_string=None):
+    super(ActionValidatePathAppend, self).__call__(parser, namespace, values, option_string=option_string)
+
+    items: List[List[Path]] = getattr(namespace, self.dest, None)
+    if items and items[0]:
+      for item in items[0]:
+        if not item.exists():
+          raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
+
+
 class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
     self._args: argparse.Namespace = args
+    self.debug: bool = args.dry_run
     self.dry_run: bool = args.dry_run
     self.verbose: bool = args.verbose
 
@@ -60,8 +97,8 @@ class ColorArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-color', action='store_true')
-    arg_parser.add_argument('--use-color', action='store_true')
+    arg_parser.add_argument('--no-color', action=STORE_TRUE)
+    arg_parser.add_argument('--use-color', action=STORE_TRUE)
     return arg_parser
 
 
@@ -73,8 +110,8 @@ class IncludeExcludeCmdArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-cmd', action='append')
-    arg_parser.add_argument('--include-cmd', action='append')
+    arg_parser.add_argument('--exclude-cmd', action=APPEND)
+    arg_parser.add_argument('--include-cmd', action=APPEND)
     return arg_parser
 
 
@@ -86,8 +123,23 @@ class IncludeExcludeRegexArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-regex', action='append')
-    arg_parser.add_argument('--include-regex', action='append')
+    arg_parser.add_argument('--exclude-regex', action=APPEND)
+    arg_parser.add_argument('--include-regex', action=APPEND)
+    return arg_parser
+
+
+class LoggingArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.log_format: str = args.log_format
+    self.log_level: str = args.log_level
+    self.quiet: bool = args.quiet
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--log-format")
+    arg_parser.add_argument("--log-level")
+    arg_parser.add_argument("--quiet", action=STORE_TRUE)
     return arg_parser
 
 
@@ -109,15 +161,15 @@ class PagerArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-pager', action='store_true')
+    arg_parser.add_argument('--no-pager', action=STORE_TRUE)
     arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
-    arg_parser.add_argument('--use-pager', action='store_true')
+    arg_parser.add_argument('--use-pager', action=STORE_TRUE)
     return arg_parser
 
 
 def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  arg_parser.add_argument('-v', '--verbose', action='store_true')
-  arg_parser.add_argument('--dry-run', "--debug", action='store_true')
+  arg_parser.add_argument('-v', '--verbose', action=STORE_TRUE)
+  arg_parser.add_argument('--dry-run', "--debug", action=STORE_TRUE)
   return arg_parser
 
 
@@ -158,15 +210,31 @@ def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Option
 
 
 def parse_args_with_positionals_and_init_others(
-    arg_parser: argparse.ArgumentParser,
-    positionals_key: str = DEFAULT_POSITIONALS_KEY,
-    argv: Optional[Sequence[str]] = None,
+  arg_parser: argparse.ArgumentParser,
+  positionals_key: str = None,
+  argv: Optional[Sequence[str]] = None,
+  positionals_type: Callable = None,
 ) -> argparse.Namespace:
   import argcomplete
+  import functools
   from ltpylib.logs import init_logging
 
   argcomplete.autocomplete(arg_parser)
   args, positionals = arg_parser.parse_known_intermixed_args(args=argv)
+
+  if positionals_key is None:
+    if isinstance(arg_parser.formatter_class, PositionalsHelpFormatter):
+      help_formatter: PositionalsHelpFormatter = arg_parser.formatter_class
+      positionals_key = help_formatter.positionals_key
+    elif isinstance(arg_parser.formatter_class, functools.partial):
+      help_formatter: functools.partial = arg_parser.formatter_class
+      positionals_key = help_formatter.keywords.get("positionals_key")
+    else:
+      positionals_key = DEFAULT_POSITIONALS_KEY
+
+  if positionals_type is not None:
+    positionals = [positionals_type(arg) for arg in positionals]
+
   args.__setattr__(positionals_key, positionals)
   init_logging(args=args)
   return args

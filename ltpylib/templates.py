@@ -15,12 +15,12 @@ DEFAULT_TEMPLATE_FILES_GLOBS: Sequence[str] = ('**/*.template.*',)
 
 
 def replace_templates_in_files(
-    candidate_files_dir: Path,
-    template_dir: Path,
-    candidate_files_globs: List[str] = DEFAULT_CANDIDATE_FILES_GLOBS,
-    template_files_globs: List[str] = DEFAULT_TEMPLATE_FILES_GLOBS,
-    debug_mode: bool = False,
-    force_replace: bool = False
+  candidate_files_dir: Path,
+  template_dir: Path,
+  candidate_files_globs: List[str] = DEFAULT_CANDIDATE_FILES_GLOBS,
+  template_files_globs: List[str] = DEFAULT_TEMPLATE_FILES_GLOBS,
+  debug_mode: bool = False,
+  force_replace: bool = False
 ) -> bool:
   candidate_files: List[Path] = files.filter_files_with_matching_line(
     files.list_files(candidate_files_dir, candidate_files_globs),
