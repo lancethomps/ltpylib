@@ -84,13 +84,28 @@ def _parse_header_row(header_row: BeautifulSoup, header_replacements: Dict[str, 
     return None
 
   table_headers = {}
+  found_headers = []
   for idx, header_elem in enumerate(header_cols):
     header = header_elem.get_text().strip()
-    if header_replacements:
-      header = header_replacements.get(header)
 
     if not header:
       continue
+
+    if header in found_headers:
+      header_vers = 2
+      new_header = header + str(header_vers)
+      while new_header in found_headers:
+        header_vers += 1
+        new_header = header + str(header_vers)
+        if header_vers >= 100:
+          raise Exception("Too many duplicate headers: header=%s new_header=%s header_vers=%s" % (header, new_header, header_vers))
+
+      header = new_header
+
+    found_headers.append(header)
+
+    if header_replacements:
+      header = header_replacements.get(header)
 
     if header_converters:
       for header_converter in header_converters:
