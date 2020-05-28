@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import stashy
 from requests import Response
@@ -15,6 +15,7 @@ from ltpylib.stash_types import (
   PullRequestActivities,
   PullRequestMergeability,
   PullRequestMergeStatus,
+  PullRequestParticipantStatus,
   PullRequestRole,
   PullRequestState,
   PullRequestStatus,
@@ -112,31 +113,43 @@ class StashApi(object):
 
   def my_pull_requests(
     self,
-    role: PullRequestRole = PullRequestRole.AUTHOR,
     state: PullRequestState = PullRequestState.OPEN,
+    role: PullRequestRole = None,
+    participant_status: PullRequestParticipantStatus = None,
     start: int = 0,
     limit: int = 100,
     with_attributes: bool = True,
     order: str = None,
   ) -> PullRequestStatuses:
+
     if isinstance(role, str):
       role = PullRequestRole.from_string(role)
 
     if isinstance(state, str):
       state = PullRequestState.from_string(state)
 
+    if isinstance(participant_status, str):
+      participant_status = PullRequestParticipantStatus.from_string(participant_status)
+
     api_params = {
       "start": str(start),
       "limit": str(limit),
-      "role": role.name,
-      "state": state.name,
       "withAttributes": str(with_attributes).lower(),
     }
+
+    if state is not None:
+      api_params["state"] = state.name
+
+    if role is not None:
+      api_params["role"] = role.name
+
+    if participant_status is not None:
+      api_params["participantStatus"] = participant_status.name
 
     if order is not None:
       api_params["order"] = order
 
-    api_url = '%s/rest/api/latest/inbox/pull-requests?%s' % (
+    api_url = '%s/rest/api/latest/dashboard/pull-requests?%s' % (
       self.stash._client._base_url,
       "&".join((k + "=" + v) for (k, v) in api_params.items()),
     )
@@ -187,17 +200,21 @@ class StashApi(object):
     self,
     project: str,
     repo: str,
-    state: str = 'OPEN',
+    state: Union[PullRequestState, str] = PullRequestState.OPEN,
     author: str = None,
     order: str = None,
     target_branch: str = None,
     direction: str = 'INCOMING',
   ) -> List[PullRequestStatus]:
+
+    if isinstance(state, str):
+      state = PullRequestState.from_string(state, allow_unknown=False)
+
     prs: PullRequests = self.stash.projects[project].repos[repo].pull_requests
     return [PullRequestStatus(pr) for pr in prs.all(
       direction=direction,
       at=target_branch,
-      state=state,
+      state=(state.name if state else None),
       order=order,
       author=author,
     )]

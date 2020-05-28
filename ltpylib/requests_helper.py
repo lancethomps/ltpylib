@@ -60,7 +60,7 @@ def add_json_headers(kw: dict = None) -> dict:
   return kw
 
 
-def maybe_throw(response: Response):
+def maybe_throw(response: Response) -> Response:
   if not response.ok:
     if response.status_code == 404:
       raise NotFoundException(response)
@@ -74,8 +74,10 @@ def maybe_throw(response: Response):
         e.content = response.content
       raise e
 
+  return response
 
-def parse_raw_response(response: Response) -> Union[dict, list]:
+
+def parse_raw_response(response: Response) -> Union[dict, list, str]:
   maybe_throw(response)
   try:
     return response.json()

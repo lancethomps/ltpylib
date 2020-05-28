@@ -2,7 +2,7 @@
 import logging
 import subprocess
 import sys
-from typing import Sequence
+from typing import List, Sequence
 
 from ltpylib import procs
 
@@ -47,7 +47,14 @@ def ask_for_input(prompt: str = 'Please input value.') -> str:
   return input(prompt + '\n> ')
 
 
-def select_prompt(choices: Sequence[str], header: str = None, no_sort: bool = True, layout: str = "reverse") -> str:
+def create_fzf_select_prompt_command(
+  header: str = None,
+  no_sort: bool = True,
+  layout: str = "reverse",
+  multi: bool = False,
+  ansi: bool = False,
+) -> List[str]:
+
   command = [
     'fzf',
     '--layout',
@@ -59,6 +66,32 @@ def select_prompt(choices: Sequence[str], header: str = None, no_sort: bool = Tr
 
   if no_sort:
     command.append('--no-sort')
+
+  if multi:
+    command.append('--multi')
+
+  if ansi:
+    command.append('--ansi')
+
+  return command
+
+
+def select_prompt(
+  choices: Sequence[str],
+  header: str = None,
+  no_sort: bool = True,
+  layout: str = "reverse",
+  multi: bool = False,
+  ansi: bool = False,
+) -> str:
+
+  command = create_fzf_select_prompt_command(
+    header=header,
+    no_sort=no_sort,
+    layout=layout,
+    multi=multi,
+    ansi=ansi,
+  )
 
   result: subprocess.CompletedProcess = procs.run(
     command,
@@ -74,7 +107,12 @@ def select_prompt(choices: Sequence[str], header: str = None, no_sort: bool = Tr
   return result.stdout.strip()
 
 
-def select_prompt_old(choices: Sequence[str], message: str = None, bottom_message: str = None, max_width: int = None) -> str:
+def select_prompt_old(
+  choices: Sequence[str],
+  message: str = None,
+  bottom_message: str = None,
+  max_width: int = None,
+) -> str:
   command = ['select_prompt']
 
   if message:

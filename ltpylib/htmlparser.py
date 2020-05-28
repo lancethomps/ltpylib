@@ -46,7 +46,7 @@ def parse_table(
         if not header:
           continue
 
-        val: str = data.get_text()
+        val: str = data.get_text().strip()
         if val_converters:
           for val_converter in val_converters:
             val = val_converter(val)
@@ -85,7 +85,7 @@ def _parse_header_row(header_row: BeautifulSoup, header_replacements: Dict[str, 
 
   table_headers = {}
   for idx, header_elem in enumerate(header_cols):
-    header = header_elem.get_text()
+    header = header_elem.get_text().strip()
     if header_replacements:
       header = header_replacements.get(header)
 

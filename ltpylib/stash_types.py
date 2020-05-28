@@ -26,8 +26,25 @@ class PaginatedValues(object):
     self.start: int = values.pop("start", None)
 
 
+class PullRequestParticipantStatus(EnumAutoName):
+  APPROVED = auto()
+  NEEDS_WORK = auto()
+  UNAPPROVED = auto()
+
+  @staticmethod
+  def from_string(val: str, allow_unknown: bool = False):
+    try:
+      return PullRequestParticipantStatus[val.upper()] if val else None
+    except KeyError as e:
+      if allow_unknown:
+        return None
+
+      raise e
+
+
 class PullRequestRole(EnumAutoName):
   AUTHOR = auto()
+  PARTICIPANT = auto()
   REVIEWER = auto()
 
   @staticmethod
@@ -303,6 +320,7 @@ class PullRequestStatuses(DataWithUnknownProperties, PaginatedValues):
 
     PaginatedValues.__init__(self, values)
 
+    self.nextPageStart: int = values.pop("nextPageStart", None)
     self.values: List[PullRequestStatus] = list(map(PullRequestStatus, values.pop("values", []))) if "values" in values else None
 
     DataWithUnknownProperties.__init__(self, values)

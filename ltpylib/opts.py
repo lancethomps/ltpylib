@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
+from ltpylib.opts_actions import APPEND, STORE_TRUE
+
 TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
 DEFAULT_POSITIONALS_KEY = 'command'
 
@@ -95,8 +97,8 @@ class ColorArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-color', action='store_true')
-    arg_parser.add_argument('--use-color', action='store_true')
+    arg_parser.add_argument('--no-color', action=STORE_TRUE)
+    arg_parser.add_argument('--use-color', action=STORE_TRUE)
     return arg_parser
 
 
@@ -108,8 +110,8 @@ class IncludeExcludeCmdArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-cmd', action='append')
-    arg_parser.add_argument('--include-cmd', action='append')
+    arg_parser.add_argument('--exclude-cmd', action=APPEND)
+    arg_parser.add_argument('--include-cmd', action=APPEND)
     return arg_parser
 
 
@@ -121,8 +123,23 @@ class IncludeExcludeRegexArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-regex', action='append')
-    arg_parser.add_argument('--include-regex', action='append')
+    arg_parser.add_argument('--exclude-regex', action=APPEND)
+    arg_parser.add_argument('--include-regex', action=APPEND)
+    return arg_parser
+
+
+class LoggingArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.log_format: str = args.log_format
+    self.log_level: str = args.log_level
+    self.quiet: bool = args.quiet
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--log-format")
+    arg_parser.add_argument("--log-level")
+    arg_parser.add_argument("--quiet", action=STORE_TRUE)
     return arg_parser
 
 
@@ -144,15 +161,15 @@ class PagerArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-pager', action='store_true')
+    arg_parser.add_argument('--no-pager', action=STORE_TRUE)
     arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
-    arg_parser.add_argument('--use-pager', action='store_true')
+    arg_parser.add_argument('--use-pager', action=STORE_TRUE)
     return arg_parser
 
 
 def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  arg_parser.add_argument('-v', '--verbose', action='store_true')
-  arg_parser.add_argument('--dry-run', "--debug", action='store_true')
+  arg_parser.add_argument('-v', '--verbose', action=STORE_TRUE)
+  arg_parser.add_argument('--dry-run', "--debug", action=STORE_TRUE)
   return arg_parser
 
 

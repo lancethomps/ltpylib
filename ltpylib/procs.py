@@ -4,6 +4,31 @@ import sys
 from typing import Any, List, Optional, Tuple, Union
 
 
+class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
+
+  def __init__(self, returncode, cmd, output=None, stderr=None):
+    super(CalledProcessErrorWithOutput, self).__init__(returncode, cmd, output, stderr)
+
+  def __str__(self):
+    stdout_and_stderr = ""
+
+    if self.output:
+      stdout_and_stderr += "\n\nstdout\n---\n%s" % self.output
+
+    if self.stderr:
+      stdout_and_stderr += "\n\nstderr\n---\n%s" % self.stderr
+
+    if self.returncode and self.returncode < 0:
+      try:
+        import signal
+
+        return "Command '%s' died with %r.%s" % (self.cmd, signal.Signals(-self.returncode), stdout_and_stderr)
+      except ValueError:
+        return "Command '%s' died with unknown signal %d.%s" % (self.cmd, -self.returncode, stdout_and_stderr)
+    else:
+      return "Command '%s' returned non-zero exit status %d.%s" % (self.cmd, self.returncode, stdout_and_stderr)
+
+
 def run(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
   if 'stdout' not in kwargs:
@@ -11,7 +36,12 @@ def run(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[flo
   if 'stderr' not in kwargs:
     kwargs['stderr'] = subprocess.PIPE
 
-  return subprocess.run(*popenargs, input=input, timeout=timeout, check=check, **kwargs)
+  result = subprocess.run(*popenargs, input=input, timeout=timeout, check=False, **kwargs)
+
+  if check:
+    check_returncode_with_output(result)
+
+  return result
 
 
 def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
@@ -24,8 +54,17 @@ def run_and_parse_output(*popenargs, input: Union[bytes, str, None] = None, time
   if 'stderr' not in kwargs:
     kwargs['stderr'] = subprocess.PIPE
 
-  result = subprocess.run(*popenargs, input=input, timeout=timeout, check=check, **kwargs)
+  result = subprocess.run(*popenargs, input=input, timeout=timeout, check=False, **kwargs)
+
+  if check:
+    check_returncode_with_output(result)
+
   return result.returncode, result.stdout
+
+
+def check_returncode_with_output(result: subprocess.CompletedProcess):
+  if result.returncode:
+    raise CalledProcessErrorWithOutput(result.returncode, result.args, result.stdout, result.stderr)
 
 
 def get_procs_from_name(name_matcher: str) -> List[Tuple[int, str]]:
