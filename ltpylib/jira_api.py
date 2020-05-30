@@ -105,7 +105,12 @@ class JiraApi(object):
       )
     )
 
-  def issue_summaries(self, issues: List[str], markdown: bool = False) -> List[str]:
+  def issue_summaries(
+    self,
+    issues: List[str],
+    markdown: bool = False,
+    link: bool = False,
+  ) -> List[str]:
     summaries = []
 
     for issue in issues:
@@ -118,6 +123,8 @@ class JiraApi(object):
 
       if markdown:
         summary: str = "[%s](https://jira.wlth.fr/browse/%s) `%s`" % (result.key, result.key, result.summary)
+      elif link:
+        summary: str = "https://jira.wlth.fr/browse/%s %s" % (result.key, result.summary)
       else:
         summary: str = "%s %s" % (result.key, result.summary)
 
