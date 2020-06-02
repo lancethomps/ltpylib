@@ -7,8 +7,10 @@ import re
 from pathlib import Path
 from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple, Union
 
-
 # NB: replacement matching groups should be in the \1 format instead of $1
+from ltpylib import strings
+
+
 def replace_matches_in_file(
   file: Union[str, Path],
   search_string: str,
@@ -18,7 +20,13 @@ def replace_matches_in_file(
   flags: Union[int, re.RegexFlag] = 0
 ) -> bool:
   if isinstance(quote_replacement, str):
-    quote_replacement = quote_replacement.lower() in ['true', '1', 't', 'y', 'yes']
+    quote_replacement = strings.convert_to_bool(quote_replacement)
+
+  if isinstance(force_replace, str):
+    force_replace = strings.convert_to_bool(force_replace)
+
+  if isinstance(flags, str):
+    flags = strings.convert_to_number(flags)
 
   if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
@@ -30,6 +38,32 @@ def replace_matches_in_file(
     write_file(file, content_new)
     return True
   elif force_replace and re.search(search_string, content, flags=flags):
+    write_file(file, content_new)
+    return True
+
+  return False
+
+
+def replace_strings_in_file(
+  file: Union[str, Path],
+  search_string: str,
+  replacement: str,
+  count: int = -1,
+  force_replace: bool = False,
+) -> bool:
+  if isinstance(count, str):
+    count = strings.convert_to_number(count)
+
+  if isinstance(force_replace, str):
+    force_replace = strings.convert_to_bool(force_replace)
+
+  content: str = read_file(file)
+  content_new = content.replace(search_string, replacement, count)
+
+  if content != content_new:
+    write_file(file, content_new)
+    return True
+  elif force_replace and search_string in content:
     write_file(file, content_new)
     return True
 

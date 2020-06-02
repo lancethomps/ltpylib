@@ -71,6 +71,21 @@ class ActionValidatePathAppend(argparse._AppendAction):
           raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
 
 
+class ActionValidatePathSingle(argparse.Action):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+    super(ActionValidatePathSingle, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, value: Path, option_string=None):
+    setattr(namespace, self.dest, value)
+
+    if value is not None:
+      if not value.exists():
+        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
+
+
 class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
