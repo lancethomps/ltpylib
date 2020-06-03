@@ -182,6 +182,28 @@ class PagerArgs(object):
     return arg_parser
 
 
+class RegexCasingArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.ignore_case: bool = args.ignore_case
+    self.use_case: bool = args.use_case
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--ignore-case", "-i", action=STORE_TRUE)
+    arg_parser.add_argument("--use-case", action=STORE_TRUE)
+    return arg_parser
+
+  def should_ignore_case(self, regex_pattern: str) -> bool:
+    if self.use_case:
+      return False
+
+    if self.ignore_case:
+      return True
+
+    return regex_pattern is not None and regex_pattern.islower()
+
+
 def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
   arg_parser.add_argument('-v', '--verbose', action=STORE_TRUE)
   arg_parser.add_argument('--dry-run', "--debug", action=STORE_TRUE)
