@@ -71,6 +71,21 @@ class ActionValidatePathAppend(argparse._AppendAction):
           raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
 
 
+class ActionValidatePathSingle(argparse.Action):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+    super(ActionValidatePathSingle, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, value: Path, option_string=None):
+    setattr(namespace, self.dest, value)
+
+    if value is not None:
+      if not value.exists():
+        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
+
+
 class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
@@ -165,6 +180,28 @@ class PagerArgs(object):
     arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
     arg_parser.add_argument('--use-pager', action=STORE_TRUE)
     return arg_parser
+
+
+class RegexCasingArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.ignore_case: bool = args.ignore_case
+    self.use_case: bool = args.use_case
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--ignore-case", "-i", action=STORE_TRUE)
+    arg_parser.add_argument("--use-case", action=STORE_TRUE)
+    return arg_parser
+
+  def should_ignore_case(self, regex_pattern: str) -> bool:
+    if self.use_case:
+      return False
+
+    if self.ignore_case:
+      return True
+
+    return regex_pattern is not None and regex_pattern.islower()
 
 
 def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
