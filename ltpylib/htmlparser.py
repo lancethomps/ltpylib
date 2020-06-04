@@ -105,7 +105,7 @@ def _parse_header_row(header_row: BeautifulSoup, header_replacements: Dict[str, 
     found_headers.append(header)
 
     if header_replacements:
-      header = header_replacements.get(header)
+      header = header_replacements.get(header, header)
 
     if header_converters:
       for header_converter in header_converters:
