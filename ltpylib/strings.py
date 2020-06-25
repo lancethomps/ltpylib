@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import re
-from typing import Union
+from typing import List, Union
 
 BOOLEAN_STRINGS_FALSE = frozenset([
   "no",
@@ -66,6 +66,10 @@ def is_number(val: str) -> bool:
     return True
 
   return False
+
+
+def str_list_max_length(values: List[str]) -> int:
+  return len(max(values, key=len))
 
 
 def strip_color_codes(val: str) -> str:

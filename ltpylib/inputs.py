@@ -5,6 +5,7 @@ import sys
 from typing import List, Sequence
 
 from ltpylib import procs
+from ltpylib.strings import strip_color_codes
 
 
 def confirm(question: str = 'Continue?', default: str = None) -> bool:
@@ -54,7 +55,6 @@ def create_fzf_select_prompt_command(
   multi: bool = False,
   ansi: bool = False,
 ) -> List[str]:
-
   command = [
     'fzf',
     '--layout',
@@ -84,7 +84,6 @@ def select_prompt(
   multi: bool = False,
   ansi: bool = False,
 ) -> str:
-
   command = create_fzf_select_prompt_command(
     header=header,
     no_sort=no_sort,
@@ -105,6 +104,26 @@ def select_prompt(
 
   result.check_returncode()
   return result.stdout.strip()
+
+
+def select_prompt_and_return_indexes(
+  choices: Sequence[str],
+  header: str = None,
+  multi: bool = False,
+  ansi: bool = False,
+) -> List[int]:
+  selections = select_prompt(
+    choices,
+    header=header,
+    no_sort=True,
+    layout="reverse",
+    multi=multi,
+    ansi=ansi,
+  ).splitlines(keepends=False)
+
+  choices_without_colors = [strip_color_codes(choice) for choice in choices]
+
+  return [choices_without_colors.index(item) for item in selections]
 
 
 def select_prompt_old(

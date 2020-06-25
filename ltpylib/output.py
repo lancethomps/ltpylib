@@ -3,11 +3,11 @@ import json
 
 from typing import List
 
-from ltpylib import dicts
-
 
 def prettify_json(obj, remove_nulls: bool = False) -> str:
   if remove_nulls:
+    from ltpylib import dicts
+
     obj = json.loads(
       prettify_json(obj, remove_nulls=False),
       object_hook=dicts.remove_nulls_and_empty,
