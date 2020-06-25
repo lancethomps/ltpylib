@@ -276,10 +276,23 @@ class StashApi(object):
     merged_branches.values = []
 
     for branch in branches.values:
-      if branch.metadata is None or BRANCH_PR_META_KEY not in branch.metadata or "pullRequest" not in branch.metadata.get(BRANCH_PR_META_KEY):
+      if branch.metadata is None or BRANCH_PR_META_KEY not in branch.metadata:
         continue
 
       branch_pr_meta = branch.metadata.get(BRANCH_PR_META_KEY)
+
+      if "pullRequest" not in branch_pr_meta:
+        has_prs_with_state = False
+        for state in states:
+          if state.name.lower() in branch_pr_meta and branch_pr_meta.get(state.name.lower()) > 0:
+            has_prs_with_state = True
+            break
+
+        if has_prs_with_state:
+          merged_branches.values.append(branch)
+
+        continue
+
       pr_meta_raw: dict = branch_pr_meta.pop("pullRequest")
       pr_meta = PullRequestStatus(values=pr_meta_raw)
       branch_pr_meta["pullRequest"] = pr_meta
