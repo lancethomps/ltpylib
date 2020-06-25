@@ -6,7 +6,7 @@ import requests
 from requests import Session
 
 from ltpylib import requests_helper
-from ltpylib.jenkins_types import JenkinsBuild
+from ltpylib.jenkins_types import JenkinsBuild, JenkinsInstance
 
 JENKINS_JOB_URL_REGEX: str = r'^(https?):\/\/([^\/:]+)(:[0-9]+)?(?:\/)(?:job|blue\/organizations\/jenkins)\/(([^\/]+)(?:\/(?:job|detail)\/([^\/]+))?)\/([0-9]+)\/' \
                              r'(?:pipeline\/?|display\/redirect)?$'
@@ -38,6 +38,13 @@ class JenkinsApi(object):
   def build(self, job: str, build: int) -> JenkinsBuild:
     response = self.session.get(self.url("job/%s/%s/api/json?tree=*" % (job, str(build))))
     return JenkinsBuild(requests_helper.parse_raw_response(response))
+
+  def instance_info(self, tree: str = "*") -> JenkinsInstance:
+    response = self.session.get(self.url("api/json?tree=%s" % tree))
+    return JenkinsInstance(requests_helper.parse_raw_response(response))
+
+  def instance_info_all_jobs(self) -> JenkinsInstance:
+    return self.instance_info(tree="jobs[name,jobs[name]]")
 
 
 def parse_job_url(url: str) -> Tuple[str, int]:
