@@ -6,8 +6,8 @@ from typing import Callable, List, Optional, Sequence
 
 from ltpylib.opts_actions import APPEND, STORE_TRUE
 
-TRUE_VALUES = ['true', '1', 't', 'yes', 'y']
-DEFAULT_POSITIONALS_KEY = 'command'
+TRUE_VALUES = ["true", "1", "t", "yes", "y"]
+DEFAULT_POSITIONALS_KEY = "command"
 
 
 class PositionalsHelpFormatter(argparse.HelpFormatter):
@@ -22,7 +22,7 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
   ):
     super().__init__(prog, indent_increment, max_help_position, width)
     self.positionals_key = positionals_key
-    self.positionals_action = argparse._StoreAction([], self.positionals_key, nargs='+')
+    self.positionals_action = argparse._StoreAction([], self.positionals_key, nargs="+")
 
   def add_usage(self, usage, actions, groups, prefix=None):
     from itertools import chain
@@ -32,7 +32,7 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
   def add_arguments(self, actions):
     from itertools import chain
 
-    if self._current_section.heading == 'positional arguments':
+    if self._current_section.heading == "positional arguments":
       super().add_arguments(chain(actions, [self.positionals_action]))
     else:
       super().add_arguments(actions)
@@ -90,9 +90,21 @@ class BaseArgs(object):
 
   def __init__(self, args: argparse.Namespace):
     self._args: argparse.Namespace = args
-    self.debug: bool = args.dry_run
-    self.dry_run: bool = args.dry_run
+    self.debug: bool = args.debug
     self.verbose: bool = args.verbose
+
+  def __repr__(self):
+    return str(self.__dict__)
+
+  def check_for_debug_and_exit(self, exit_code: int = 0, log_args_before_exit: bool = False):
+    if self.debug:
+      import logging
+
+      if log_args_before_exit:
+        log_args(self)
+
+      logging.warning("debug enabled, exiting...")
+      exit(exit_code)
 
 
 class ColorArgs(object):
@@ -112,8 +124,8 @@ class ColorArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-color', action=STORE_TRUE)
-    arg_parser.add_argument('--use-color', action=STORE_TRUE)
+    arg_parser.add_argument("--no-color", action=STORE_TRUE)
+    arg_parser.add_argument("--use-color", action=STORE_TRUE)
     return arg_parser
 
 
@@ -125,8 +137,8 @@ class IncludeExcludeCmdArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-cmd', action=APPEND)
-    arg_parser.add_argument('--include-cmd', action=APPEND)
+    arg_parser.add_argument("--exclude-cmd", action=APPEND)
+    arg_parser.add_argument("--include-cmd", action=APPEND)
     return arg_parser
 
 
@@ -138,8 +150,8 @@ class IncludeExcludeRegexArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--exclude-regex', action=APPEND)
-    arg_parser.add_argument('--include-regex', action=APPEND)
+    arg_parser.add_argument("--exclude-regex", action=APPEND)
+    arg_parser.add_argument("--include-regex", action=APPEND)
     return arg_parser
 
 
@@ -176,9 +188,9 @@ class PagerArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
-    arg_parser.add_argument('--no-pager', action=STORE_TRUE)
-    arg_parser.add_argument('--pager', default=default_pager if default_pager else os.getenv('PAGER', 'less'))
-    arg_parser.add_argument('--use-pager', action=STORE_TRUE)
+    arg_parser.add_argument("--no-pager", action=STORE_TRUE)
+    arg_parser.add_argument("--pager", default=default_pager if default_pager else os.getenv("PAGER", "less"))
+    arg_parser.add_argument("--use-pager", action=STORE_TRUE)
     return arg_parser
 
 
@@ -205,17 +217,17 @@ class RegexCasingArgs(object):
 
 
 def add_default_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-  arg_parser.add_argument('-v', '--verbose', action=STORE_TRUE)
-  arg_parser.add_argument('--dry-run', "--debug", action=STORE_TRUE)
+  arg_parser.add_argument("-v", "--verbose", action=STORE_TRUE)
+  arg_parser.add_argument("--debug", action=STORE_TRUE)
   return arg_parser
 
 
 def check_debug_mode() -> bool:
-  return os.getenv('debug_mode', 'false').lower() in TRUE_VALUES
+  return os.getenv("debug_mode", "false").lower() in TRUE_VALUES
 
 
 def check_verbose() -> bool:
-  return os.getenv('verbose', 'false').lower() in TRUE_VALUES
+  return os.getenv("verbose", "false").lower() in TRUE_VALUES
 
 
 def create_default_arg_parser() -> argparse.ArgumentParser:
@@ -295,22 +307,21 @@ def check_command(cmd: str) -> bool:
   return shutil.which(cmd) is not None
 
 
-def check_for_debug_and_log_args(args: BaseArgs, exit_code: int = 0):
-  if args.dry_run:
-    log_args(args)
-    exit(exit_code)
-
-
-def log_args(args: BaseArgs, only_keys: List[str] = None, skip_keys: List[str] = None):
+def log_args(args: BaseArgs, include_raw_args: bool = False, only_keys: List[str] = None, skip_keys: List[str] = None):
   import logging
-  from ltpylib.logs import log_with_title_sep
+  from ltpylib.logs import log_sep
+
+  logging.info("ARGS")
+  log_sep(debug_only=False)
+
+  log_format = "%-" + str(len(max(args.__dict__.keys(), key=len))) + "s -> %s"
 
   for item in sorted(args.__dict__.items()):
-    if item[0] == '_args':
+    if item[0] == "_args" and not include_raw_args:
       continue
     elif only_keys and not item[0] in only_keys:
       continue
     elif skip_keys and item[0] in skip_keys:
       continue
 
-    log_with_title_sep(logging.INFO, item[0], item[1])
+    logging.info(log_format, item[0], item[1])

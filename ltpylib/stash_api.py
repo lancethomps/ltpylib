@@ -7,7 +7,8 @@ from stashy import repos
 from stashy.pullrequests import PullRequest, PullRequests
 from stashy.repos import Repos
 
-from ltpylib import requests_helper
+from ltpylib import colors, dates, requests_helper
+from ltpylib.inputs import select_prompt_and_return_indexes
 from ltpylib.stash_types import (
   Branch,
   Branches,
@@ -23,6 +24,7 @@ from ltpylib.stash_types import (
   Repository,
   SearchResults,
 )
+from ltpylib.strings import str_list_max_length
 
 STASH_URL: str = "https://stash.wlth.fr"
 BRANCH_PR_META_KEY: str = "com.atlassian.bitbucket.server.bitbucket-ref-metadata:outgoing-pull-request-metadata"
@@ -276,10 +278,23 @@ class StashApi(object):
     merged_branches.values = []
 
     for branch in branches.values:
-      if branch.metadata is None or BRANCH_PR_META_KEY not in branch.metadata or "pullRequest" not in branch.metadata.get(BRANCH_PR_META_KEY):
+      if branch.metadata is None or BRANCH_PR_META_KEY not in branch.metadata:
         continue
 
       branch_pr_meta = branch.metadata.get(BRANCH_PR_META_KEY)
+
+      if "pullRequest" not in branch_pr_meta:
+        has_prs_with_state = False
+        for state in states:
+          if state.name.lower() in branch_pr_meta and branch_pr_meta.get(state.name.lower()) > 0:
+            has_prs_with_state = True
+            break
+
+        if has_prs_with_state:
+          merged_branches.values.append(branch)
+
+        continue
+
       pr_meta_raw: dict = branch_pr_meta.pop("pullRequest")
       pr_meta = PullRequestStatus(values=pr_meta_raw)
       branch_pr_meta["pullRequest"] = pr_meta
@@ -316,3 +331,42 @@ class StashApi(object):
 
 def create_stash_api(url: str, creds: Tuple[str, str]) -> StashApi:
   return StashApi(stashy.connect(url, creds[0], creds[1]))
+
+
+def ask_user_to_select_their_prs(stash_api: StashApi) -> Union[None, List[PullRequestStatus]]:
+  my_prs = stash_api.my_pull_requests()
+
+  if not my_prs.values:
+    return None
+
+  prs = sorted(my_prs.values, key=pr_sort)
+  pr_links: List[str] = []
+
+  branch_max_length = str_list_max_length([pr.fromRef.displayId for pr in prs])
+  repo_max_length = str_list_max_length([pr.fromRef.repository.name for pr in prs])
+
+  for pr in prs:
+    pr_links.append(
+      "  ".join([
+        colors.green(dates.from_millis(pr.createdDate).isoformat()),
+        colors.red(pr.fromRef.repository.name.ljust(repo_max_length)),
+        colors.blue(pr.fromRef.displayId.ljust(branch_max_length)),
+        pr.title,
+      ])
+    )
+
+  selections = select_prompt_and_return_indexes(
+    pr_links,
+    header="Select PRs to open",
+    multi=True,
+    ansi=True,
+  )
+
+  return [prs[index] for index in selections]
+
+
+def pr_sort(pr: PullRequestStatus) -> str:
+  return "%s %s" % (
+    pr.fromRef.repository.name,
+    pr.fromRef.displayId.lower(),
+  )

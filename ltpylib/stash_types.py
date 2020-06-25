@@ -307,6 +307,8 @@ class PullRequestStatus(DataWithUnknownProperties):
     self.updatedDate: int = values.pop("updatedDate", None)
     self.version: int = values.pop("version", None)
 
+    self.url: str = self.links.self[0].href if (self.links and self.links.self) else None
+
     self.builds: Builds = None
     self.mergeInfo: PullRequestMergeability = None
 

@@ -23,7 +23,7 @@ def prettify(
     else:
       file_type = file.suffix[1:]
 
-    func_for_type = globals()["prettify_" + file_type]
+    func_for_type = globals()["prettify_" + file_type + "_file"]
     if not callable(func_for_type):
       raise ValueError("Unsupported file type: file=%s type=%s" % (file.as_posix(), file_type))
 
@@ -32,7 +32,7 @@ def prettify(
       logging.debug("Updated %s", file.as_posix())
 
 
-def prettify_html(
+def prettify_html_file(
   file: Path,
   debug_mode: bool = False,
   verbose: bool = False,
@@ -63,7 +63,7 @@ def prettify_html(
   check_proc_result(file, result, should_have_stdout=False, allow_exit_codes=[0, 1])
 
 
-def prettify_json(
+def prettify_json_file(
   file: Path,
   debug_mode: bool = False,
   verbose: bool = False,
@@ -73,7 +73,7 @@ def prettify_json(
   files.write_file(file, result.stdout)
 
 
-def prettify_xml(
+def prettify_xml_file(
   file: Path,
   debug_mode: bool = False,
   verbose: bool = False,
@@ -83,7 +83,7 @@ def prettify_xml(
   files.write_file(file, result.stdout)
 
 
-def prettify_yaml(
+def prettify_yaml_file(
   file: Path,
   debug_mode: bool = False,
   verbose: bool = False,

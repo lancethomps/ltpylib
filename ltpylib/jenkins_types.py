@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 import time
+from typing import List
 
-from ltpylib.common_types import DataWithUnknownProperties
+from ltpylib.common_types import DataWithUnknownPropertiesAsAttributes
 
 
-class JenkinsBuild(DataWithUnknownProperties):
+class JenkinsBuild(DataWithUnknownPropertiesAsAttributes):
 
   def __init__(self, values: dict = None):
     values = values if values is not None else {}
 
+    self._class: str = values.pop("_class", None)
     self.building: bool = values.pop("building", None)
     self.duration: int = values.pop("duration", None)
     self.estimatedDuration: int = values.pop("estimatedDuration", None)
@@ -25,4 +27,28 @@ class JenkinsBuild(DataWithUnknownProperties):
     elif self.estimatedDuration is not None and self.estimatedDuration > 0 and self.timeRunning is not None:
       self.estimatedTimeRemaining: int = self.estimatedDuration - self.timeRunning
 
-    DataWithUnknownProperties.__init__(self, values)
+    DataWithUnknownPropertiesAsAttributes.__init__(self, values)
+
+
+class JenkinsInstance(DataWithUnknownPropertiesAsAttributes):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self._class: str = values.pop("_class", None)
+    self.jobs: List[JenkinsJob] = list(map(JenkinsJob, values.pop("jobs", []))) if "jobs" in values else None
+
+    DataWithUnknownPropertiesAsAttributes.__init__(self, values)
+
+
+class JenkinsJob(DataWithUnknownPropertiesAsAttributes):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self._class: str = values.pop("_class", None)
+    self.jobs: List[JenkinsJob] = list(map(JenkinsJob, values.pop("jobs", []))) if "jobs" in values else None
+    self.name: str = values.pop("name", None)
+    self.url: str = values.pop("url", None)
+
+    DataWithUnknownPropertiesAsAttributes.__init__(self, values)
