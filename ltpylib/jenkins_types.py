@@ -14,8 +14,10 @@ class JenkinsBuild(DataWithUnknownPropertiesAsAttributes):
     self.building: bool = values.pop("building", None)
     self.duration: int = values.pop("duration", None)
     self.estimatedDuration: int = values.pop("estimatedDuration", None)
+    self.id: str = values.pop("id", None)
     self.result: str = values.pop("result", None)
     self.timestamp: int = values.pop("timestamp", None)
+    self.url: str = values.pop("url", None)
 
     self.timeRunning: int = None
     if self.timestamp is not None:
