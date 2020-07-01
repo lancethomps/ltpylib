@@ -50,7 +50,7 @@ class JenkinsApi(object):
 def parse_job_url(url: str) -> Tuple[str, int]:
   match = re.match(JENKINS_JOB_URL_REGEX, url)
   job_name = match.group(5)
-  if match.group(6):
+  if match.group(6) and match.group(5) != match.group(6):
     job_name = job_name + "/job/" + match.group(6)
 
   job_num = int(match.group(7))

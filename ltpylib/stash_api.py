@@ -35,6 +35,46 @@ class StashApi(object):
   def __init__(self, stash: stashy.Stash):
     self.stash: stashy.Stash = stash
 
+  def ask_user_to_select_their_prs(
+    self,
+    role: PullRequestRole = None,
+    state: PullRequestState = PullRequestState.OPEN,
+    participant_status: List[PullRequestParticipantStatus] = None,
+  ) -> Union[None, List[PullRequestStatus]]:
+    my_prs = self.my_pull_requests(
+      state=state,
+      role=role,
+      participant_status=participant_status,
+    )
+
+    if not my_prs.values:
+      return None
+
+    prs = sorted(my_prs.values, key=pr_sort)
+    pr_links: List[str] = []
+
+    branch_max_length = str_list_max_length([pr.fromRef.displayId for pr in prs])
+    repo_max_length = str_list_max_length([pr.fromRef.repository.name for pr in prs])
+
+    for pr in prs:
+      pr_links.append(
+        "  ".join([
+          colors.green(dates.from_millis(pr.createdDate).isoformat()),
+          colors.red(pr.fromRef.repository.name.ljust(repo_max_length)),
+          colors.blue(pr.fromRef.displayId.ljust(branch_max_length)),
+          pr.title,
+        ])
+      )
+
+    selections = select_prompt_and_return_indexes(
+      pr_links,
+      header="Select PRs to open",
+      multi=True,
+      ansi=True,
+    )
+
+    return [prs[index] for index in selections]
+
   def builds_for_commit(self, commit: str, limit: int = 1000) -> Builds:
     api_url = '%s/rest/build-status/latest/commits/%s?limit=%s' % (
       self.stash._client._base_url,
@@ -115,9 +155,9 @@ class StashApi(object):
 
   def my_pull_requests(
     self,
-    state: PullRequestState = PullRequestState.OPEN,
     role: PullRequestRole = None,
-    participant_status: PullRequestParticipantStatus = None,
+    state: PullRequestState = PullRequestState.OPEN,
+    participant_status: List[PullRequestParticipantStatus] = None,
     start: int = 0,
     limit: int = 100,
     with_attributes: bool = True,
@@ -125,13 +165,13 @@ class StashApi(object):
   ) -> PullRequestStatuses:
 
     if isinstance(role, str):
-      role = PullRequestRole.from_string(role)
+      role = PullRequestRole.from_string(role, allow_unknown=True)
 
     if isinstance(state, str):
-      state = PullRequestState.from_string(state)
+      state = PullRequestState.from_string(state, allow_unknown=True, unknown_as_none=True)
 
     if isinstance(participant_status, str):
-      participant_status = PullRequestParticipantStatus.from_string(participant_status)
+      participant_status = [PullRequestParticipantStatus.from_string(val) for val in participant_status.split(",")] if participant_status and participant_status != "_" else None
 
     api_params = {
       "start": str(start),
@@ -139,16 +179,16 @@ class StashApi(object):
       "withAttributes": str(with_attributes).lower(),
     }
 
-    if state is not None:
+    if state:
       api_params["state"] = state.name
 
-    if role is not None:
+    if role:
       api_params["role"] = role.name
 
-    if participant_status is not None:
-      api_params["participantStatus"] = participant_status.name
+    if participant_status:
+      api_params["participantStatus"] = ",".join([val.name for val in participant_status])
 
-    if order is not None:
+    if order:
       api_params["order"] = order
 
     api_url = '%s/rest/api/latest/dashboard/pull-requests?%s' % (
@@ -331,38 +371,6 @@ class StashApi(object):
 
 def create_stash_api(url: str, creds: Tuple[str, str]) -> StashApi:
   return StashApi(stashy.connect(url, creds[0], creds[1]))
-
-
-def ask_user_to_select_their_prs(stash_api: StashApi) -> Union[None, List[PullRequestStatus]]:
-  my_prs = stash_api.my_pull_requests()
-
-  if not my_prs.values:
-    return None
-
-  prs = sorted(my_prs.values, key=pr_sort)
-  pr_links: List[str] = []
-
-  branch_max_length = str_list_max_length([pr.fromRef.displayId for pr in prs])
-  repo_max_length = str_list_max_length([pr.fromRef.repository.name for pr in prs])
-
-  for pr in prs:
-    pr_links.append(
-      "  ".join([
-        colors.green(dates.from_millis(pr.createdDate).isoformat()),
-        colors.red(pr.fromRef.repository.name.ljust(repo_max_length)),
-        colors.blue(pr.fromRef.displayId.ljust(branch_max_length)),
-        pr.title,
-      ])
-    )
-
-  selections = select_prompt_and_return_indexes(
-    pr_links,
-    header="Select PRs to open",
-    multi=True,
-    ansi=True,
-  )
-
-  return [prs[index] for index in selections]
 
 
 def pr_sort(pr: PullRequestStatus) -> str:

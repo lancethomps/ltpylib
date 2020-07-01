@@ -52,3 +52,15 @@ class JenkinsJob(DataWithUnknownPropertiesAsAttributes):
     self.url: str = values.pop("url", None)
 
     DataWithUnknownPropertiesAsAttributes.__init__(self, values)
+
+
+class JenkinsJobStats(DataWithUnknownPropertiesAsAttributes):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.avg_duration_millis: float = values.pop("avg_duration_millis", None)
+    self.name: str = values.pop("name", None)
+    self.total: int = values.pop("total", None)
+
+    DataWithUnknownPropertiesAsAttributes.__init__(self, values)

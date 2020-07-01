@@ -17,11 +17,16 @@ def extract_text_from_html(html: str, selector: str) -> Union[str, None]:
   return selected.get_text()
 
 
+def header_replacements_as_header_converter(header_replacements: Dict[str, str]) -> StrConverter:
+  return lambda val: header_replacements.get(val, val)
+
+
 def parse_table(
   html: str,
   table_selector: str,
   header_replacements: Dict[str, str] = None,
   header_converters: List[StrConverter] = None,
+  skip_headers: List[str] = None,
   val_converters: List[StrConverter] = None,
   row_data_predicate: Callable[[dict], bool] = None
 ) -> List[dict]:
@@ -44,6 +49,8 @@ def parse_table(
       for idx, data in enumerate(table_data):
         header = table_headers.get(idx)
         if not header:
+          continue
+        elif skip_headers and header in skip_headers:
           continue
 
         val: str = data.get_text().strip()

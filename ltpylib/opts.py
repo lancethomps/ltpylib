@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
+from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
 
 TRUE_VALUES = ["true", "1", "t", "yes", "y"]
@@ -86,15 +87,12 @@ class ActionValidatePathSingle(argparse.Action):
         raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
 
 
-class BaseArgs(object):
+class BaseArgs(TypeWithDictRepr):
 
   def __init__(self, args: argparse.Namespace):
     self._args: argparse.Namespace = args
     self.debug: bool = args.debug
     self.verbose: bool = args.verbose
-
-  def __repr__(self):
-    return str(self.__dict__)
 
   def check_for_debug_and_exit(self, exit_code: int = 0, log_args_before_exit: bool = False):
     if self.debug:

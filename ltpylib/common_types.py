@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 
 
-class DataWithUnknownProperties(object):
+class TypeWithDictRepr(object):
+
+  def __repr__(self):
+    return str(self.__dict__)
+
+
+class DataWithUnknownProperties(TypeWithDictRepr):
 
   def __init__(self, values: dict = None):
     self.unknownProperties: dict = values if values else None
