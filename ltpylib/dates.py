@@ -7,6 +7,9 @@ def from_millis(millis: int) -> datetime:
 
 
 def parse_iso_date(date_string: str) -> datetime:
+  if not date_string:
+    return None
+
   from dateutil import parser
 
   return parser.isoparse(date_string)
