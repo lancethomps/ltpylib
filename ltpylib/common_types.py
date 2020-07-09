@@ -9,8 +9,9 @@ class TypeWithDictRepr(object):
 
 class DataWithUnknownProperties(TypeWithDictRepr):
 
-  def __init__(self, values: dict = None):
-    self.unknownProperties: dict = values if values else None
+  def __init__(self, values: dict = None, skip_field_if_no_unknown: bool = False):
+    if not skip_field_if_no_unknown or values:
+      self.unknownProperties: dict = values if values else None
 
 
 class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
@@ -23,4 +24,4 @@ class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
 
       values.clear()
 
-    DataWithUnknownProperties.__init__(self, values=None)
+    DataWithUnknownProperties.__init__(self, values=None, skip_field_if_no_unknown=True)

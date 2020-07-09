@@ -22,25 +22,31 @@ class MavenArtifact(object):
   def to_artifact_string(self) -> str:
     parts: List[str] = [
       self.group_id,
-      self.artifact_id,
     ]
-    for val in [self.version, self.packaging, self.classifier]:
-      if val:
-        parts.append(val)
+
+    check_vals = [val for val in [self.version, self.packaging, self.classifier] if val]
+
+    if self.artifact_id:
+      parts.append(self.artifact_id)
+    elif check_vals:
+      parts.append("*")
+
+    for val in check_vals:
+      parts.append(val)
 
     return ":".join(parts)
 
   @staticmethod
-  def from_artifact_string(artifact: str):
+  def from_artifact_string(artifact: str, strict: bool = True):
     artifact_parts = artifact.split(":")
 
     parts_len = len(artifact_parts)
-    if parts_len < 2:
+    if parts_len < 2 and strict:
       raise Exception("Artifact should be in the form of groupId:artifactId:version[:packaging[:classifier]]")
 
     return MavenArtifact(
       artifact_parts[0],
-      artifact_parts[1],
+      artifact_parts[1] if parts_len > 1 else None,
       version=(artifact_parts[2] if parts_len > 2 else None),
       packaging=(artifact_parts[3] if parts_len > 3 else None),
       classifier=(artifact_parts[4] if parts_len > 4 else None),
