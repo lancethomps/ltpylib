@@ -44,6 +44,10 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
       logging.error("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
 
 
+def confirm_default_yes(question: str = 'Continue?') -> bool:
+  return confirm(question=question, default="y")
+
+
 def ask_for_input(prompt: str = 'Please input value.') -> str:
   return input(prompt + '\n> ')
 

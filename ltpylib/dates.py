@@ -37,6 +37,10 @@ def to_json_isoformat(date: datetime) -> str:
   return date.isoformat(sep="T", timespec="milliseconds") + "Z"
 
 
+def to_json_isoformat_friendly(date: datetime) -> str:
+  return date.isoformat(sep=" ", timespec="auto")
+
+
 def _main():
   import sys
 
