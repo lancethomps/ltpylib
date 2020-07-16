@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import re
-from typing import Tuple
+from typing import List, Tuple
 
 import requests
 from requests import Session
@@ -38,6 +38,13 @@ class JenkinsApi(object):
   def build(self, job: str, build: int) -> JenkinsBuild:
     response = self.session.get(self.url("job/%s/%s/api/json?tree=*" % (job, str(build))))
     return JenkinsBuild(requests_helper.parse_raw_response(response))
+
+  def all_builds(self, job: str, tree: str = "building,description,displayName,duration,estimatedDuration,executor,id,number,queueId,result,timestamp,url") -> List[JenkinsBuild]:
+    response = self.session.get(self.url("job/%s/api/json?tree=%s" % (
+      job,
+      "allBuilds[%s]" % tree,
+    )))
+    return [JenkinsBuild(values=v) for v in requests_helper.parse_raw_response(response).get("allBuilds")]
 
   def instance_info(self, tree: str = "*") -> JenkinsInstance:
     response = self.session.get(self.url("api/json?tree=%s" % tree))

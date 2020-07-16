@@ -3,6 +3,7 @@ import argparse
 from enum import auto
 from typing import Dict, List
 
+from ltpylib import opts_actions
 from ltpylib.common_types import DataWithUnknownProperties, TypeWithDictRepr
 from ltpylib.enums import EnumAutoName
 
@@ -540,10 +541,15 @@ class ScriptArgsPullRequestSelections(object):
     self.participant_status: List[PullRequestParticipantStatus] = args.participant_status
     self.role: PullRequestRole = args.role
     self.state: PullRequestState = args.state
+    self.state_all: bool = args.state_all
+
+    if self.state_all:
+      self.state = None
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     arg_parser.add_argument("--participant-status", type=PullRequestParticipantStatus, choices=list(PullRequestParticipantStatus), nargs="*")
     arg_parser.add_argument("--role", type=PullRequestRole, choices=list(PullRequestRole))
-    arg_parser.add_argument("--state", type=PullRequestState, choices=list(PullRequestState))
+    arg_parser.add_argument("--state", type=PullRequestState, choices=list(PullRequestState), default=PullRequestState.OPEN)
+    arg_parser.add_argument("--state-all", action=opts_actions.STORE_TRUE)
     return arg_parser
