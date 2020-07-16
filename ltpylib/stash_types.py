@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import argparse
 from enum import auto
 from typing import Dict, List
 
-from ltpylib.common_types import DataWithUnknownProperties
+from ltpylib import opts_actions
+from ltpylib.common_types import DataWithUnknownProperties, TypeWithDictRepr
 from ltpylib.enums import EnumAutoName
 
 
@@ -65,12 +67,12 @@ class PullRequestState(EnumAutoName):
   UNKNOWN = auto()
 
   @staticmethod
-  def from_string(state: str, allow_unknown: bool = True):
+  def from_string(state: str, allow_unknown: bool = True, unknown_as_none: bool = False):
     try:
       return PullRequestState[state.upper()] if state else None
     except KeyError as e:
       if allow_unknown:
-        return PullRequestState.UNKNOWN
+        return None if unknown_as_none else PullRequestState.UNKNOWN
 
       raise e
 
@@ -485,3 +487,69 @@ class User(DataWithUnknownProperties):
     self.type: str = values.pop("type", None)
 
     DataWithUnknownProperties.__init__(self, values)
+
+
+class ScriptArgPullRequest(TypeWithDictRepr):
+  url_regex: str = r"https://([^/]+)/(projects|users)/([^/]+)/repos/([^/]+)/pull-requests/([^/]+)"
+
+  def __init__(
+    self,
+    url: str = None,
+    project: str = None,
+    repo: str = None,
+    pr_id: int = None,
+  ):
+    self.url: str = url
+    self.project: str = project
+    self.repo: str = repo
+    self.pr_id: int = pr_id
+
+    self.project_type: str = ""
+
+    if self.url:
+      import re
+
+      matches: List[List[str]] = re.findall(ScriptArgPullRequest.url_regex, self.url)
+      if not matches:
+        raise ValueError("Could not extract arguments from URL: %s" % self.url)
+
+      matched = matches[0]
+      self.pr_id: int = int(matched[4])
+      self.project: str = matched[2]
+      self.project_type: str = matched[1]
+      self.repo: str = matched[3]
+
+      if self.project_type == "users" and not self.project.startswith("~"):
+        self.project = "~" + self.project
+
+    else:
+      if self.pr_id and self.project and self.repo:
+
+        if self.project.startswith("~"):
+          self.project_type = "users"
+        else:
+          self.project_type = "projects"
+
+        self.url = ("https://stash.wlth.fr/projects/%s/repos/%s/pull-requests/%s/overview" % (self.project, self.repo, self.pr_id))
+      else:
+        raise ValueError("Either the URL (via --url) or project/repo/id (via --project/--repo/--id) arguments must be specified.")
+
+
+class ScriptArgsPullRequestSelections(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.participant_status: List[PullRequestParticipantStatus] = args.participant_status
+    self.role: PullRequestRole = args.role
+    self.state: PullRequestState = args.state
+    self.state_all: bool = args.state_all
+
+    if self.state_all:
+      self.state = None
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--participant-status", type=PullRequestParticipantStatus, choices=list(PullRequestParticipantStatus), nargs="*")
+    arg_parser.add_argument("--role", type=PullRequestRole, choices=list(PullRequestRole))
+    arg_parser.add_argument("--state", type=PullRequestState, choices=list(PullRequestState), default=PullRequestState.OPEN)
+    arg_parser.add_argument("--state-all", action=opts_actions.STORE_TRUE)
+    return arg_parser

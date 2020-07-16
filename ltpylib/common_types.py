@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 
 
-class DataWithUnknownProperties(object):
+class TypeWithDictRepr(object):
 
-  def __init__(self, values: dict = None):
-    self.unknownProperties: dict = values if values else None
+  def __repr__(self):
+    return str(self.__dict__)
+
+
+class DataWithUnknownProperties(TypeWithDictRepr):
+
+  def __init__(self, values: dict = None, skip_field_if_no_unknown: bool = False):
+    if not skip_field_if_no_unknown or values:
+      self.unknownProperties: dict = values if values else None
 
 
 class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
@@ -17,4 +24,4 @@ class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
 
       values.clear()
 
-    DataWithUnknownProperties.__init__(self, values=None)
+    DataWithUnknownProperties.__init__(self, values=None, skip_field_if_no_unknown=True)

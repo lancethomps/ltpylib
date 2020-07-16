@@ -1,49 +1,95 @@
 #!/usr/bin/env python3
 import subprocess
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from ltpylib import procs, xmlparser
+from ltpylib.common_types import TypeWithDictRepr
 
 MVN_EXPR_PROJECT_GROUP_ID = 'project.groupId'
 MVN_EXPR_PROJECT_ARTIFACT_ID = 'project.artifactId'
 MVN_EXPR_PROJECT_VERSION = 'project.version'
 
 
-class MavenArtifact(object):
+class MavenArtifact(TypeWithDictRepr):
 
-  def __init__(self, group_id: str, artifact_id: str, version: str = None, packaging: str = None, classifier: str = None):
+  def __init__(
+    self,
+    group_id: str = None,
+    artifact_id: str = None,
+    version: str = None,
+    packaging: str = None,
+    classifier: str = None,
+    scope: str = None,
+  ):
     self.group_id: str = group_id
     self.artifact_id: str = artifact_id
     self.version: str = version
     self.packaging: str = packaging
     self.classifier: str = classifier
+    self.scope: str = scope
+
+  def __eq__(self, other):
+    return self.__dict__ == other.__dict__
+
+  def __hash__(self):
+    return hash(str(self.__dict__))
 
   def to_artifact_string(self) -> str:
-    parts: List[str] = [
-      self.group_id,
-      self.artifact_id,
-    ]
-    for val in [self.version, self.packaging, self.classifier]:
-      if val:
-        parts.append(val)
+    # groupId:artifactId[:version[:packaging[:classifier[:scope]]]]
+    parts_reversed: List[str] = []
 
-    return ":".join(parts)
+    parts_ordered = [self.group_id, self.artifact_id, self.version, self.packaging, self.classifier, self.scope]
+    has_part = False
+    for part in reversed(parts_ordered):
+      if part:
+        has_part = True
+        parts_reversed.append(part)
+      elif has_part:
+        parts_reversed.append("*")
+
+    return ":".join(reversed(parts_reversed))
+
+  def to_dict(self, remove_fields: List[str] = None) -> dict:
+    copied = {}
+    for key, val in self.__dict__.items():
+      if remove_fields and key in remove_fields:
+        continue
+
+      if val:
+        copied[key] = val
+
+    return copied
+
+  def to_group_and_artifact_only(self):
+    return MavenArtifact(self.group_id, self.artifact_id)
 
   @staticmethod
-  def from_artifact_string(artifact: str):
+  def from_artifact_string(artifact: str, strict: bool = True, star_to_null: bool = True):
     artifact_parts = artifact.split(":")
 
     parts_len = len(artifact_parts)
-    if parts_len < 2:
-      raise Exception("Artifact should be in the form of groupId:artifactId:version[:packaging[:classifier]]")
+    if parts_len < 2 and strict:
+      raise Exception("Artifact should be in the form of groupId:artifactId[:version[:packaging[:classifier[:scope]]]]")
+
+    def get_part(idx: int) -> Optional[str]:
+      if parts_len <= idx:
+        return None
+
+      part = artifact_parts[idx]
+
+      if star_to_null and part == "*":
+        return None
+
+      return part
 
     return MavenArtifact(
-      artifact_parts[0],
-      artifact_parts[1],
-      version=(artifact_parts[2] if parts_len > 2 else None),
-      packaging=(artifact_parts[3] if parts_len > 3 else None),
-      classifier=(artifact_parts[4] if parts_len > 4 else None),
+      group_id=get_part(0),
+      artifact_id=get_part(1),
+      version=get_part(2),
+      packaging=get_part(3),
+      classifier=get_part(4),
+      scope=get_part(5),
     )
 
 

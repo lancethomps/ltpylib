@@ -12,10 +12,17 @@ class JenkinsBuild(DataWithUnknownPropertiesAsAttributes):
 
     self._class: str = values.pop("_class", None)
     self.building: bool = values.pop("building", None)
+    self.description: str = values.pop("description", None)
+    self.displayName: str = values.pop("displayName", None)
     self.duration: int = values.pop("duration", None)
     self.estimatedDuration: int = values.pop("estimatedDuration", None)
+    self.executor: str = values.pop("executor", None)
+    self.id: str = values.pop("id", None)
+    self.number: int = values.pop("number", None)
+    self.queueId: int = values.pop("queueId", None)
     self.result: str = values.pop("result", None)
     self.timestamp: int = values.pop("timestamp", None)
+    self.url: str = values.pop("url", None)
 
     self.timeRunning: int = None
     if self.timestamp is not None:
@@ -50,5 +57,17 @@ class JenkinsJob(DataWithUnknownPropertiesAsAttributes):
     self.jobs: List[JenkinsJob] = list(map(JenkinsJob, values.pop("jobs", []))) if "jobs" in values else None
     self.name: str = values.pop("name", None)
     self.url: str = values.pop("url", None)
+
+    DataWithUnknownPropertiesAsAttributes.__init__(self, values)
+
+
+class JenkinsJobStats(DataWithUnknownPropertiesAsAttributes):
+
+  def __init__(self, values: dict = None):
+    values = values if values is not None else {}
+
+    self.avg_duration_millis: float = values.pop("avg_duration_millis", None)
+    self.name: str = values.pop("name", None)
+    self.total: int = values.pop("total", None)
 
     DataWithUnknownPropertiesAsAttributes.__init__(self, values)

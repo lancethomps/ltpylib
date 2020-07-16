@@ -7,6 +7,9 @@ def from_millis(millis: int) -> datetime:
 
 
 def parse_iso_date(date_string: str) -> datetime:
+  if not date_string:
+    return None
+
   from dateutil import parser
 
   return parser.isoparse(date_string)
@@ -26,8 +29,16 @@ def parse_possibly_relative_date(date_string: str) -> datetime:
   return dateparser.parse(date_string)
 
 
+def to_yyyymmdd(date: datetime) -> str:
+  return date.strftime("%Y%m%d")
+
+
 def to_json_isoformat(date: datetime) -> str:
   return date.isoformat(sep="T", timespec="milliseconds") + "Z"
+
+
+def to_json_isoformat_friendly(date: datetime) -> str:
+  return date.isoformat(sep=" ", timespec="auto")
 
 
 def _main():

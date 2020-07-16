@@ -17,7 +17,7 @@ def replace_matches_in_file(
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
   force_replace: bool = False,
-  flags: Union[int, re.RegexFlag] = 0
+  flags: Union[int, re.RegexFlag] = 0,
 ) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = strings.convert_to_bool(quote_replacement)
@@ -65,6 +65,38 @@ def replace_strings_in_file(
     return True
   elif force_replace and search_string in content:
     write_file(file, content_new)
+    return True
+
+  return False
+
+
+def remove_matching_lines_in_file(
+  file: Union[str, Path],
+  search_string: str,
+  quote_search_string: bool = False,
+  flags: Union[int, re.RegexFlag] = 0,
+) -> bool:
+  if isinstance(quote_search_string, str):
+    quote_search_string = strings.convert_to_bool(quote_search_string)
+
+  if isinstance(flags, str):
+    flags = strings.convert_to_number(flags)
+
+  if quote_search_string:
+    search_string = re.escape(search_string)
+
+  content: str = read_file(file)
+  matcher = re.compile(search_string, flags=flags)
+  has_match = False
+  new_lines = []
+  for line in content.splitlines():
+    if matcher.search(line):
+      has_match = True
+    else:
+      new_lines.append(line)
+
+  if has_match:
+    write_file(file, "\n".join(new_lines))
     return True
 
   return False
