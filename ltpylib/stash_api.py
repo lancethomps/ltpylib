@@ -369,8 +369,11 @@ class StashApi(object):
     )))
 
 
-def create_stash_api(url: str, creds: Tuple[str, str]) -> StashApi:
-  return StashApi(stashy.connect(url, creds[0], creds[1]))
+def create_stash_api(url: str, creds: Tuple[str, str] = None, token: str = None) -> StashApi:
+  if token:
+    return StashApi(stashy.client.Stash(url, token=token))
+
+  return StashApi(stashy.client.Stash(url, username=creds[0], password=creds[1]))
 
 
 def pr_sort(pr: PullRequestStatus) -> str:
