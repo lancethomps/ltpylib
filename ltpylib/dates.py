@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from datetime import datetime
 
 
@@ -39,6 +39,53 @@ def to_json_isoformat(date: datetime) -> str:
 
 def to_json_isoformat_friendly(date: datetime) -> str:
   return date.isoformat(sep=" ", timespec="auto")
+
+
+def add(
+  date: datetime,
+  years: int = 0,
+  months: int = 0,
+  days: int = 0,
+  leapdays: int = 0,
+  weeks: int = 0,
+  hours: int = 0,
+  minutes: int = 0,
+  seconds: int = 0,
+  microseconds: int = 0,
+  year: int = None,
+  month: int = None,
+  day: int = None,
+  weekday: int = None,
+  yearday: int = None,
+  nlyearday: int = None,
+  hour: int = None,
+  minute: int = None,
+  second: int = None,
+  microsecond: int = None,
+) -> datetime:
+  from dateutil.relativedelta import relativedelta
+
+  return date + relativedelta(
+    years=years,
+    months=months,
+    days=days,
+    leapdays=leapdays,
+    weeks=weeks,
+    hours=hours,
+    minutes=minutes,
+    seconds=seconds,
+    microseconds=microseconds,
+    year=year,
+    month=month,
+    day=day,
+    weekday=weekday,
+    yearday=yearday,
+    nlyearday=nlyearday,
+    hour=hour,
+    minute=minute,
+    second=second,
+    microsecond=microsecond,
+  )
 
 
 def _main():

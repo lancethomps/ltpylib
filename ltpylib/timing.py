@@ -17,6 +17,15 @@ def get_time_elapsed_msg(start_time):
   return format_seconds(time.time() - float(start_time))
 
 
+def get_time_remaining_formatted_seconds(start_time, count, total):
+  frac_seconds = time.time() - float(start_time)
+  if float(count) <= 0:
+    return "N/A"
+
+  estimated_total = frac_seconds * (float(total) / float(count))
+  return format_seconds(estimated_total - frac_seconds)
+
+
 def get_time_remaining_msg(start_time, count, total):
   frac_seconds = time.time() - float(start_time)
   if float(count) <= 0:
