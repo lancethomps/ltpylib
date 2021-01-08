@@ -10,6 +10,7 @@ def replace_matches(
   search_string: str,
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
+  wrap_replacement_in_function: bool = False,
   flags: Union[int, re.RegexFlag] = 0,
 ) -> str:
   if isinstance(quote_replacement, str):
@@ -17,6 +18,13 @@ def replace_matches(
 
   if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
+  elif wrap_replacement_in_function and isinstance(replacement, str):
+    replacement_content = replacement
+
+    def replacement_function(match: Match) -> str:
+      return replacement_content
+
+    replacement = replacement_function
 
   return re.sub(search_string, replacement, content, flags=flags)
 

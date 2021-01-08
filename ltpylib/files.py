@@ -16,11 +16,15 @@ def replace_matches_in_file(
   search_string: str,
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
+  wrap_replacement_in_function: Union[bool, str] = False,
   force_replace: bool = False,
   flags: Union[int, re.RegexFlag] = 0,
 ) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = strings.convert_to_bool(quote_replacement)
+
+  if isinstance(wrap_replacement_in_function, str):
+    wrap_replacement_in_function = strings.convert_to_bool(wrap_replacement_in_function)
 
   if isinstance(force_replace, str):
     force_replace = strings.convert_to_bool(force_replace)
@@ -30,6 +34,13 @@ def replace_matches_in_file(
 
   if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
+  elif wrap_replacement_in_function and isinstance(replacement, str):
+    replacement_content = replacement
+
+    def replacement_function(match: Match) -> str:
+      return replacement_content
+
+    replacement = replacement_function
 
   content = read_file(file)
   content_new = re.sub(search_string, replacement, content, flags=flags)
