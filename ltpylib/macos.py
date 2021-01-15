@@ -61,7 +61,12 @@ def add_generic_password(label: str, pw: str, account: str = None) -> bool:
   return True
 
 
-def find_generic_password(label: str, ask_if_missing: bool = True, add_if_missing: bool = False, prompt_to_add_if_missing: bool = True) -> str:
+def find_generic_password(
+  label: str,
+  ask_if_missing: bool = True,
+  add_if_missing: bool = False,
+  prompt_to_add_if_missing: bool = True,
+) -> str:
   status, pw = procs.run_and_parse_output([
     "security",
     "find-generic-password",
@@ -81,6 +86,65 @@ def find_generic_password(label: str, ask_if_missing: bool = True, add_if_missin
           add_generic_password(label, pw, account=getuser())
     else:
       raise Exception("Could not find generic keychain password for label: %s" % label)
+
+  return pw.strip()
+
+
+def add_internet_password(host: str, pw: str, user: str = None) -> bool:
+  if user is None:
+    user = getuser()
+
+  result = procs.run_with_regular_stdout([
+    "security",
+    "add-internet-password",
+    "-t",
+    "dflt",
+    "-a",
+    user,
+    "-s",
+    host,
+    "-w",
+    pw,
+  ])
+  if result.returncode != 0:
+    raise Exception("Could not add internet keychain password: host=%s user=%s" % (host, user))
+
+  return True
+
+
+def find_internet_password(
+  host: str,
+  user: str = None,
+  ask_if_missing: bool = True,
+  add_if_missing: bool = False,
+  prompt_to_add_if_missing: bool = True,
+):
+  if user is None:
+    user = getuser()
+
+  status, pw = procs.run_and_parse_output([
+    "/usr/bin/security",
+    "find-internet-password",
+    "-t",
+    "dflt",
+    "-a",
+    user,
+    "-ws",
+    host,
+  ])
+  if status != 0:
+    if ask_if_missing:
+      prompt = 'Please enter your password for %s.' % (host)
+      if not add_if_missing:
+        prompt += ' You can skip entering your password by running: security add-internet-password -a "$USER" -s "%s" -w' % (host)
+
+      pw = getpass(prompt="%s\n> " % prompt)
+      if add_if_missing and pw:
+        if not prompt_to_add_if_missing or inputs.confirm('Add this password to your keychain in order to skip this prompt next time?', default="y"):
+          logging.info('Adding internet password to keychain...')
+          add_internet_password(host, pw, user=user)
+    else:
+      raise Exception("Could not find internet keychain password for label: %s" % host)
 
   return pw.strip()
 

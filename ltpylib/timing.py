@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import logging
 import time
 
 
@@ -33,6 +33,11 @@ def get_time_remaining_msg(start_time, count, total):
 
   estimated_total = frac_seconds * (float(total) / float(count))
   return "Elapsed: {0: >12} Remaining: {1: >12}".format(format_seconds(frac_seconds), format_seconds(estimated_total - frac_seconds))
+
+
+def sleep_and_log(seconds: int, log_level: int = logging.INFO):
+  logging.log(log_level, "Sleeping %s seconds...", seconds)
+  time.sleep(seconds)
 
 
 if __name__ == "__main__":

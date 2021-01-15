@@ -136,8 +136,8 @@ def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
     file = Path(file)
 
   with open(file.as_posix(), 'r') as fr:
-    content = fr.read()
-  return json.loads(content)
+    loaded_json = json.load(fr)
+  return loaded_json
 
 
 def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:

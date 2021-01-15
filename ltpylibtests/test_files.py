@@ -19,6 +19,13 @@ class TestFiles(unittest.TestCase):
     assert files.read_file_n_lines(test_file, 6) == ["line1", "line2", "line3", "", "line5"]
     assert files.read_file_n_lines(test_file, -1) == ["line1", "line2", "line3", "", "line5"]
 
+  def test_read_json_file(self):
+    test_file = Path(os.path.dirname(os.path.realpath(__file__))).joinpath("test_files_read_json_file.json")
+    parsed_json = files.read_json_file(test_file)
+
+    assert parsed_json.get("field1") == "value1"
+    assert parsed_json.get("field2") == 2
+
 
 if __name__ == '__main__':
   unittest.main()
