@@ -140,17 +140,24 @@ def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
   return json.loads(content)
 
 
-def read_file_n_lines(file: Union[str, Path], n_lines: int) -> List[str]:
+def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
   if isinstance(file, str):
     file = Path(file)
 
   lines: List[str] = []
   with open(file.as_posix()) as fr:
-    for n in range(n_lines - 1):
-      line = fr.readline()
-      if not line:
-        break
-      lines.append(line.rstrip('\n'))
+    if n_lines < 0:
+      while True:
+        line = fr.readline()
+        if not line:
+          break
+        lines.append(line.rstrip('\n'))
+    else:
+      for n in range(n_lines):
+        line = fr.readline()
+        if not line:
+          break
+        lines.append(line.rstrip('\n'))
 
   return lines
 
