@@ -43,3 +43,7 @@ def dicts_to_markdown_table(data: List[dict], showindex: bool = False, tablefmt:
     headers=data_frame.columns,
     tablefmt=tablefmt,
   )
+
+
+def sort_csv_rows(rows: List[str]) -> List[str]:
+  return [rows[0]] + sorted(rows[1:])
