@@ -31,12 +31,15 @@ def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, 
   raise ValueError("String is not a boolean: " % val)
 
 
-def convert_to_number(val: str, check_if_valid: bool = False) -> Union[int, float, str, None]:
+def convert_to_number(val: str, check_if_valid: bool = False, float_only: bool = False) -> Union[int, float, str, None]:
   if val is None:
     return None
 
   if check_if_valid and not is_number(val):
     return val
+
+  if float_only:
+    return float(val)
 
   try:
     return int(val)

@@ -33,6 +33,10 @@ def to_yyyymmdd(date: datetime) -> str:
   return date.strftime("%Y%m%d")
 
 
+def to_yyyymmdd_dashes(date: datetime) -> str:
+  return date.strftime("%Y-%m-%d")
+
+
 def to_json_isoformat(date: datetime) -> str:
   return date.isoformat(sep="T", timespec="milliseconds") + "Z"
 

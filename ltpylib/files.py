@@ -11,6 +11,13 @@ from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple,
 from ltpylib import strings
 
 
+def convert_to_path(path: Union[Path, str]) -> Path:
+  if isinstance(path, str):
+    return Path(path)
+
+  return path
+
+
 def replace_matches_in_file(
   file: Union[str, Path],
   search_string: str,
@@ -116,15 +123,13 @@ def remove_matching_lines_in_file(
 def chmod_proc(perms: str, file: Union[str, Path]) -> int:
   import subprocess
 
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   return subprocess.call(["chmod", perms, file.as_posix()])
 
 
 def read_file(file: Union[str, Path]) -> AnyStr:
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
     content = fr.read()
@@ -132,8 +137,7 @@ def read_file(file: Union[str, Path]) -> AnyStr:
 
 
 def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
     loaded_json = json.load(fr)
@@ -141,8 +145,7 @@ def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
 
 
 def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   lines: List[str] = []
   with open(file.as_posix()) as fr:
@@ -163,16 +166,14 @@ def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
 
 
 def write_file(file: Union[str, Path], contents: AnyStr):
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'w') as fw:
     fw.write(contents)
 
 
 def append_file(file: Union[str, Path], contents: AnyStr):
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'a') as fw:
     fw.write(contents)
