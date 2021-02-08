@@ -149,6 +149,10 @@ def find_internet_password(
   return pw.strip()
 
 
+def open_url(url: str):
+  return procs.run_with_regular_stdout(["open", url], check=True)
+
+
 def _main():
   import sys
 
