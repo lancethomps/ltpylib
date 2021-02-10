@@ -39,12 +39,29 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
       super().add_arguments(actions)
 
 
-class ActionValidatePath(argparse.Action):
+class ActionPathValidate(argparse.Action):
 
   def __init__(self, option_strings, dest, type=None, **kwargs):
     if type is not None:
       raise ValueError("type not allowed")
-    super(ActionValidatePath, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+    super(ActionPathValidate, self).__init__(option_strings=option_strings, dest=dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, value: Path, option_string=None):
+    setattr(namespace, self.dest, value)
+
+    if value is not None:
+      if not value.exists():
+        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
+
+
+class ActionPathsValidate(argparse._AppendAction):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+
+    super(ActionPathsValidate, self).__init__(option_strings=option_strings, dest=dest, type=Path, **kwargs)
 
   def __call__(self, parser, namespace, values: List[Path], option_string=None):
     setattr(namespace, self.dest, values)
@@ -53,38 +70,6 @@ class ActionValidatePath(argparse.Action):
       for item in values:
         if not item.exists():
           raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
-
-
-class ActionValidatePathAppend(argparse._AppendAction):
-
-  def __init__(self, option_strings, dest, type=None, **kwargs):
-    if type is not None:
-      raise ValueError("type not allowed")
-    super(ActionValidatePathAppend, self).__init__(option_strings, dest, type=Path, **kwargs)
-
-  def __call__(self, parser, namespace, values, option_string=None):
-    super(ActionValidatePathAppend, self).__call__(parser, namespace, values, option_string=option_string)
-
-    items: List[List[Path]] = getattr(namespace, self.dest, None)
-    if items and items[0]:
-      for item in items[0]:
-        if not item.exists():
-          raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
-
-
-class ActionValidatePathSingle(argparse.Action):
-
-  def __init__(self, option_strings, dest, type=None, **kwargs):
-    if type is not None:
-      raise ValueError("type not allowed")
-    super(ActionValidatePathSingle, self).__init__(option_strings, dest, type=Path, **kwargs)
-
-  def __call__(self, parser, namespace, value: Path, option_string=None):
-    setattr(namespace, self.dest, value)
-
-    if value is not None:
-      if not value.exists():
-        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
 
 
 class BaseArgs(TypeWithDictRepr):
