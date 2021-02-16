@@ -1,22 +1,46 @@
 #!/usr/bin/env python3
 # pylint: disable=C0111
-from typing import List
+from typing import List, Union
 
 from ltpylib import checks, strings
 
 
 def convert_string_values_to_correct_type(
-  obj: dict,
+  obj: Union[dict, list],
   convert_numbers: bool = True,
   convert_booleans: bool = True,
-) -> dict:
-  for key in obj.keys():
-    val = obj.get(key)
-    if isinstance(val, str):
-      if convert_numbers and strings.is_number(val):
-        obj[key] = strings.convert_to_number(val)
-      elif convert_booleans and strings.is_boolean(val):
-        obj[key] = strings.convert_to_bool(val)
+  use_decimal: bool = False,
+  recursive: bool = False,
+) -> Union[dict, list]:
+  if isinstance(obj, list):
+    objs = obj
+  else:
+    objs = [obj]
+
+  for obj_dict in objs:
+    for key, val in obj_dict.items():
+      if isinstance(val, str):
+        if convert_numbers and strings.is_number(val):
+          obj_dict[key] = strings.convert_to_number(val, use_decimal=use_decimal)
+        elif convert_booleans and strings.is_boolean(val):
+          obj_dict[key] = strings.convert_to_bool(val)
+      elif recursive and isinstance(val, dict):
+        convert_string_values_to_correct_type(
+          val,
+          convert_numbers=convert_numbers,
+          convert_booleans=convert_booleans,
+          use_decimal=use_decimal,
+          recursive=recursive,
+        )
+      elif recursive and isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+        for inner_val in val:
+          convert_string_values_to_correct_type(
+            inner_val,
+            convert_numbers=convert_numbers,
+            convert_booleans=convert_booleans,
+            use_decimal=use_decimal,
+            recursive=recursive,
+          )
 
   return obj
 
