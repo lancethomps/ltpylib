@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import logging
+import os
 import subprocess
 import sys
 from typing import List, Sequence
 
-from ltpylib import procs
+from ltpylib import procs, strings
 from ltpylib.strings import strip_color_codes
 
 
@@ -46,6 +47,11 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
 
 def confirm_default_yes(question: str = 'Continue?') -> bool:
   return confirm(question=question, default="y")
+
+
+def check_auto_confirm() -> bool:
+  auto_confirm = os.getenv("auto_confirm")
+  return auto_confirm is not None and strings.is_boolean(auto_confirm) and strings.convert_to_bool(auto_confirm)
 
 
 def ask_for_input(prompt: str = 'Please input value.') -> str:

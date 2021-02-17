@@ -77,6 +77,9 @@ def add_git_dirs(
       if should_skip_repo(git_repo, exclude_patterns):
         continue
 
+      if git_repo in git_repos:
+        continue
+
       git_repos.append(git_repo)
 
   return git_repos

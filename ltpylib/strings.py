@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import re
+from decimal import Decimal
 from typing import List, Union
 
 BOOLEAN_STRINGS_FALSE = frozenset([
@@ -12,6 +13,9 @@ BOOLEAN_STRINGS_TRUE = frozenset([
   "y",
   "true",
 ])
+TO_SNAKE_CASE_REMOVE_REGEX = re.compile(r"[']")
+TO_SNAKE_CASE_REGEX = re.compile(r"[^a-zA-Z0-9]")
+MULTI_SPACE_REGEX = re.compile(r"\s+")
 
 
 def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, None]:
@@ -31,17 +35,25 @@ def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, 
   raise ValueError("String is not a boolean: " % val)
 
 
-def convert_to_number(val: str, check_if_valid: bool = False) -> Union[int, float, str, None]:
+def convert_to_number(
+  val: str,
+  check_if_valid: bool = False,
+  float_only: bool = False,
+  use_decimal: bool = False,
+) -> Union[int, float, str, None]:
   if val is None:
     return None
 
   if check_if_valid and not is_number(val):
     return val
 
+  if float_only:
+    return Decimal(val) if use_decimal else float(val)
+
   try:
     return int(val)
   except ValueError:
-    return float(val)
+    return Decimal(val) if use_decimal else float(val)
 
 
 def is_boolean(val: str) -> bool:
@@ -82,6 +94,19 @@ def substring_after(val: str, before_str: str) -> str:
 
 def substring_before(val: str, before_str: str) -> str:
   return val.split(before_str)[0]
+
+
+def to_snake_case(val: str) -> str:
+  return MULTI_SPACE_REGEX.sub(
+    " ",
+    TO_SNAKE_CASE_REGEX.sub(
+      " ",
+      TO_SNAKE_CASE_REMOVE_REGEX.sub(
+        "",
+        val.lower(),
+      ),
+    ),
+  ).strip().replace(" ", "_")
 
 
 def _main():

@@ -2,7 +2,7 @@
 # pylint: disable=C0111
 
 import re
-import urllib.parse
+import urllib.parse as urllib_parse
 from typing import Callable, List
 
 StrConverter = Callable[[str], str]
@@ -32,11 +32,15 @@ def num_only(val: str) -> str:
 
 
 def url_encode(val: str) -> str:
-  return urllib.parse.quote_plus(val)
+  return urllib_parse.quote_plus(val)
 
 
 def url_decode(val: str) -> str:
-  return urllib.parse.unquote_plus(val)
+  return urllib_parse.unquote_plus(val)
+
+
+def dict_to_url_params(params: dict) -> str:
+  return urllib_parse.urlencode(params)
 
 
 def to_camel_case(val: str, sep: str = None) -> str:

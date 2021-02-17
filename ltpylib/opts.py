@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Sequence
 
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
+from ltpylib.output import is_output_to_terminal
 
 TRUE_VALUES = ["true", "1", "t", "yes", "y"]
 DEFAULT_POSITIONALS_KEY = "command"
@@ -39,12 +40,29 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
       super().add_arguments(actions)
 
 
-class ActionValidatePath(argparse.Action):
+class ActionPathValidate(argparse.Action):
 
   def __init__(self, option_strings, dest, type=None, **kwargs):
     if type is not None:
       raise ValueError("type not allowed")
-    super(ActionValidatePath, self).__init__(option_strings, dest, type=Path, **kwargs)
+
+    super(ActionPathValidate, self).__init__(option_strings=option_strings, dest=dest, type=Path, **kwargs)
+
+  def __call__(self, parser, namespace, value: Path, option_string=None):
+    setattr(namespace, self.dest, value)
+
+    if value is not None:
+      if not value.exists():
+        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
+
+
+class ActionPathsValidate(argparse._AppendAction):
+
+  def __init__(self, option_strings, dest, type=None, **kwargs):
+    if type is not None:
+      raise ValueError("type not allowed")
+
+    super(ActionPathsValidate, self).__init__(option_strings=option_strings, dest=dest, type=Path, **kwargs)
 
   def __call__(self, parser, namespace, values: List[Path], option_string=None):
     setattr(namespace, self.dest, values)
@@ -53,38 +71,6 @@ class ActionValidatePath(argparse.Action):
       for item in values:
         if not item.exists():
           raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
-
-
-class ActionValidatePathAppend(argparse._AppendAction):
-
-  def __init__(self, option_strings, dest, type=None, **kwargs):
-    if type is not None:
-      raise ValueError("type not allowed")
-    super(ActionValidatePathAppend, self).__init__(option_strings, dest, type=Path, **kwargs)
-
-  def __call__(self, parser, namespace, values, option_string=None):
-    super(ActionValidatePathAppend, self).__call__(parser, namespace, values, option_string=option_string)
-
-    items: List[List[Path]] = getattr(namespace, self.dest, None)
-    if items and items[0]:
-      for item in items[0]:
-        if not item.exists():
-          raise ValueError("Supplied Path does not exist: %s" % (item.as_posix()))
-
-
-class ActionValidatePathSingle(argparse.Action):
-
-  def __init__(self, option_strings, dest, type=None, **kwargs):
-    if type is not None:
-      raise ValueError("type not allowed")
-    super(ActionValidatePathSingle, self).__init__(option_strings, dest, type=Path, **kwargs)
-
-  def __call__(self, parser, namespace, value: Path, option_string=None):
-    setattr(namespace, self.dest, value)
-
-    if value is not None:
-      if not value.exists():
-        raise ValueError("Supplied Path does not exist: %s" % (value.as_posix()))
 
 
 class BaseArgs(TypeWithDictRepr):
@@ -108,22 +94,11 @@ class BaseArgs(TypeWithDictRepr):
 class ColorArgs(object):
 
   def __init__(self, args: argparse.Namespace):
-    self.no_color: bool = args.no_color
-    self.use_color: bool = args.use_color
-
-  def should_use_color(self, default: bool = True) -> bool:
-    if self.use_color:
-      return True
-
-    if self.no_color:
-      return False
-
-    return default
+    self.color: bool = args.color if args.color is not None else is_output_to_terminal()
 
   @staticmethod
-  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument("--no-color", action=STORE_TRUE)
-    arg_parser.add_argument("--use-color", action=STORE_TRUE)
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default: bool = None) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--color", action=argparse.BooleanOptionalAction, default=default)
     return arg_parser
 
 

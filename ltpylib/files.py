@@ -11,16 +11,27 @@ from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple,
 from ltpylib import strings
 
 
+def convert_to_path(path: Union[Path, str]) -> Path:
+  if isinstance(path, str):
+    return Path(path)
+
+  return path
+
+
 def replace_matches_in_file(
   file: Union[str, Path],
   search_string: str,
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
+  wrap_replacement_in_function: Union[bool, str] = False,
   force_replace: bool = False,
   flags: Union[int, re.RegexFlag] = 0,
 ) -> bool:
   if isinstance(quote_replacement, str):
     quote_replacement = strings.convert_to_bool(quote_replacement)
+
+  if isinstance(wrap_replacement_in_function, str):
+    wrap_replacement_in_function = strings.convert_to_bool(wrap_replacement_in_function)
 
   if isinstance(force_replace, str):
     force_replace = strings.convert_to_bool(force_replace)
@@ -30,6 +41,13 @@ def replace_matches_in_file(
 
   if quote_replacement and isinstance(replacement, str):
     replacement = re.escape(replacement)
+  elif wrap_replacement_in_function and isinstance(replacement, str):
+    replacement_content = replacement
+
+    def replacement_function(match: Match) -> str:
+      return replacement_content
+
+    replacement = replacement_function
 
   content = read_file(file)
   content_new = re.sub(search_string, replacement, content, flags=flags)
@@ -105,15 +123,13 @@ def remove_matching_lines_in_file(
 def chmod_proc(perms: str, file: Union[str, Path]) -> int:
   import subprocess
 
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   return subprocess.call(["chmod", perms, file.as_posix()])
 
 
 def read_file(file: Union[str, Path]) -> AnyStr:
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
     content = fr.read()
@@ -121,40 +137,43 @@ def read_file(file: Union[str, Path]) -> AnyStr:
 
 
 def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
-    content = fr.read()
-  return json.loads(content)
+    loaded_json = json.load(fr)
+  return loaded_json
 
 
-def read_file_n_lines(file: Union[str, Path], n_lines: int) -> List[str]:
-  if isinstance(file, str):
-    file = Path(file)
+def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
+  file = convert_to_path(file)
 
   lines: List[str] = []
   with open(file.as_posix()) as fr:
-    for n in range(n_lines - 1):
-      line = fr.readline()
-      if not line:
-        break
-      lines.append(line.rstrip('\n'))
+    if n_lines < 0:
+      while True:
+        line = fr.readline()
+        if not line:
+          break
+        lines.append(line.rstrip('\n'))
+    else:
+      for n in range(n_lines):
+        line = fr.readline()
+        if not line:
+          break
+        lines.append(line.rstrip('\n'))
 
   return lines
 
 
 def write_file(file: Union[str, Path], contents: AnyStr):
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'w') as fw:
     fw.write(contents)
 
 
 def append_file(file: Union[str, Path], contents: AnyStr):
-  if isinstance(file, str):
-    file = Path(file)
+  file = convert_to_path(file)
 
   with open(file.as_posix(), 'a') as fw:
     fw.write(contents)
