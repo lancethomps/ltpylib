@@ -5,13 +5,14 @@ import os
 from typing import List, Sequence, Union
 
 
-def colorize_json(json_data: Union[str, dict, Sequence]) -> Union[bytes, str]:
+def colorize_json(json_data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
   import pygments
   from pygments.formatters.terminal import TerminalFormatter
   from pygments.formatters.terminal256 import Terminal256Formatter
   from pygments.lexers.data import JsonLexer
 
-  pygments_style = os.getenv("PYGMENTS_STYLE", "solarized-light")
+  if not pygments_style:
+    pygments_style = os.getenv("PYGMENTS_STYLE", "solarized-light")
 
   return pygments.highlight(
     json_data if isinstance(json_data, str) or json_data is None else prettify_json(json_data, colorize=False),
