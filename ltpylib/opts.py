@@ -6,6 +6,7 @@ from typing import Callable, List, Optional, Sequence
 
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
+from ltpylib.output import is_output_to_terminal
 
 TRUE_VALUES = ["true", "1", "t", "yes", "y"]
 DEFAULT_POSITIONALS_KEY = "command"
@@ -93,22 +94,11 @@ class BaseArgs(TypeWithDictRepr):
 class ColorArgs(object):
 
   def __init__(self, args: argparse.Namespace):
-    self.no_color: bool = args.no_color
-    self.use_color: bool = args.use_color
-
-  def should_use_color(self, default: bool = True) -> bool:
-    if self.use_color:
-      return True
-
-    if self.no_color:
-      return False
-
-    return default
+    self.color: bool = args.color if args.color is not None else is_output_to_terminal()
 
   @staticmethod
-  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
-    arg_parser.add_argument("--no-color", action=STORE_TRUE)
-    arg_parser.add_argument("--use-color", action=STORE_TRUE)
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default: bool = None) -> argparse.ArgumentParser:
+    arg_parser.add_argument("--color", action=argparse.BooleanOptionalAction, default=default)
     return arg_parser
 
 

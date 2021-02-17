@@ -5,6 +5,37 @@ from typing import List, Union
 from ltpylib import checks, strings
 
 
+def convert_keys_to_snake_case(
+  obj: Union[dict, list],
+  recursive: bool = False,
+) -> Union[dict, list]:
+  if isinstance(obj, list):
+    objs = obj
+  else:
+    objs = [obj]
+
+  for obj_dict in objs:
+    dict_items = list(obj_dict.items())
+    for key, val in dict_items:
+      key_snake_case = strings.to_snake_case(key)
+      if key != key_snake_case:
+        obj_dict[key_snake_case] = obj_dict.pop(key)
+
+      if recursive and isinstance(val, dict):
+        convert_keys_to_snake_case(
+          val,
+          recursive=recursive,
+        )
+      elif recursive and isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+        for inner_val in val:
+          convert_keys_to_snake_case(
+            inner_val,
+            recursive=recursive,
+          )
+
+  return obj
+
+
 def convert_string_values_to_correct_type(
   obj: Union[dict, list],
   convert_numbers: bool = True,

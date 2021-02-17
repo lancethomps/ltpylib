@@ -13,6 +13,9 @@ BOOLEAN_STRINGS_TRUE = frozenset([
   "y",
   "true",
 ])
+TO_SNAKE_CASE_REMOVE_REGEX = re.compile(r"[']")
+TO_SNAKE_CASE_REGEX = re.compile(r"[^a-zA-Z0-9]")
+MULTI_SPACE_REGEX = re.compile(r"\s+")
 
 
 def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, None]:
@@ -91,6 +94,19 @@ def substring_after(val: str, before_str: str) -> str:
 
 def substring_before(val: str, before_str: str) -> str:
   return val.split(before_str)[0]
+
+
+def to_snake_case(val: str) -> str:
+  return MULTI_SPACE_REGEX.sub(
+    " ",
+    TO_SNAKE_CASE_REGEX.sub(
+      " ",
+      TO_SNAKE_CASE_REMOVE_REGEX.sub(
+        "",
+        val.lower(),
+      ),
+    ),
+  ).strip().replace(" ", "_")
 
 
 def _main():
