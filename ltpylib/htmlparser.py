@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # pylint: disable=C0111
 
 from typing import Callable, Dict, List, Union

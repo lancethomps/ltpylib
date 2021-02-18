@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess
 from pathlib import Path
 from typing import List, Optional, Tuple, Union
