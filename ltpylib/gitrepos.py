@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from pathlib import Path
 from typing import List, Sequence
 
@@ -7,6 +7,17 @@ from ltpylib import files, filters
 FIND_REPOS_RECURSION_EXCLUDES = frozenset([
   'node_modules',
 ])
+
+
+def is_file_part_of_git_repo(file_path: Path) -> bool:
+  if file_path.is_dir() and file_path.joinpath(".git").is_dir():
+    return True
+
+  for parent_file in file_path.parents:
+    if parent_file.joinpath(".git").is_dir():
+      return True
+
+  return False
 
 
 def filter_invalid_repos(git_repos: List[Path]) -> List[Path]:
