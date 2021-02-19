@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
 
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Optional, Union
 
 from bs4 import BeautifulSoup
 
 StrConverter = Callable[[str], str]
 
 
+def create_parser(html: str) -> BeautifulSoup:
+  return BeautifulSoup(html, 'html5lib')
+
+
 def extract_text_from_html(html: str, selector: str) -> Union[str, None]:
-  soup = BeautifulSoup(html, 'html5lib')
+  soup = create_parser(html)
   selected: BeautifulSoup = soup.select_one(selector)
   if not selected:
     return
@@ -29,8 +33,8 @@ def parse_table(
   skip_headers: List[str] = None,
   val_converters: List[StrConverter] = None,
   row_data_predicate: Callable[[dict], bool] = None
-) -> List[dict]:
-  soup = BeautifulSoup(html, 'html5lib')
+) -> Optional[List[dict]]:
+  soup = create_parser(html)
   table: BeautifulSoup = soup.select_one(table_selector)
   if not table:
     return None
