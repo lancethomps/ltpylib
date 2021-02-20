@@ -4,6 +4,8 @@ import os
 
 from typing import List, Sequence, Union
 
+from ltpylib.common_types import TypeWithDictRepr
+
 
 def colorize_json(json_data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
   import pygments
@@ -59,10 +61,14 @@ def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
   return data_frame.to_csv(index=showindex)
 
 
-def dicts_to_markdown_table(data: List[dict], showindex: bool = False, tablefmt: str = "github") -> str:
+def dicts_to_markdown_table(data: Union[List[dict], List[TypeWithDictRepr]], showindex: bool = False, tablefmt: str = "github") -> str:
   import tabulate
 
   from pandas import DataFrame
+
+  if len(data) > 0 and isinstance(data[0], TypeWithDictRepr):
+    data_as_class: List[TypeWithDictRepr] = data
+    data = [val.as_dict() for val in data_as_class]
 
   data_frame = DataFrame(data)
   return tabulate.tabulate(

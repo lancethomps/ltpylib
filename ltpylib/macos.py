@@ -6,7 +6,7 @@ from ltpylib import inputs, procs
 
 
 def notify(message: str, title: str = "Terminal Notification", sound_name: str = "Ping", subtitle: str = ""):
-  message = message.replace('"', '\\"')
+  message = message.replace('"', '\\"').replace("\n", "\\n")
   title = title.replace('"', '\\"')
   sound_name = sound_name.replace('"', '\\"')
   subtitle = subtitle.replace('"', '\\"')

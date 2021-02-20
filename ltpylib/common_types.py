@@ -3,8 +3,11 @@
 
 class TypeWithDictRepr(object):
 
-  def __repr__(self):
+  def __repr__(self) -> str:
     return str(self.__dict__)
+
+  def as_dict(self) -> dict:
+    return dict(self.__dict__)
 
 
 class DataWithUnknownProperties(TypeWithDictRepr):
