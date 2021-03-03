@@ -22,3 +22,6 @@ test_cases:
 
 - input: "REGULAR Market Price"
   expected: regular_market_price
+
+- input: "averageDailyVolume10Day"
+  expected: average_daily_volume_10day
