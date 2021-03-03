@@ -14,17 +14,21 @@ class DataWithUnknownProperties(TypeWithDictRepr):
 
   def __init__(self, values: dict = None, skip_field_if_no_unknown: bool = False):
     if not skip_field_if_no_unknown or values:
-      self.unknownProperties: dict = values if values else None
+      self.unknown_properties: dict = values if values else None
 
 
 class DataWithUnknownPropertiesAsAttributes(DataWithUnknownProperties):
 
   def __init__(self, values: dict = None):
     if values:
-      self.hasUnknownProperties: bool = True
+      self._has_unknown_properties: bool = True
       for item in values.items():
         setattr(self, str(item[0]), item[1])
 
       values.clear()
 
     DataWithUnknownProperties.__init__(self, values=None, skip_field_if_no_unknown=True)
+
+  @property
+  def has_unknown_properties(self) -> bool:
+    return getattr(self, "_has_unknown_properties", False)

@@ -8,11 +8,11 @@ class TestDataWithUnknownProperties(unittest.TestCase):
 
   def test_DataWithUnknownProperties_empty(self):
     val = DataWithUnknownProperties(values={})
-    assert val.unknownProperties is None
+    self.assertIsNone(val.unknown_properties)
 
   def test_DataWithUnknownProperties_none(self):
     val = DataWithUnknownProperties(values=None)
-    assert val.unknownProperties is None
+    self.assertIsNone(val.unknown_properties)
 
   def test_DataWithUnknownProperties_some(self):
     values = {
@@ -20,7 +20,7 @@ class TestDataWithUnknownProperties(unittest.TestCase):
       "field_str": "abc",
     }
     val = DataWithUnknownProperties(values=values)
-    assert val.unknownProperties == values
+    self.assertDictEqual(val.unknown_properties, values)
 
 
 class TestDataWithUnknownPropertiesAsAttributes(unittest.TestCase):
@@ -31,20 +31,26 @@ class TestDataWithUnknownPropertiesAsAttributes(unittest.TestCase):
       "field_str": "abc",
     }
     val = DataWithUnknownPropertiesAsAttributes(values=values)
-    assert hasattr(val, "field_num")
-    assert getattr(val, "field_num") == 3
-    assert val.field_num == 3
 
-    assert hasattr(val, "field_str")
-    assert getattr(val, "field_str") == "abc"
-    assert val.field_str == "abc"
+    self.assertTrue(val.has_unknown_properties)
+    self.assertFalse(hasattr(val, "unknown_properties"))
+
+    self.assertTrue(hasattr(val, "field_num"))
+    self.assertEqual(getattr(val, "field_num"), 3)
+    self.assertEqual(val.field_num, 3)
+
+    self.assertTrue(hasattr(val, "field_str"))
+    self.assertEqual(getattr(val, "field_str"), "abc")
+    self.assertEqual(val.field_str, "abc")
 
   def test_DataWithUnknownPropertiesAsAttributes_none(self):
     val = DataWithUnknownPropertiesAsAttributes(values=None)
-    assert val is not None
+    self.assertFalse(val.has_unknown_properties)
+    self.assertFalse(hasattr(val, "unknown_properties"))
 
     val = DataWithUnknownPropertiesAsAttributes(values={})
-    assert val is not None
+    self.assertFalse(val.has_unknown_properties)
+    self.assertFalse(hasattr(val, "unknown_properties"))
 
 
 if __name__ == '__main__':
