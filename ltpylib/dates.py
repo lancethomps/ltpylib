@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from datetime import datetime
+from typing import Optional
 
 
 def from_millis(millis: int) -> datetime:
   return datetime.fromtimestamp(millis / 1000.0)
 
 
-def parse_iso_date(date_string: str) -> datetime:
+def parse_iso_date(date_string: str) -> Optional[datetime]:
   if not date_string:
     return None
 
@@ -16,6 +17,9 @@ def parse_iso_date(date_string: str) -> datetime:
 
 
 def parse_date(date_string: str, format: str = None) -> datetime:
+  if isinstance(date_string, datetime):
+    return date_string
+
   from dateutil import parser
 
   if not format:
