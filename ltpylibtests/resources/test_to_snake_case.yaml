@@ -8,13 +8,13 @@ test_cases:
 - input: "Forward Dividend & Yield"
   expected: forward_dividend_yield
 
-- input: Market Cap
+- input: "Market Cap"
   expected: market_cap
 
-- input: regularMarketPrice
+- input: "regularMarketPrice"
   expected: regular_market_price
 
-- input: RegularMarketPrice
+- input: "RegularMarketPrice"
   expected: regular_market_price
 
 - input: "Regular Market Price"
