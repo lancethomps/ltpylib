@@ -9,7 +9,7 @@ from ltpylib import files
 class TestFiles(unittest.TestCase):
 
   def test_read_file_n_lines(self):
-    test_file = Path(os.path.dirname(os.path.realpath(__file__))).joinpath("test_files_read_file_n_lines.txt")
+    test_file = Path(os.path.dirname(os.path.realpath(__file__))).joinpath("resources/test_files_read_file_n_lines.txt")
 
     assert files.read_file_n_lines(test_file, 1) == ["line1"]
     assert files.read_file_n_lines(test_file, 2) == ["line1", "line2"]
@@ -20,7 +20,7 @@ class TestFiles(unittest.TestCase):
     assert files.read_file_n_lines(test_file, -1) == ["line1", "line2", "line3", "", "line5"]
 
   def test_read_json_file(self):
-    test_file = Path(os.path.dirname(os.path.realpath(__file__))).joinpath("test_files_read_json_file.json")
+    test_file = Path(os.path.dirname(os.path.realpath(__file__))).joinpath("resources/test_files_read_json_file.json")
     parsed_json = files.read_json_file(test_file)
 
     assert parsed_json.get("field1") == "value1"

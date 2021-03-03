@@ -1,0 +1,24 @@
+test_cases:
+- input: "Beta (5Y Monthly)"
+  expected: beta_5y_monthly
+
+- input: "Day's Range"
+  expected: days_range
+
+- input: "Forward Dividend & Yield"
+  expected: forward_dividend_yield
+
+- input: Market Cap
+  expected: market_cap
+
+- input: regularMarketPrice
+  expected: regular_market_price
+
+- input: RegularMarketPrice
+  expected: regular_market_price
+
+- input: "Regular Market Price"
+  expected: regular_market_price
+
+- input: "REGULAR Market Price"
+  expected: regular_market_price
