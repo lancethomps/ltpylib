@@ -1,6 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, List, Optional, Tuple, Union
 
 
@@ -29,14 +30,30 @@ class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
       return "Command '%s' returned non-zero exit status %d.%s" % (self.cmd, self.returncode, stdout_and_stderr)
 
 
-def run(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
+def run(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = False,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  **kwargs,
+) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
   if 'stdout' not in kwargs:
     kwargs['stdout'] = subprocess.PIPE
   if 'stderr' not in kwargs:
     kwargs['stderr'] = subprocess.PIPE
 
-  result = subprocess.run(*popenargs, input=input, timeout=timeout, check=False, **kwargs)
+  result = subprocess.run(
+    *popenargs,
+    input=input,
+    timeout=timeout,
+    check=False,
+    cwd=cwd,
+    shell=shell,
+    **kwargs,
+  )
 
   if check:
     check_returncode_with_output(result)
@@ -44,20 +61,48 @@ def run(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[flo
   return result
 
 
-def run_with_regular_stdout(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> subprocess.CompletedProcess:
-  return run(*popenargs, input=input, timeout=timeout, check=check, stdout=sys.stdout, stderr=sys.stderr, **kwargs)
+def run_with_regular_stdout(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = False,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  **kwargs,
+) -> subprocess.CompletedProcess:
+  return run(
+    *popenargs,
+    input=input,
+    timeout=timeout,
+    check=check,
+    cwd=cwd,
+    shell=shell,
+    stdout=sys.stdout,
+    stderr=sys.stderr,
+    **kwargs,
+  )
 
 
-def run_and_parse_output(*popenargs, input: Union[bytes, str, None] = None, timeout: Optional[float] = None, check: bool = False, **kwargs) -> Tuple[int, str]:
+def run_and_parse_output(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = False,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  **kwargs,
+) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
-  kwargs['universal_newlines'] = True
-  if 'stderr' not in kwargs:
-    kwargs['stderr'] = subprocess.PIPE
 
-  result = subprocess.run(*popenargs, input=input, timeout=timeout, check=False, **kwargs)
-
-  if check:
-    check_returncode_with_output(result)
+  result = run(
+    *popenargs,
+    input=input,
+    timeout=timeout,
+    check=check,
+    cwd=cwd,
+    shell=shell,
+    **kwargs,
+  )
 
   return result.returncode, result.stdout
 

@@ -8,6 +8,7 @@ jira
 pandas
 psutil
 Pygments
+PyYAML
 python-dateutil
 requests
 semver

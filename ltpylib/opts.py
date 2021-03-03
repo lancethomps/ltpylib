@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import argparse
 import os
 from pathlib import Path
@@ -280,7 +280,7 @@ def check_command(cmd: str) -> bool:
   return shutil.which(cmd) is not None
 
 
-def log_args(args: BaseArgs, include_raw_args: bool = False, only_keys: List[str] = None, skip_keys: List[str] = None):
+def log_args(args: BaseArgs, include_raw_args: bool = True, only_keys: List[str] = None, skip_keys: List[str] = None):
   import logging
   from ltpylib.logs import log_sep
 

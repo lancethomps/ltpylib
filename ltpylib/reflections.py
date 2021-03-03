@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # pylint: disable=C0111
 import inspect
 from typing import ClassVar, List, Tuple

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 APPEND = "append"
 APPEND_CONST = "append_const"

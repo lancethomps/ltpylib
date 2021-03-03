@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import re
 from decimal import Decimal
-from typing import List, Union
+from typing import List, Match, Union
 
 BOOLEAN_STRINGS_FALSE = frozenset([
   "no",
@@ -13,9 +13,11 @@ BOOLEAN_STRINGS_TRUE = frozenset([
   "y",
   "true",
 ])
-TO_SNAKE_CASE_REMOVE_REGEX = re.compile(r"[']")
-TO_SNAKE_CASE_REGEX = re.compile(r"[^a-zA-Z0-9]")
+
+CAMEL_CASE_CAP_CHARS_REGEX = re.compile(r"(?<=[a-z])([A-Z0-9])|(?<=[^0-9])([A-Z])(?=[a-z])")
+CASE_CONVERSION_IGNORE_REGEX = re.compile(r"[']")
 MULTI_SPACE_REGEX = re.compile(r"\s+")
+NON_ALPHA_NUMERIC_REGEX = re.compile(r"[^a-zA-Z0-9]")
 
 
 def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, None]:
@@ -96,17 +98,18 @@ def substring_before(val: str, before_str: str) -> str:
   return val.split(before_str)[0]
 
 
+def _to_snake_case_replacer(match: Match) -> str:
+  return " " + "".join([val for val in match.group(1, 2) if val is not None])
+
+
 def to_snake_case(val: str) -> str:
-  return MULTI_SPACE_REGEX.sub(
-    " ",
-    TO_SNAKE_CASE_REGEX.sub(
-      " ",
-      TO_SNAKE_CASE_REMOVE_REGEX.sub(
-        "",
-        val.lower(),
-      ),
-    ),
-  ).strip().replace(" ", "_")
+  val = CASE_CONVERSION_IGNORE_REGEX.sub("", val)
+
+  val = NON_ALPHA_NUMERIC_REGEX.sub(" ", val)
+
+  val = CAMEL_CASE_CAP_CHARS_REGEX.sub(_to_snake_case_replacer, val)
+
+  return MULTI_SPACE_REGEX.sub("_", val.lower().strip())
 
 
 def _main():
