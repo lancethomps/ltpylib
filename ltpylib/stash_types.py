@@ -3,9 +3,8 @@ import argparse
 from enum import auto
 from typing import Dict, List
 
-from ltpylib import opts_actions
+from ltpylib import enums, opts_actions
 from ltpylib.common_types import DataWithUnknownProperties, TypeWithDictRepr
-from ltpylib.enums import EnumAutoName
 
 
 class DisplayIdAndId(object):
@@ -28,7 +27,7 @@ class PaginatedValues(object):
     self.start: int = values.pop("start", None)
 
 
-class PullRequestParticipantStatus(EnumAutoName):
+class PullRequestParticipantStatus(enums.EnumAutoName):
   APPROVED = auto()
   NEEDS_WORK = auto()
   UNAPPROVED = auto()
@@ -44,7 +43,7 @@ class PullRequestParticipantStatus(EnumAutoName):
       raise e
 
 
-class PullRequestRole(EnumAutoName):
+class PullRequestRole(enums.EnumAutoName):
   AUTHOR = auto()
   PARTICIPANT = auto()
   REVIEWER = auto()
@@ -60,7 +59,7 @@ class PullRequestRole(EnumAutoName):
       raise e
 
 
-class PullRequestState(EnumAutoName):
+class PullRequestState(enums.EnumAutoName):
   DECLINED = auto()
   MERGED = auto()
   OPEN = auto()

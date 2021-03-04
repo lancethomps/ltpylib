@@ -1,14 +1,32 @@
 #!/usr/bin/env python
 import logging
 from getpass import getpass, getuser
+from typing import Union
 
-from ltpylib import inputs, procs
+from ltpylib import enums, inputs, procs
 
 
-def notify(message: str, title: str = "Terminal Notification", sound_name: str = "Ping", subtitle: str = ""):
+class MacSoundsSystem(enums.EnumAutoName):
+  BASSO = "Basso"
+  BLOW = "Blow"
+  BOTTLE = "Bottle"
+  FROG = "Frog"
+  FUNK = "Funk"
+  GLASS = "Glass"
+  HERO = "Hero"
+  MORSE = "Morse"
+  PING = "Ping"
+  POP = "Pop"
+  PURR = "Purr"
+  SOSUMI = "Sosumi"
+  SUBMARINE = "Submarine"
+  TINK = "Tink"
+
+
+def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
   message = message.replace('"', '\\"').replace("\n", "\\n")
   title = title.replace('"', '\\"')
-  sound_name = sound_name.replace('"', '\\"')
+  sound_name = (sound_name.name if isinstance(sound_name, MacSoundsSystem) else sound_name).replace('"', '\\"')
   subtitle = subtitle.replace('"', '\\"')
 
   js_function = f"""

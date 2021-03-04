@@ -2,7 +2,7 @@
 import argparse
 import os
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence
+from typing import Callable, List, Optional, Sequence, Union
 
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
@@ -223,11 +223,16 @@ def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]
   return args
 
 
-def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args_and_init_others(
+  arg_parser: argparse.ArgumentParser,
+  argv: Optional[Sequence[str]] = None,
+  log_level: Union[str, int] = None,
+  log_format: str = None,
+) -> argparse.Namespace:
   from ltpylib.logs import init_logging
 
   args = parse_args(arg_parser, argv=argv)
-  init_logging(args=args)
+  init_logging(args=args, log_level=log_level, log_format=log_format)
   return args
 
 
