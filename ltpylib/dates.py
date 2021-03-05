@@ -1,6 +1,25 @@
 #!/usr/bin/env python
-from datetime import datetime
+from datetime import datetime, tzinfo
 from typing import Optional
+
+import pytz
+
+
+def add_timezone_if_missing(date: datetime, tz: tzinfo) -> datetime:
+  if date.tzinfo is not None:
+    return date
+
+  return date.astimezone(tz)
+
+
+def as_local_timezone(date: datetime) -> datetime:
+  from dateutil import tz
+
+  return date.astimezone(tz.tzlocal())
+
+
+def as_pacific_time(date: datetime) -> datetime:
+  return date.astimezone(pytz.timezone("US/Pacific"))
 
 
 def from_millis(millis: int) -> datetime:
@@ -47,6 +66,10 @@ def to_json_isoformat(date: datetime) -> str:
 
 def to_json_isoformat_friendly(date: datetime) -> str:
   return date.isoformat(sep=" ", timespec="auto")
+
+
+def to_hhMMss_ampm(date: datetime) -> str:
+  return date.strftime("%I:%M:%S %p")
 
 
 def add(
