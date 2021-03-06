@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import json
 import os
-
 from typing import List, Sequence, Union
 
 from ltpylib.common_types import TypeWithDictRepr
@@ -27,6 +26,10 @@ def is_output_to_terminal() -> bool:
   import sys
 
   return sys.stdout.isatty()
+
+
+def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, colorize=is_output_to_terminal())
 
 
 def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
