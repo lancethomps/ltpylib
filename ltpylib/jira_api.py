@@ -20,11 +20,17 @@ ISSUE_FIELD_SPRINT_RAW: str = "sprintRaw"
 
 class JiraApi(object):
 
-  def __init__(self, api: JIRA = None, url: str = None, auth: Tuple[str, str] = None):
+  def __init__(
+    self,
+    api: JIRA = None,
+    url: str = None,
+    auth: Tuple[str, str] = None,
+    basic_auth: Tuple[str, str] = None,
+  ):
     if api is not None:
       self.api: JIRA = api
-    elif url is not None and auth is not None:
-      self.api: JIRA = JIRA(url, auth=auth)
+    elif url is not None and (auth is not None or basic_auth is not None):
+      self.api: JIRA = JIRA(url, auth=auth, basic_auth=basic_auth)
     else:
       raise Exception("Must be initialized with 'api: JIRA' instance or both 'url' and 'auth'")
 
@@ -122,9 +128,9 @@ class JiraApi(object):
       result = self.issue(issue_key)
 
       if markdown:
-        summary: str = "[%s](https://jira.wlth.fr/browse/%s) `%s`" % (result.key, result.key, result.summary)
+        summary: str = "[%s](%s/browse/%s) `%s`" % (self.url, result.key, result.key, result.summary)
       elif link:
-        summary: str = "https://jira.wlth.fr/browse/%s %s" % (result.key, result.summary)
+        summary: str = "%s/browse/%s %s" % (self.url, result.key, result.summary)
       else:
         summary: str = "%s %s" % (result.key, result.summary)
 
@@ -205,8 +211,12 @@ class JiraApi(object):
         if key in skip_fields or orig_key in skip_fields:
           continue
         elif key == "sprint":
-          sprints: List[str] = val
-          val = [re.match(r".*,name=(.*?),.*", sprint).group(1).replace("Money Movement - 2019", "MM - 2019").replace("Money Movement 2019", "MM - 2019") for sprint in sprints]
+          sprints: List[Union[str, dict]] = val
+          if isinstance(sprints[0], str):
+            val = [re.match(r".*,name=(.*?),.*", sprint).group(1) for sprint in sprints]
+          else:
+            val = [sprint.get("name") for sprint in sprints]
+
           if ISSUE_FIELD_SPRINT_RAW not in skip_fields:
             updated_value[ISSUE_FIELD_SPRINT_RAW] = sprints
           if ISSUE_FIELD_SPRINT_FINAL not in skip_fields:
@@ -245,3 +255,7 @@ class JiraApi(object):
             convert_value[field] = "\n".join(convert_value.get(field))
 
     return result
+
+  @property
+  def url(self):
+    return self.api._options["server"]

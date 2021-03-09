@@ -497,6 +497,7 @@ class ScriptArgPullRequest(TypeWithDictRepr):
     project: str = None,
     repo: str = None,
     pr_id: int = None,
+    stash_url: str = None,
   ):
     self.url: str = url
     self.project: str = project
@@ -529,7 +530,10 @@ class ScriptArgPullRequest(TypeWithDictRepr):
         else:
           self.project_type = "projects"
 
-        self.url = ("https://stash.wlth.fr/projects/%s/repos/%s/pull-requests/%s/overview" % (self.project, self.repo, self.pr_id))
+        if stash_url.endswith("/"):
+          stash_url = stash_url[:-1]
+
+        self.url = ("%s/projects/%s/repos/%s/pull-requests/%s/overview" % (stash_url, self.project, self.repo, self.pr_id))
       else:
         raise ValueError("Either the URL (via --url) or project/repo/id (via --project/--repo/--id) arguments must be specified.")
 
