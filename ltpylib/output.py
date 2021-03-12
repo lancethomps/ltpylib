@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import List, Sequence, Union
+from typing import Any, List, Sequence, Union
 
 from ltpylib.common_types import TypeWithDictRepr
 
@@ -28,6 +28,13 @@ def is_output_to_terminal() -> bool:
   return sys.stdout.isatty()
 
 
+def json_dump_default(val: Any) -> Any:
+  if hasattr(val, "to_dict"):
+    return getattr(val, "to_dict")()
+
+  return getattr(val, '__dict__', str(val))
+
+
 def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
   return prettify_json(obj, remove_nulls=remove_nulls, colorize=is_output_to_terminal())
 
@@ -44,7 +51,7 @@ def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> st
     obj,
     sort_keys=True,
     indent='  ',
-    default=lambda x: getattr(x, '__dict__', str(x)),
+    default=json_dump_default,
   )
 
   if colorize:
