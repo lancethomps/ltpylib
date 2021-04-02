@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-import decimal
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_DOWN
 from typing import Union
 
 
-def convert_decimal_precision(val: Union[Decimal, float, str], precision: int, rounding: str = decimal.ROUND_HALF_DOWN) -> Decimal:
+def convert_decimal_precision(val: Union[Decimal, float, str], precision: int, rounding: str = ROUND_HALF_DOWN) -> Decimal:
   if precision == 0:
     exp = Decimal("1")
   else:
