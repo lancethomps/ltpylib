@@ -64,11 +64,14 @@ def init_logging(
   else:
     log_level = DEFAULT_LOG_LEVEL
 
+  log_config_kwargs = {
+    "style": DEFAULT_LOG_STYLE,
+    "handlers": [StdoutStreamHandler()],
+  }
   logging.basicConfig(
     level=log_level,
-    style=DEFAULT_LOG_STYLE,
-    format=(log_format if log_format else DEFAULT_LOG_FORMAT),
-    handlers=[StdoutStreamHandler()],
+    format=log_format if log_format else DEFAULT_LOG_FORMAT,
+    **log_config_kwargs,
   )
 
 
