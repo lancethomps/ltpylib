@@ -3,7 +3,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import List, Sequence, Pattern, Match, Callable, Union
+from typing import Callable, List, Match, Pattern, Sequence, Union
 
 from ltpylib import files, logs
 
@@ -20,7 +20,8 @@ def replace_templates_in_files(
   candidate_files_globs: List[str] = DEFAULT_CANDIDATE_FILES_GLOBS,
   template_files_globs: List[str] = DEFAULT_TEMPLATE_FILES_GLOBS,
   debug_mode: bool = False,
-  force_replace: bool = False
+  force_replace: bool = False,
+  match_leading_whitespace: bool = False,
 ) -> bool:
   candidate_files: List[Path] = files.filter_files_with_matching_line(
     files.list_files(candidate_files_dir, candidate_files_globs),
@@ -41,12 +42,24 @@ def replace_templates_in_files(
   logs.log_with_title_sep(logging.DEBUG, 'Template Files', '\n'.join([file.absolute().as_posix() for file in template_files]))
 
   for template_file in template_files:
-    replace_template(candidate_files, template_file, debug_mode=debug_mode, force_replace=force_replace)
+    replace_template(
+      candidate_files,
+      template_file,
+      debug_mode=debug_mode,
+      force_replace=force_replace,
+      match_leading_whitespace=match_leading_whitespace,
+    )
 
   return True
 
 
-def replace_template(candidate_files: List[Path], template_file: Path, debug_mode: bool = False, force_replace: bool = False):
+def replace_template(
+  candidate_files: List[Path],
+  template_file: Path,
+  debug_mode: bool = False,
+  force_replace: bool = False,
+  match_leading_whitespace: bool = False,
+):
   template_file_content: str = files.read_file(template_file)
 
   lines = []
@@ -85,6 +98,21 @@ def replace_template(candidate_files: List[Path], template_file: Path, debug_mod
         repl_string += groups.get("end")
 
       return repl_string
+
+    replacement = repl
+  elif match_leading_whitespace:
+    replacement_leading_spaces = len(lines[0]) - len(lines[0].lstrip())
+
+    def repl(match: re.Match) -> str:
+      matched_string = match.group()
+      first_line = matched_string.splitlines()[0]
+      match_leading_spaces = len(first_line) - len(first_line.lstrip())
+      if match_leading_spaces != replacement_leading_spaces:
+        replacement_spaces_regex = "^ {" + str(replacement_leading_spaces) + "}"
+        replacement_spaces_replacement = " " * match_leading_spaces
+        return re.sub(replacement_spaces_regex, replacement_spaces_replacement, replacement_str, flags=re.MULTILINE)
+
+      return replacement_str
 
     replacement = repl
 
