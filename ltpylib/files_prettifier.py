@@ -37,8 +37,9 @@ def prettify_html_file(
   debug_mode: bool = False,
   verbose: bool = False,
 ):
+  tidy_executable = "/usr/bin/tidy" if Path("/usr/bin/tidy").exists() else "tidy"
   tidy_args = [
-    "tidy",
+    tidy_executable,
     "-icm",
     "-wrap",
     "200",
