@@ -112,6 +112,13 @@ def to_snake_case(val: str) -> str:
   return MULTI_SPACE_REGEX.sub("_", val.lower().strip())
 
 
+def truncate_if_needed(val: str, max_length: int, include_ellipsis: bool = True) -> str:
+  if val and len(val) > max_length:
+    return (val[:max_length] + "..") if include_ellipsis else val[:max_length]
+
+  return val
+
+
 def _main():
   import sys
 
