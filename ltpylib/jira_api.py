@@ -1,18 +1,22 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
+import jira.resources
 import re
-from typing import Dict, List, Tuple, Union
-
 from jira import JIRA
 from requests import Session
+from typing import Dict, List, Tuple, Union
 
-from ltpylib import strconverters
+from ltpylib import inputs, strconverters, strings
 from ltpylib.collect import EMPTY_LIST, EMPTY_MAP, to_csv
-from ltpylib.jira_api_types import Issue, IssueSearchResult
+from ltpylib.jira_api_types import Issue, IssueSearchResult, Sprint, SprintReport, SprintState, VelocityReport
+
+OPTION_AGILE_REST_PATH = "agile_rest_path"
 
 JIRA_API_SEARCH: str = "/rest/api/2/search"
 JIRA_API_SPRINTS: str = "/rest/greenhopper/latest/sprintquery/225?includeFutureSprints=true"
 JIRA_API_EPICS: str = "/rest/greenhopper/latest/xboard/plan/backlog/epics"
+JIRA_API_SPRINT_REPORT: str = "/rest/greenhopper/1.0/rapid/charts/sprintreport"
+JIRA_API_VELOCITY_REPORT: str = "/rest/greenhopper/1.0/rapid/charts/velocity.json"
 
 ISSUE_FIELD_SPRINT_FINAL: str = "sprintFinal"
 ISSUE_FIELD_SPRINT_RAW: str = "sprintRaw"
@@ -30,12 +34,30 @@ class JiraApi(object):
     if api is not None:
       self.api: JIRA = api
     elif url is not None and (auth is not None or basic_auth is not None):
-      self.api: JIRA = JIRA(url, auth=auth, basic_auth=basic_auth)
+      self.api: JIRA = JIRA(
+        url,
+        auth=auth,
+        basic_auth=basic_auth,
+        options={
+          OPTION_AGILE_REST_PATH: jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
+        },
+      )
     else:
       raise Exception("Must be initialized with 'api: JIRA' instance or both 'url' and 'auth'")
 
   def get_session(self) -> Session:
     return self.api._session
+
+  def board_id(self, board_id_or_name: Union[str, int]) -> int:
+    if isinstance(board_id_or_name, int) or board_id_or_name.isdigit():
+      return int(board_id_or_name)
+
+    boards = self.api.boards(maxResults=0)
+    for maybe_board in boards:
+      if maybe_board.id == board_id_or_name or maybe_board.name == board_id_or_name:
+        return int(maybe_board.id)
+
+    raise Exception("Could not find board=%s, choices below:\n%s" % (board_id_or_name, "\n".join(["%s (%s)" % (board.id, board.name) for board in boards])))
 
   def epics(self, board_id: int) -> dict:
     return self.get_session().get(self.api.client_info() + JIRA_API_EPICS + "?rapidViewId=" + str(board_id)).json()
@@ -61,46 +83,6 @@ class JiraApi(object):
           fields=to_csv(fields),
           expand=JiraApi.expand_with_names(expand),
         ).raw,
-        no_convert=no_convert,
-        convert_single_value_arrays=convert_single_value_arrays,
-        create_new_result=create_new_result,
-        skip_fields=skip_fields,
-        dict_field_to_inner_field=dict_field_to_inner_field,
-        join_array_fields=join_array_fields,
-        date_fields=date_fields
-      )
-    )
-
-  def search_issues(
-    self,
-    jql: str,
-    start_at: int = 0,
-    max_results: int = 50,
-    validate_query: bool = True,
-    fields: List[str] = None,
-    expand: List[str] = None,
-    json_result: bool = True,
-    # parse response config
-    no_convert: bool = False,
-    convert_single_value_arrays: bool = False,
-    create_new_result: bool = False,
-    skip_fields: List[str] = EMPTY_LIST,
-    dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
-    join_array_fields: List[str] = EMPTY_LIST,
-    date_fields: List[str] = EMPTY_LIST
-  ) -> IssueSearchResult:
-    return IssueSearchResult(
-      values=JiraApi.parse_api_response_with_names(
-        self.api.search_issues(
-          jql,
-          startAt=start_at,
-          maxResults=max_results,
-          validate_query=validate_query,
-          fields=to_csv(fields),
-          expand=JiraApi.expand_with_names(expand),
-          json_result=json_result,
-        ),
-        "issues",
         no_convert=no_convert,
         convert_single_value_arrays=convert_single_value_arrays,
         create_new_result=create_new_result,
@@ -137,6 +119,229 @@ class JiraApi(object):
       summaries.append(summary)
 
     return summaries
+
+  def search_issues(
+    self,
+    jql_or_filter_id: Union[str, int],
+    start_at: int = 0,
+    max_results: Union[int, bool] = 50,
+    validate_query: bool = True,
+    fields: List[str] = None,
+    expand: List[str] = None,
+    json_result: bool = True,
+    # parse response config
+    no_convert: bool = False,
+    convert_single_value_arrays: bool = False,
+    create_new_result: bool = False,
+    skip_fields: List[str] = EMPTY_LIST,
+    dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
+    join_array_fields: List[str] = EMPTY_LIST,
+    date_fields: List[str] = EMPTY_LIST
+  ) -> IssueSearchResult:
+    if isinstance(jql_or_filter_id, int) or jql_or_filter_id.isdigit():
+      jira_filter: jira.resources.Filter = self.api.filter(jql_or_filter_id)
+      jql: str = jira_filter.jql
+    else:
+      jql: str = jql_or_filter_id
+
+    return IssueSearchResult(
+      values=JiraApi.parse_api_response_with_names(
+        self.api.search_issues(
+          jql,
+          startAt=start_at,
+          maxResults=max_results,
+          validate_query=validate_query,
+          fields=to_csv(fields),
+          expand=JiraApi.expand_with_names(expand),
+          json_result=json_result,
+        ),
+        "issues",
+        no_convert=no_convert,
+        convert_single_value_arrays=convert_single_value_arrays,
+        create_new_result=create_new_result,
+        skip_fields=skip_fields,
+        dict_field_to_inner_field=dict_field_to_inner_field,
+        join_array_fields=join_array_fields,
+        date_fields=date_fields
+      )
+    )
+
+  def sprint_id(
+    self,
+    sprint_id_or_name: Union[str, int],
+    board_id: int,
+    allow_select_sprint: bool = True,
+    find_active_sprint: bool = False,
+    find_first_future_sprint: bool = False,
+    include_closed_sprints: bool = False,
+  ) -> int:
+    if not sprint_id_or_name:
+      if not allow_select_sprint:
+        raise ValueError("sprint_id_or_name is None and allow_select_sprint=False")
+
+      return self.sprint_selection(
+        board_id,
+        find_active_sprint=find_active_sprint,
+        find_first_future_sprint=find_first_future_sprint,
+        include_closed_sprints=include_closed_sprints,
+      )
+
+    if isinstance(sprint_id_or_name, int) or sprint_id_or_name.isdigit():
+      return int(sprint_id_or_name)
+
+    sprints = self.api.sprints(board_id)
+    for maybe_sprint in sprints:
+      if maybe_sprint.id == sprint_id_or_name or maybe_sprint.name == sprint_id_or_name:
+        return int(maybe_sprint.id)
+
+    raise Exception("Could not find sprint=%s, choices below:\n%s" % (sprint_id_or_name, "\n".join(JiraApi.create_sprint_choices(sprints))))
+
+  def sprint_issues(
+    self,
+    board_id_or_name: Union[str, int],
+    sprint_id_or_name: Union[str, int] = None,
+    find_active_sprint: bool = False,
+    find_first_future_sprint: bool = False,
+    include_closed_sprints: bool = False,
+    add_filters: List[str] = None,
+    include_placeholder: bool = False,
+    include_sub_tasks: bool = False,
+    unassigned: bool = False,
+    unestimated: bool = False,
+    fields: List[str] = None,
+    max_results: int = 500,
+  ) -> IssueSearchResult:
+    board_id = self.board_id(board_id_or_name)
+    sprint_id = self.sprint_id(
+      sprint_id_or_name,
+      board_id,
+      allow_select_sprint=True,
+      find_active_sprint=find_active_sprint,
+      find_first_future_sprint=find_first_future_sprint,
+      include_closed_sprints=include_closed_sprints,
+    )
+
+    add_filters = " ".join(
+      JiraApi.create_filters(
+        add_filters=add_filters,
+        include_placeholder=include_placeholder,
+        include_sub_tasks=include_sub_tasks,
+        unassigned=unassigned,
+        unestimated=unestimated,
+      )
+    )
+
+    jql = "Sprint = %s %s ORDER BY updated DESC" % (sprint_id, add_filters)
+
+    return self.search_issues(jql, max_results=max_results, fields=fields)
+
+  def sprint_report(
+    self,
+    board_id: int,
+    sprint_id: int,
+  ) -> SprintReport:
+    url = self.api.client_info() + JIRA_API_SPRINT_REPORT + "?rapidViewId=%s&sprintId=%s" % (board_id, sprint_id)
+    return SprintReport(self.get_session().get(url).json())
+
+  def sprint_selection(
+    self,
+    board_id: int,
+    find_active_sprint: bool = False,
+    find_first_future_sprint: bool = False,
+    include_closed_sprints: bool = False,
+    include_closed_sprints_count: int = 2,
+  ) -> int:
+    sprints = self.sprints(
+      board_id,
+      include_closed_sprints=include_closed_sprints,
+      include_closed_sprints_count=include_closed_sprints_count,
+    )
+    choices = JiraApi.create_sprint_choices(sprints)
+
+    if find_active_sprint:
+      for sprint in sprints:
+        if sprint.state == "ACTIVE":
+          return int(sprint.id)
+
+      raise Exception("No ACTIVE sprint found in sprints below:\n%s" % "\n".join(choices))
+    elif find_first_future_sprint:
+      for sprint in sprints:
+        if sprint.state == "FUTURE":
+          return int(sprint.id)
+
+      raise Exception("No FUTURE sprint found in sprints below:\n%s" % "\n".join(choices))
+
+    choice = inputs.select_prompt(choices)
+    return int(strings.substring_before(choice, " ("))
+
+  def sprints(
+    self,
+    board_id: int,
+    include_closed_sprints: bool = True,
+    include_closed_sprints_count: int = None,
+  ) -> List[Sprint]:
+    if self.using_greenhopper():
+      state = None
+    else:
+      sprint_states = ["active", "future"]
+      if include_closed_sprints:
+        sprint_states.append("closed")
+      state = ",".join(sprint_states)
+
+    sprints: List[Sprint] = [Sprint(sprint.raw) for sprint in self.api.sprints(board_id, state=state)]
+    if not include_closed_sprints:
+      sprints = [sprint for sprint in sprints if sprint.state != SprintState.CLOSED]
+    elif include_closed_sprints_count is not None and include_closed_sprints_count > 0:
+      closed_sprints: List[Sprint] = [sprint for sprint in sprints if sprint.state == SprintState.CLOSED]
+      other_sprints: List[Sprint] = [sprint for sprint in sprints if sprint.state != SprintState.CLOSED]
+      closed_sprints = sorted(closed_sprints, key=lambda spr: spr.endDate, reverse=True)[:include_closed_sprints_count]
+      sprints = sorted(other_sprints + closed_sprints, key=lambda spr: spr.id)
+
+    return sprints
+
+  def using_greenhopper(self) -> bool:
+    return self.api._options[OPTION_AGILE_REST_PATH] == jira.resources.GreenHopperResource.GREENHOPPER_REST_PATH
+
+  def velocity_report(
+    self,
+    board_id: int,
+  ) -> VelocityReport:
+    url = self.api.client_info() + JIRA_API_VELOCITY_REPORT + "?rapidViewId=%s" % (board_id)
+    return VelocityReport(self.get_session().get(url).json())
+
+  @staticmethod
+  def create_filters(
+    add_filters: List[str] = None,
+    include_placeholder: bool = False,
+    include_sub_tasks: bool = False,
+    unassigned: bool = False,
+    unestimated: bool = False,
+  ) -> List[str]:
+    filters: List[str] = []
+    if add_filters:
+      filters.extend(add_filters)
+
+    if not include_placeholder:
+      filters.append("AND (labels IS EMPTY OR labels NOT IN (placeholder))")
+
+    if not include_sub_tasks:
+      filters.append("AND type NOT IN (Sub-task)")
+
+    if unassigned:
+      filters.append("AND assignee IS NULL")
+
+    if unestimated:
+      filters.append("AND \"Story Points\" IS NULL")
+
+    return filters
+
+  @staticmethod
+  def create_issues_display(issues: List[Issue], fields: List[str]) -> List[str]:
+    return sorted([" ".join([getattr(issue, field) for field in fields]) for issue in issues])
+
+  @staticmethod
+  def create_sprint_choices(sprints: List[Sprint]) -> List[str]:
+    return [('%s (%s): %s' % (sprint.id, sprint.state.name, sprint.name)) for sprint in sprints]
 
   @staticmethod
   def expand_with_names(expand: List[str]) -> str:

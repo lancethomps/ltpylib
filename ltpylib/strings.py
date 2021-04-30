@@ -20,6 +20,11 @@ MULTI_SPACE_REGEX = re.compile(r"\s+")
 NON_ALPHA_NUMERIC_REGEX = re.compile(r"[^a-zA-Z0-9]")
 
 
+def camel_case_to_title_case(val: str):
+  val = val[:1].upper() + val[1:]
+  return " ".join(re.findall(r'[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))', val))
+
+
 def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, None]:
   if val is None:
     return None

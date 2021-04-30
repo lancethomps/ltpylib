@@ -64,6 +64,21 @@ def prettify_json_remove_nulls(obj) -> str:
   return prettify_json(obj, remove_nulls=True)
 
 
+def prettify_yaml(obj, remove_nulls: bool = False) -> str:
+  import yaml
+
+  obj = json.loads(prettify_json(
+    obj,
+    remove_nulls=remove_nulls,
+    colorize=False,
+  ))
+
+  return yaml.dump(
+    obj,
+    default_flow_style=False,
+  )
+
+
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
   from pandas import DataFrame
 
