@@ -1,8 +1,7 @@
 #!/usr/bin/env python
+import pytz
 from datetime import datetime, tzinfo
 from typing import Optional
-
-import pytz
 
 
 def add_timezone_if_missing(date: datetime, tz: tzinfo) -> datetime:
@@ -24,6 +23,12 @@ def as_pacific_time(date: datetime) -> datetime:
 
 def from_millis(millis: int) -> datetime:
   return datetime.fromtimestamp(millis / 1000.0)
+
+
+def is_last_day_of_month(date: datetime) -> datetime:
+  import calendar
+
+  return calendar.monthrange(date.year, date.month)[1] == date.day
 
 
 def parse_iso_date(date_string: str) -> Optional[datetime]:
