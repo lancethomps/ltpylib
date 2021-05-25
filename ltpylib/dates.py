@@ -35,15 +35,19 @@ def parse_iso_date(date_string: str) -> Optional[datetime]:
   return parser.isoparse(date_string)
 
 
-def parse_date(date_string: str, format: str = None) -> datetime:
+def parse_date(date_string: str, date_format: str = None) -> Optional[datetime]:
+  if not date_string:
+    return None
+
   if isinstance(date_string, datetime):
     return date_string
 
   from dateutil import parser
 
-  if not format:
+  if not date_format:
     return parser.parse(date_string)
-  return datetime.strptime(date_string, format)
+
+  return datetime.strptime(date_string, date_format)
 
 
 def parse_possibly_relative_date(date_string: str) -> datetime:

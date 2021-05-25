@@ -10,7 +10,7 @@ from ltpylib import files, procs
 
 def prettify(
   files_to_prettify: Union[Path, List[Path]],
-  type: str = None,
+  file_type: str = None,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
@@ -18,14 +18,14 @@ def prettify(
     files_to_prettify = [files_to_prettify]
 
   for file in files_to_prettify:
-    if type:
-      file_type = type
+    if file_type:
+      single_file_type = file_type
     else:
-      file_type = file.suffix[1:]
+      single_file_type = file.suffix[1:]
 
-    func_for_type = globals()["prettify_" + file_type + "_file"]
+    func_for_type = globals()["prettify_" + single_file_type + "_file"]
     if not callable(func_for_type):
-      raise ValueError("Unsupported file type: file=%s type=%s" % (file.as_posix(), file_type))
+      raise ValueError("Unsupported file type: file=%s type=%s" % (file.as_posix(), single_file_type))
 
     func_for_type(file, debug_mode=debug_mode, verbose=verbose)
     if verbose:

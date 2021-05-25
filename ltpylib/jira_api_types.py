@@ -8,6 +8,10 @@ from ltpylib import dates, enums
 from ltpylib.common_types import DataWithUnknownPropertiesAsAttributes
 
 
+def in_values_and_valid_date(values: dict, key: str) -> bool:
+  return key in values and values.get(key) != "None"
+
+
 class IdAndSelf(object):
 
   def __init__(self, values: dict = None):
@@ -287,15 +291,15 @@ class Sprint(IdAndSelf, DataWithUnknownPropertiesAsAttributes):
     values = values if values is not None else {}
 
     self.canUpdateSprint: bool = values.pop("canUpdateSprint", None)
-    self.completeDate: datetime = dates.parse_date(values.pop("completeDate")) if "completeDate" in values else None
+    self.completeDate: datetime = dates.parse_date(values.pop("completeDate")) if in_values_and_valid_date(values, "completeDate") else None
     self.daysRemaining: int = int(values.pop("daysRemaining")) if "daysRemaining" in values else None
-    self.endDate: datetime = dates.parse_date(values.pop("endDate")) if "endDate" in values else None
+    self.endDate: datetime = dates.parse_date(values.pop("endDate")) if in_values_and_valid_date(values, "endDate") else None
     self.goal: str = values.pop("goal", None)
     self.linkedPagesCount: int = int(values.pop("linkedPagesCount")) if "linkedPagesCount" in values else None
     self.name: str = values.pop("name", None)
     self.originBoardId: int = int(values.pop("originBoardId")) if "originBoardId" in values else None
     self.sequence: int = int(values.pop("sequence")) if "sequence" in values else None
-    self.startDate: datetime = dates.parse_date(values.pop("startDate")) if "startDate" in values else None
+    self.startDate: datetime = dates.parse_date(values.pop("startDate")) if in_values_and_valid_date(values, "startDate") else None
     self.state: SprintState = SprintState.from_string(values.pop("state")) if "state" in values else None
 
     IdAndSelf.__init__(self, values)
