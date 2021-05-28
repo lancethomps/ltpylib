@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
-import jira.resources
 import re
+from typing import Dict, List, Tuple, Union
+
+import jira.resources
 from jira import JIRA
 from requests import Session
-from typing import Dict, List, Tuple, Union
 
 from ltpylib import inputs, strconverters, strings
 from ltpylib.collect import EMPTY_LIST, EMPTY_MAP, to_csv
@@ -136,7 +137,7 @@ class JiraApi(object):
     skip_fields: List[str] = EMPTY_LIST,
     dict_field_to_inner_field: Dict[str, str] = EMPTY_MAP,
     join_array_fields: List[str] = EMPTY_LIST,
-    date_fields: List[str] = EMPTY_LIST
+    date_fields: List[str] = EMPTY_LIST,
   ) -> IssueSearchResult:
     if isinstance(jql_or_filter_id, int) or jql_or_filter_id.isdigit():
       jira_filter: jira.resources.Filter = self.api.filter(jql_or_filter_id)
@@ -144,15 +145,25 @@ class JiraApi(object):
     else:
       jql: str = jql_or_filter_id
 
-    return IssueSearchResult(
+    get_all = isinstance(max_results, bool) and not max_results
+    if json_result:
+      check_for_more = get_all or max_results > 100
+      max_results_param = 100 if check_for_more else max_results
+    else:
+      check_for_more = False
+      max_results_param = max_results
+
+    fields_csv = to_csv(fields)
+    expanded_with_names = JiraApi.expand_with_names(expand)
+    result = IssueSearchResult(
       values=JiraApi.parse_api_response_with_names(
         self.api.search_issues(
           jql,
           startAt=start_at,
-          maxResults=max_results,
+          maxResults=max_results_param,
           validate_query=validate_query,
-          fields=to_csv(fields),
-          expand=JiraApi.expand_with_names(expand),
+          fields=fields_csv,
+          expand=expanded_with_names,
           json_result=json_result,
         ),
         "issues",
@@ -165,6 +176,38 @@ class JiraApi(object):
         date_fields=date_fields
       )
     )
+
+    if check_for_more:
+      last_result = result
+
+      while last_result.issues and len(result.issues) < result.total and (get_all or len(result.issues) < max_results):
+        more_start_at = last_result.startAt + last_result.maxResults
+
+        last_result = IssueSearchResult(
+          values=JiraApi.parse_api_response_with_names(
+            self.api.search_issues(
+              jql,
+              startAt=more_start_at,
+              maxResults=max_results_param,
+              validate_query=validate_query,
+              fields=fields_csv,
+              expand=expanded_with_names,
+              json_result=json_result,
+            ),
+            "issues",
+            no_convert=no_convert,
+            convert_single_value_arrays=convert_single_value_arrays,
+            create_new_result=create_new_result,
+            skip_fields=skip_fields,
+            dict_field_to_inner_field=dict_field_to_inner_field,
+            join_array_fields=join_array_fields,
+            date_fields=date_fields
+          )
+        )
+
+        result.issues.extend(last_result.issues)
+
+    return result
 
   def sprint_id(
     self,
