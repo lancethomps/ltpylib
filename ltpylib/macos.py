@@ -1,9 +1,16 @@
 #!/usr/bin/env python
 import logging
+import os.path
 from getpass import getpass, getuser
+from pathlib import Path
 from typing import Union
 
 from ltpylib import enums, inputs, procs
+
+MAC_SOUND_DIRS = [
+  "/System/Library/Sounds",
+  "~/Library/Sounds",
+]
 
 
 class MacSoundsSystem(enums.EnumAutoName):
@@ -57,6 +64,28 @@ def pbcopy(val: str):
     input=val,
     check=True,
   )
+
+
+def find_sound_file(sound: Union[MacSoundsSystem, str]):
+  sound_name = (sound.name if isinstance(sound, MacSoundsSystem) else sound)
+  for sounds_dir in MAC_SOUND_DIRS:
+    for file_ext in ["", ".aiff"]:
+      sound_file = Path(os.path.expanduser(sounds_dir)).joinpath(sound_name + file_ext)
+      if sound_file.is_file():
+        return sound_file
+
+  if isinstance(sound, MacSoundsSystem):
+    raise ValueError("sound file not found for: %s" % sound)
+
+  sound_file = Path(os.path.expanduser(sound_name))
+  if sound_file.is_file():
+    return sound_file
+
+  raise ValueError("sound file not found for: %s" % sound)
+
+
+def play_sound(sound: Union[MacSoundsSystem, str]):
+  procs.run_with_regular_stdout(["afplay", find_sound_file(sound).as_posix()], check=True)
 
 
 def add_generic_password(label: str, pw: str, account: str = None) -> bool:
