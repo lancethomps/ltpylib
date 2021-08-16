@@ -136,7 +136,7 @@ def select_prompt_and_return_indexes(
   return [choices_without_colors.index(item) for item in selections]
 
 
-def select_prompt_old(
+def select_prompt_cmd(
   choices: Sequence[str],
   message: str = None,
   bottom_message: str = None,
@@ -159,6 +159,7 @@ def select_prompt_old(
     command,
     universal_newlines=True,
     stderr=sys.stderr,
+    stdin=sys.stdin,
   )
   if result.returncode == 130:
     raise KeyboardInterrupt
