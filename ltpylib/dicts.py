@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import List, Union
+from typing import Callable, List, Union
 
 from ltpylib import checks, strings
 
@@ -76,6 +76,15 @@ def convert_string_values_to_correct_type(
   return obj
 
 
+def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None):
+  for field in fields:
+    if field in from_val:
+      if field_converter is not None:
+        to_val[field_converter(field)] = from_val[field]
+      else:
+        to_val[field] = from_val[field]
+
+
 def find(key: str, obj: dict) -> List[dict]:
   if isinstance(obj, dict):
     for k, v in obj.items():
@@ -88,17 +97,6 @@ def find(key: str, obj: dict) -> List[dict]:
     for d in obj:
       for res in find(key, d):
         yield res
-
-  # for k, v in obj.items():
-  #   if k == key:
-  #     yield v
-  #   elif isinstance(v, dict):
-  #     for res in find(key, v):
-  #       yield res
-  #   elif isinstance(v, list):
-  #     for d in v:
-  #       for res in find(key, d):
-  #         yield res
 
 
 def remove_nulls(dict_with_nulls: dict) -> dict:

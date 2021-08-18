@@ -6,7 +6,7 @@ import os
 from collections import OrderedDict
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from pathlib import Path
-from typing import Union
+from typing import Dict, List, Union
 
 HOSTS_CONFIG: Union[ConfigParser, None] = None
 
@@ -94,6 +94,36 @@ def write_properties(config: ConfigParser, file: Union[str, Path], sort_keys: bo
 
   with open(file.as_posix(), 'w') as configfile:
     config.write(configfile)
+
+
+def read_bash_env_vars_from_file(file: Union[str, Path], pass_env_vars: List[str] = None) -> Dict[str, str]:
+  from ltpylib import procs
+
+  env_vars: Dict[str, str] = {}
+
+  if isinstance(file, str):
+    file = Path(file)
+
+  command = ["env", "-i"]
+  include_env_vars = ["HOME"]
+  if pass_env_vars:
+    include_env_vars.extend(pass_env_vars)
+
+  for var_name in include_env_vars:
+    command.append("%s=%s" % (var_name, os.getenv(var_name, "")))
+
+  command.extend(["bash", "-c", "source '%s' && env" % file.as_posix()])
+  output = procs.run_and_parse_output(command, check=True)[1]
+
+  for line in output.splitlines():
+    (key, _, value) = line.partition("=")
+    env_vars[key] = value
+
+  for var_name in (include_env_vars + ["_", "SHLVL", "PWD"]):
+    if var_name in env_vars:
+      env_vars.pop(var_name)
+
+  return env_vars
 
 
 def _main():
