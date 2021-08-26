@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Union
 
 from ltpylib import checks, strings
 
@@ -76,11 +76,13 @@ def convert_string_values_to_correct_type(
   return obj
 
 
-def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None):
+def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None):
   for field in fields:
     if field in from_val:
       if field_converter is not None:
         to_val[field_converter(field)] = from_val[field]
+      elif field_converter_map:
+        to_val[field_converter_map[field]] = from_val[field]
       else:
         to_val[field] = from_val[field]
 

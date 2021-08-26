@@ -35,6 +35,28 @@ def json_dump_default(val: Any) -> Any:
   return getattr(val, '__dict__', str(val))
 
 
+def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
+  if remove_nulls:
+    from ltpylib import dicts
+
+    obj = json.loads(
+      prettify_json(obj, remove_nulls=False, colorize=False),
+      object_hook=dicts.remove_nulls_and_empty,
+    )
+  output = json.dumps(
+    obj,
+    sort_keys=True,
+    indent=None,
+    separators=(",", ":"),
+    default=json_dump_default,
+  )
+
+  if colorize:
+    output = colorize_json(output)
+
+  return output
+
+
 def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
   return prettify_json(obj, remove_nulls=remove_nulls, colorize=is_output_to_terminal())
 
