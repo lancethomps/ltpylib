@@ -51,8 +51,8 @@ def convert_string_values_to_correct_type(
   for obj_dict in objs:
     for key, val in obj_dict.items():
       if isinstance(val, str):
-        if convert_numbers and strings.is_number(val):
-          obj_dict[key] = strings.convert_to_number(val, use_decimal=use_decimal)
+        if convert_numbers and strings.is_number(val, allow_comma=True):
+          obj_dict[key] = strings.convert_to_number(val, use_decimal=use_decimal, remove_commas=True)
         elif convert_booleans and strings.is_boolean(val):
           obj_dict[key] = strings.convert_to_bool(val)
       elif recursive and isinstance(val, dict):

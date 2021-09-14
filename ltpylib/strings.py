@@ -47,12 +47,16 @@ def convert_to_number(
   check_if_valid: bool = False,
   float_only: bool = False,
   use_decimal: bool = False,
+  remove_commas: bool = False,
 ) -> Union[int, float, str, None]:
   if val is None:
     return None
 
-  if check_if_valid and not is_number(val):
+  if check_if_valid and not is_number(val, allow_comma=remove_commas):
     return val
+
+  if remove_commas:
+    val = val.replace(",", "")
 
   if float_only:
     return Decimal(val) if use_decimal else float(val)
@@ -70,7 +74,7 @@ def is_boolean(val: str) -> bool:
   return val.lower() in BOOLEAN_STRINGS_FALSE or val.lower() in BOOLEAN_STRINGS_TRUE
 
 
-def is_number(val: str) -> bool:
+def is_number(val: str, allow_comma: bool = False) -> bool:
   if not val:
     return False
 
@@ -82,6 +86,9 @@ def is_number(val: str) -> bool:
     return True
 
   if val.startswith("-") and val.replace("-", "", 1).isdigit():
+    return True
+
+  if allow_comma and val.replace(",", "").isdigit():
     return True
 
   return False
