@@ -74,18 +74,18 @@ def run_with_logging_output(
 ) -> subprocess.CompletedProcess:
   from ltpylib import logs
 
-  log_pipe = logs.LogPipe(level=level)
-  return run(
-    *popenargs,
-    input=input,
-    timeout=timeout,
-    check=check,
-    cwd=cwd,
-    shell=shell,
-    stdout=log_pipe,
-    stderr=log_pipe,
-    **kwargs,
-  )
+  with logs.LogPipe(level=level) as log_pipe:
+    return run(
+      *popenargs,
+      input=input,
+      timeout=timeout,
+      check=check,
+      cwd=cwd,
+      shell=shell,
+      stdout=log_pipe,
+      stderr=log_pipe,
+      **kwargs,
+    )
 
 
 def run_with_regular_stdout(

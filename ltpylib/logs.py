@@ -55,6 +55,12 @@ class LogPipe(threading.Thread):
     """
     os.close(self.fdWrite)
 
+  def __enter__(self):
+    return self
+
+  def __exit__(self, exc_type, exc_value, exc_tb):
+    self.close()
+
 
 class StdoutStreamHandler(logging.StreamHandler):
 
