@@ -24,42 +24,40 @@ LOG_FORMAT_WITH_LEVEL = f"{LOG_FORMAT_PART_LEVEL} {LOG_FORMAT_PART_MESSAGE}"
 LOG_FORMAT_WITH_TIMESTAMP = f"[{LOG_FORMAT_PART_TIMESTAMP}] {LOG_FORMAT_PART_MESSAGE}"
 
 
+# see https://stackoverflow.com/questions/21953835/run-subprocess-and-print-output-to-logging
 class LogPipe(threading.Thread):
 
   def __init__(self, level: int = logging.INFO):
-    """Setup the object with a logger and a loglevel
-    and start the thread
-    """
     threading.Thread.__init__(self)
     self.daemon = False
     self.level = level
-    self.fdRead, self.fdWrite = os.pipe()
-    self.pipeReader = os.fdopen(self.fdRead)
+    self.fd_read, self.fd_write = os.pipe()
+    self.pipe_reader = os.fdopen(self.fd_read)
     self.start()
-
-  def fileno(self):
-    """Return the write file descriptor of the pipe
-    """
-    return self.fdWrite
-
-  def run(self):
-    """Run the thread, logging everything.
-    """
-    for line in iter(self.pipeReader.readline, ''):
-      logging.log(self.level, line.strip('\n'))
-
-    self.pipeReader.close()
-
-  def close(self):
-    """Close the write end of the pipe.
-    """
-    os.close(self.fdWrite)
 
   def __enter__(self):
     return self
 
   def __exit__(self, exc_type, exc_value, exc_tb):
     self.close()
+
+  def fileno(self):
+    return self.fd_write
+
+  def run(self):
+    for line in iter(self.pipe_reader.readline, ''):
+      logging.log(self.level, line.strip('\n'))
+
+    self.pipe_reader.close()
+
+  def close(self):
+    os.close(self.fd_write)
+
+  def write(self, message):
+    logging.log(self.level, message)
+
+  def flush(self):
+    pass
 
 
 class StdoutStreamHandler(logging.StreamHandler):
