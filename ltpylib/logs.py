@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+import threading
 from pathlib import Path
 from typing import Union
 
@@ -21,6 +22,38 @@ LOG_SEP = "------------------------------------------------"
 
 LOG_FORMAT_WITH_LEVEL = f"{LOG_FORMAT_PART_LEVEL} {LOG_FORMAT_PART_MESSAGE}"
 LOG_FORMAT_WITH_TIMESTAMP = f"[{LOG_FORMAT_PART_TIMESTAMP}] {LOG_FORMAT_PART_MESSAGE}"
+
+
+class LogPipe(threading.Thread):
+
+  def __init__(self, level: int = logging.INFO):
+    """Setup the object with a logger and a loglevel
+    and start the thread
+    """
+    threading.Thread.__init__(self)
+    self.daemon = False
+    self.level = level
+    self.fdRead, self.fdWrite = os.pipe()
+    self.pipeReader = os.fdopen(self.fdRead)
+    self.start()
+
+  def fileno(self):
+    """Return the write file descriptor of the pipe
+    """
+    return self.fdWrite
+
+  def run(self):
+    """Run the thread, logging everything.
+    """
+    for line in iter(self.pipeReader.readline, ''):
+      logging.log(self.level, line.strip('\n'))
+
+    self.pipeReader.close()
+
+  def close(self):
+    """Close the write end of the pipe.
+    """
+    os.close(self.fdWrite)
 
 
 class StdoutStreamHandler(logging.StreamHandler):

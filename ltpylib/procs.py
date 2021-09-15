@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -59,6 +60,32 @@ def run(
     check_returncode_with_output(result)
 
   return result
+
+
+def run_with_logging_output(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = False,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  level: int = logging.INFO,
+  **kwargs,
+) -> subprocess.CompletedProcess:
+  from ltpylib import logs
+
+  log_pipe = logs.LogPipe(level=level)
+  return run(
+    *popenargs,
+    input=input,
+    timeout=timeout,
+    check=check,
+    cwd=cwd,
+    shell=shell,
+    stdout=log_pipe,
+    stderr=log_pipe,
+    **kwargs,
+  )
 
 
 def run_with_regular_stdout(
