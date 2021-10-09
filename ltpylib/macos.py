@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import logging
 import os.path
 from getpass import getpass, getuser
+
+import logging
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 from ltpylib import enums, inputs, procs
 
@@ -198,6 +199,15 @@ def find_internet_password(
 
 def open_url(url: str):
   return procs.run_with_regular_stdout(["open", url], check=True)
+
+
+def trash(paths: Union[List[Path], List[str], Path, str], check: bool = True) -> bool:
+  if not isinstance(paths, list):
+    paths = [paths]
+
+  paths = [p.as_posix() if isinstance(p, Path) else p for p in paths]
+
+  return procs.run_with_regular_stdout(["trash", "-Fv"] + paths, check=check).returncode == 0
 
 
 def _main():

@@ -94,6 +94,16 @@ def is_number(val: str, allow_comma: bool = False) -> bool:
   return False
 
 
+def maybe_json_string(val: str) -> bool:
+  if not val:
+    return False
+
+  if val.startswith("[") and val.endswith("]"):
+    return True
+
+  return val.startswith("{") and val.endswith("}")
+
+
 def str_list_max_length(values: List[str]) -> int:
   return len(max(values, key=len))
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 from ltpylib import checks, strings
 
@@ -99,6 +99,26 @@ def find(key: str, obj: dict) -> List[dict]:
     for d in obj:
       for res in find(key, d):
         yield res
+
+
+def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) -> Dict[Any, List[dict]]:
+  if isinstance(key, str):
+
+    def key_getter(x):
+      return x.get(key)
+
+  else:
+    key_getter = key
+
+  by_field: Dict[str, List[dict]] = {}
+  for val in list_of_dicts:
+    field_value = key_getter(val)
+    if field_value not in by_field:
+      by_field[field_value] = []
+
+    by_field[field_value].append(val)
+
+  return by_field
 
 
 def remove_nulls(dict_with_nulls: dict) -> dict:
