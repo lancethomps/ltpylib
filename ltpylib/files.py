@@ -5,7 +5,7 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple, Union
+from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
 # NB: replacement matching groups should be in the \1 format instead of $1
 from ltpylib import strings
@@ -179,9 +179,12 @@ def append_file(file: Union[str, Path], contents: AnyStr):
     fw.write(contents)
 
 
-def list_files(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
+def list_files(base_dir: Path, globs: Union[List[str], str] = ('**/*',)) -> List[Path]:
+  if isinstance(globs, str):
+    globs = [globs]
+
   files: Set[Path] = set()
-  file: Path = None
+  file: Optional[Path] = None
   for file in list(itertools.chain(*[base_dir.glob(glob) for glob in globs])):
     if file.is_file():
       files.add(file)
@@ -193,7 +196,7 @@ def list_files(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
 
 def list_dirs(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
   dirs: Set[Path] = set()
-  child_dir: Path = None
+  child_dir: Optional[Path] = None
   for child_dir in list(itertools.chain(*[base_dir.glob(glob) for glob in globs])):
     if child_dir.is_dir():
       dirs.add(child_dir)

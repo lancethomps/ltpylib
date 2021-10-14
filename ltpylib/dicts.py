@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from ltpylib import checks, strings
 
@@ -76,7 +76,7 @@ def convert_string_values_to_correct_type(
   return obj
 
 
-def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None):
+def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None) -> dict:
   for field in fields:
     if field in from_val:
       if field_converter is not None:
@@ -85,6 +85,8 @@ def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter
         to_val[field_converter_map[field]] = from_val[field]
       else:
         to_val[field] = from_val[field]
+
+  return to_val
 
 
 def find(key: str, obj: dict) -> List[dict]:
@@ -101,7 +103,7 @@ def find(key: str, obj: dict) -> List[dict]:
         yield res
 
 
-def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) -> Dict[Any, List[dict]]:
+def create_key_getter(key: Union[str, Callable[[dict], Any]]) -> Callable[[dict], Any]:
   if isinstance(key, str):
 
     def key_getter(x):
@@ -110,6 +112,20 @@ def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) 
   else:
     key_getter = key
 
+  return key_getter
+
+
+def find_first_with_key_value(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]], expected_value: Any) -> Optional[dict]:
+  key_getter = create_key_getter(key)
+
+  for val in list_of_dicts:
+    field_value = key_getter(val)
+    if field_value == expected_value:
+      return val
+
+
+def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) -> Dict[Any, List[dict]]:
+  key_getter = create_key_getter(key)
   by_field: Dict[str, List[dict]] = {}
   for val in list_of_dicts:
     field_value = key_getter(val)
@@ -119,6 +135,20 @@ def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) 
     by_field[field_value].append(val)
 
   return by_field
+
+
+def unique_key_values(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]], include_nulls: bool = False) -> List[Any]:
+  key_getter = create_key_getter(key)
+  unique_values = []
+  for val in list_of_dicts:
+    field_value = key_getter(val)
+    if field_value is None and not include_nulls:
+      continue
+
+    if field_value not in unique_values:
+      unique_values.append(field_value)
+
+  return unique_values
 
 
 def remove_nulls(dict_with_nulls: dict) -> dict:
