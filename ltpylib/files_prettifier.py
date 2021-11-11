@@ -7,6 +7,10 @@ from typing import List, Union
 
 from ltpylib import files, procs
 
+FILE_EXT_MAPPINGS = {
+  "yml": "yaml",
+}
+
 
 def prettify(
   files_to_prettify: Union[Path, List[Path]],
@@ -21,7 +25,7 @@ def prettify(
     if file_type:
       single_file_type = file_type
     else:
-      single_file_type = file.suffix[1:]
+      single_file_type = FILE_EXT_MAPPINGS.get(file.suffix[1:], file.suffix[1:])
 
     func_for_type = globals()["prettify_" + single_file_type + "_file"]
     if not callable(func_for_type):
