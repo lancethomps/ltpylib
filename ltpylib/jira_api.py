@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
-import re
-from typing import Dict, List, Tuple, Union
-
 import jira.resources
+import re
 from jira import JIRA
 from requests import Session
+from typing import Dict, List, Tuple, Union
 
 from ltpylib import inputs, strconverters, strings
 from ltpylib.collect import EMPTY_LIST, EMPTY_MAP, to_csv
-from ltpylib.jira_api_types import Issue, IssueSearchResult, Sprint, SprintReport, SprintState, VelocityReport
+from ltpylib.jira_api_types import Issue, IssueSearchResult, JiraProject, Sprint, SprintReport, SprintState, VelocityReport
 
 OPTION_AGILE_REST_PATH = "agile_rest_path"
 
@@ -49,7 +48,10 @@ class JiraApi(object):
   def get_session(self) -> Session:
     return self.api._session
 
-  def board_id(self, board_id_or_name: Union[str, int]) -> int:
+  def board_id(
+    self,
+    board_id_or_name: Union[str, int],
+  ) -> int:
     if isinstance(board_id_or_name, int) or board_id_or_name.isdigit():
       return int(board_id_or_name)
 
@@ -60,7 +62,10 @@ class JiraApi(object):
 
     raise Exception("Could not find board=%s, choices below:\n%s" % (board_id_or_name, "\n".join(["%s (%s)" % (board.id, board.name) for board in boards])))
 
-  def epics(self, board_id: int) -> dict:
+  def epics(
+    self,
+    board_id: int,
+  ) -> dict:
     return self.get_session().get(self.api.client_info() + JIRA_API_EPICS + "?rapidViewId=" + str(board_id)).json()
 
   def issue(
@@ -120,6 +125,13 @@ class JiraApi(object):
       summaries.append(summary)
 
     return summaries
+
+  def project(
+    self,
+    project_id_or_name: Union[str, int],
+  ) -> JiraProject:
+    jira_project: jira.resources.Project = self.api.project(project_id_or_name)
+    return JiraProject(values=jira_project.raw)
 
   def search_issues(
     self,

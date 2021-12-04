@@ -235,10 +235,20 @@ class JiraProject(IdAndSelf, DataWithUnknownPropertiesAsAttributes):
   def __init__(self, values: dict = None):
     values = values if values is not None else {}
 
+    self.assigneeType: str = values.pop("assigneeType", None)
     self.avatarUrls: dict = values.pop("avatarUrls", None)
+    self.description: str = values.pop("description", None)
+    self.expand: str = values.pop("expand", None)
+    self.isPrivate: str = values.pop("isPrivate", None)
+    self.issueTypes: List[IssueType] = list(map(IssueType, values.pop("issueTypes", []))) if "issueTypes" in values else None
     self.key: str = values.pop("key", None)
+    self.lead: JiraUser = JiraUser(values=values.pop("lead")) if "lead" in values else None
     self.name: str = values.pop("name", None)
     self.projectTypeKey: str = values.pop("projectTypeKey", None)
+    self.properties: dict = values.pop("properties", None)
+    self.roles: dict = values.pop("roles", None)
+    self.simplified: bool = values.pop("simplified", None)
+    self.style: str = values.pop("style", None)
 
     IdAndSelf.__init__(self, values)
     DataWithUnknownPropertiesAsAttributes.__init__(self, values)
