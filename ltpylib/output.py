@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 import json
 import os
-from typing import Any, List, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from ltpylib.common_types import TypeWithDictRepr
+
+CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
 
 def colorize_json(json_data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
@@ -28,9 +30,25 @@ def is_output_to_terminal() -> bool:
   return sys.stdout.isatty()
 
 
+def add_custom_json_dumper(dumper_id: str, dumper: Callable[[Any], Any], use_if: Callable[[Any], bool] = None):
+  global CUSTOM_JSON_DUMPERS
+  CUSTOM_JSON_DUMPERS[dumper_id] = (dumper, use_if)
+
+
 def json_dump_default(val: Any) -> Any:
   if hasattr(val, "to_dict"):
     return getattr(val, "to_dict")()
+
+  if CUSTOM_JSON_DUMPERS:
+    for dumper, use_if in CUSTOM_JSON_DUMPERS.values():
+      if use_if is not None:
+        if not use_if(val):
+          continue
+        return dumper(val)
+      else:
+        dumper_val = dumper(val)
+        if dumper_val is not None:
+          return dumper_val
 
   return getattr(val, '__dict__', str(val))
 
