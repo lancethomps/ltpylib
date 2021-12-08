@@ -64,35 +64,65 @@ def create_fzf_select_prompt_command(
   layout: str = "reverse",
   multi: bool = False,
   ansi: bool = False,
+  preview: str = None,
+  preview_window: str = "down:wrap:hidden",
+  binds: Sequence[str] = None,
+  fzf_args: Sequence[str] = None,
 ) -> List[str]:
   command = [
-    'fzf',
-    '--layout',
+    "fzf",
+    "--layout",
     layout,
   ]
 
   if header:
-    command.extend(['--header', header])
+    command.extend([
+      "--header",
+      header,
+    ])
 
   if no_sort:
-    command.append('--no-sort')
+    command.append("--no-sort")
 
   if multi:
-    command.append('--multi')
+    command.append("--multi")
 
   if ansi:
-    command.append('--ansi')
+    command.append("--ansi")
+
+  if preview:
+    command.extend([
+      "--preview",
+      preview,
+      "--preview-window",
+      preview_window,
+    ])
+
+  if binds:
+    for bind in binds:
+      command.extend([
+        "--bind",
+        bind,
+      ])
+
+  if fzf_args:
+    command.extend(fzf_args)
 
   return command
 
 
 def select_prompt(
   choices: Sequence[str],
+  choices_in_stdin: bool = False,
   header: str = None,
   no_sort: bool = True,
   layout: str = "reverse",
   multi: bool = False,
   ansi: bool = False,
+  preview: str = None,
+  preview_window: str = "down:wrap:hidden",
+  binds: Sequence[str] = None,
+  fzf_args: Sequence[str] = None,
 ) -> str:
   command = create_fzf_select_prompt_command(
     header=header,
@@ -100,13 +130,19 @@ def select_prompt(
     layout=layout,
     multi=multi,
     ansi=ansi,
+    preview=preview,
+    preview_window=preview_window,
+    binds=binds,
+    fzf_args=fzf_args,
   )
 
+  stdin = sys.stdin if choices_in_stdin else None
   result: subprocess.CompletedProcess = procs.run(
     command,
     universal_newlines=True,
     stderr=sys.stderr,
-    input="\n".join(choices),
+    input=None if choices_in_stdin else "\n".join(choices),
+    stdin=stdin,
   )
 
   if result.returncode == 130:
@@ -142,16 +178,16 @@ def select_prompt_cmd(
   bottom_message: str = None,
   max_width: int = None,
 ) -> str:
-  command = ['select_prompt']
+  command = ["select_prompt"]
 
   if message:
-    command.extend(['--message', message])
+    command.extend(["--message", message])
 
   if bottom_message:
-    command.extend(['--bottom-message', message])
+    command.extend(["--bottom-message", message])
 
   if max_width:
-    command.extend(['--max-width', str(max_width)])
+    command.extend(["--max-width", str(max_width)])
 
   command.extend(choices)
 

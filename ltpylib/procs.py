@@ -3,7 +3,8 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 
 
 class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
@@ -235,6 +236,57 @@ def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_leve
     logging.log(log_level, 'STATUS: Process killed.')
   else:
     logging.log(log_level, 'STATUS: Process successfully shutdown after %s seconds.', total_time)
+
+
+orig_unraisablehook = None
+
+
+def disable_unraisablehook():
+  global orig_unraisablehook
+  if orig_unraisablehook is None:
+    orig_unraisablehook = sys.unraisablehook
+
+  sys.unraisablehook = ignoring_unraisablehook
+
+
+def enable_unraisablehook():
+  global orig_unraisablehook
+  if orig_unraisablehook is None:
+    raise Exception("sys.unraisablehook was never overridden")
+  sys.unraisablehook = orig_unraisablehook
+  orig_unraisablehook = None
+
+
+def ignoring_unraisablehook(*args, **kwargs):
+  pass
+
+
+class catch_unraisable_exception:
+
+  def __init__(self) -> None:
+    self.unraisable: Optional["sys.UnraisableHookArgs"] = None
+    self._old_hook: Optional[Callable[["sys.UnraisableHookArgs"], Any]] = None
+
+  def _hook(self, unraisable: "sys.UnraisableHookArgs") -> None:
+    # Storing unraisable.object can resurrect an object which is being
+    # finalized. Storing unraisable.exc_value creates a reference cycle.
+    self.unraisable = unraisable
+
+  def __enter__(self) -> "catch_unraisable_exception":
+    self._old_hook = sys.unraisablehook
+    sys.unraisablehook = self._hook
+    return self
+
+  def __exit__(
+    self,
+    exc_type: Optional[Type[BaseException]],
+    exc_val: Optional[BaseException],
+    exc_tb: Optional[TracebackType],
+  ) -> None:
+    assert self._old_hook is not None
+    sys.unraisablehook = self._old_hook
+    self._old_hook = None
+    del self.unraisable
 
 
 def _main():
