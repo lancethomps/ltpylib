@@ -530,7 +530,7 @@ fi
 
     self.results = inputs.select_prompt(
       None if self.using_stdin else self.original_results.splitlines(),
-      choices_in_stdin=self.using_stdin,
+      stdin=sys.stdin if self.using_stdin else None,
       header=self.select_header,
       multi=True,
       ansi=True,

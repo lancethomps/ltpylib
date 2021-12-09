@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, IO, List, Optional, Tuple, Type, Union
 
 
 class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
@@ -32,6 +32,26 @@ class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
       return "Command '%s' returned non-zero exit status %d.%s" % (self.cmd, self.returncode, stdout_and_stderr)
 
 
+def run_popen(
+  *popenargs,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  stdout: Optional[Union[int, IO]] = subprocess.PIPE,
+  stderr: Optional[Union[int, IO]] = subprocess.PIPE,
+  **kwargs,
+) -> subprocess.Popen:
+  kwargs['universal_newlines'] = True
+
+  return subprocess.Popen(
+    *popenargs,
+    cwd=cwd,
+    shell=shell,
+    stdout=stdout,
+    stderr=stderr,
+    **kwargs,
+  )
+
+
 def run(
   *popenargs,
   input: Union[bytes, str, None] = None,
@@ -39,13 +59,11 @@ def run(
   check: bool = False,
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
+  stdout: Optional[Union[int, IO]] = subprocess.PIPE,
+  stderr: Optional[Union[int, IO]] = subprocess.PIPE,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
-  if 'stdout' not in kwargs:
-    kwargs['stdout'] = subprocess.PIPE
-  if 'stderr' not in kwargs:
-    kwargs['stderr'] = subprocess.PIPE
 
   result = subprocess.run(
     *popenargs,
@@ -54,6 +72,8 @@ def run(
     check=False,
     cwd=cwd,
     shell=shell,
+    stdout=stdout,
+    stderr=stderr,
     **kwargs,
   )
 

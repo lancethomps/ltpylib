@@ -3,7 +3,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import List, Sequence
+from typing import IO, List, Optional, Sequence
 
 from ltpylib import procs, strings
 from ltpylib.strings import strip_color_codes
@@ -112,8 +112,8 @@ def create_fzf_select_prompt_command(
 
 
 def select_prompt(
-  choices: Sequence[str],
-  choices_in_stdin: bool = False,
+  choices: Optional[Sequence[str]],
+  stdin: Optional[IO] = None,
   header: str = None,
   no_sort: bool = True,
   layout: str = "reverse",
@@ -136,12 +136,11 @@ def select_prompt(
     fzf_args=fzf_args,
   )
 
-  stdin = sys.stdin if choices_in_stdin else None
   result: subprocess.CompletedProcess = procs.run(
     command,
     universal_newlines=True,
     stderr=sys.stderr,
-    input=None if choices_in_stdin else "\n".join(choices),
+    input=None if stdin is not None else "\n".join(choices),
     stdin=stdin,
   )
 
