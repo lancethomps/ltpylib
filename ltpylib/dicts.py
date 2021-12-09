@@ -37,24 +37,24 @@ def convert_keys_to_snake_case(
 
 
 def convert_string_values_to_correct_type(
-  obj: Union[dict, list],
+  value_to_convert: Union[dict, list],
   convert_numbers: bool = True,
   convert_booleans: bool = True,
   use_decimal: bool = False,
   recursive: bool = False,
 ) -> Union[dict, list]:
-  if isinstance(obj, list):
-    objs = obj
+  if isinstance(value_to_convert, list):
+    if isinstance(value_to_convert[0], str):
+      return [convert_string_to_correct_type(val, convert_numbers=convert_numbers, convert_booleans=convert_booleans, use_decimal=use_decimal) for val in value_to_convert]
+
+    objs = value_to_convert
   else:
-    objs = [obj]
+    objs = [value_to_convert]
 
   for obj_dict in objs:
     for key, val in obj_dict.items():
       if isinstance(val, str):
-        if convert_numbers and strings.is_number(val, allow_comma=True):
-          obj_dict[key] = strings.convert_to_number(val, use_decimal=use_decimal, remove_commas=True)
-        elif convert_booleans and strings.is_boolean(val):
-          obj_dict[key] = strings.convert_to_bool(val)
+        obj_dict[key] = convert_string_to_correct_type(val, convert_numbers=convert_numbers, convert_booleans=convert_booleans, use_decimal=use_decimal)
       elif recursive and isinstance(val, dict):
         convert_string_values_to_correct_type(
           val,
@@ -73,7 +73,21 @@ def convert_string_values_to_correct_type(
             recursive=recursive,
           )
 
-  return obj
+  return value_to_convert
+
+
+def convert_string_to_correct_type(
+  val: str,
+  convert_numbers: bool = True,
+  convert_booleans: bool = True,
+  use_decimal: bool = False,
+):
+  if convert_numbers and strings.is_number(val, allow_comma=True):
+    return strings.convert_to_number(val, use_decimal=use_decimal, remove_commas=True)
+  elif convert_booleans and strings.is_boolean(val):
+    return strings.convert_to_bool(val)
+
+  return val
 
 
 def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None) -> dict:

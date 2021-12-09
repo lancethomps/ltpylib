@@ -64,4 +64,7 @@ setup(
     'test': PyTest,
   },
   tests_require=test_requirements,
+  extras_require={
+    "pg": ["psycopg2"],
+  },
 )
