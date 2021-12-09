@@ -21,6 +21,13 @@ def convert_to_path(path: Union[Path, str]) -> Path:
   return path
 
 
+def convert_to_path_expandvars(path: Union[Path, str]) -> Path:
+  if isinstance(path, str):
+    return Path(os.path.expandvars(path))
+
+  return path
+
+
 def replace_matches_in_file(
   file: Union[str, Path],
   search_string: str,
@@ -143,8 +150,20 @@ def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
-    loaded_json = json.load(fr)
-  return loaded_json
+    parsed = json.load(fr)
+
+  return parsed
+
+
+def read_yaml_file(file: Union[str, Path]) -> Union[dict, list]:
+  import yaml
+
+  file = convert_to_path(file)
+
+  with open(file.as_posix(), 'r') as fr:
+    parsed = yaml.full_load(fr)
+
+  return parsed
 
 
 def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:

@@ -262,6 +262,9 @@ orig_unraisablehook = None
 
 
 def disable_unraisablehook():
+  if not hasattr(sys, "unraisablehook"):
+    return
+
   global orig_unraisablehook
   if orig_unraisablehook is None:
     orig_unraisablehook = sys.unraisablehook
@@ -270,6 +273,9 @@ def disable_unraisablehook():
 
 
 def enable_unraisablehook():
+  if not hasattr(sys, "unraisablehook"):
+    return
+
   global orig_unraisablehook
   if orig_unraisablehook is None:
     raise Exception("sys.unraisablehook was never overridden")
