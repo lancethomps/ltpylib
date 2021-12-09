@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence, Union
 
+from ltpylib import opts_actions
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
 from ltpylib.output import is_output_to_terminal
@@ -143,6 +144,22 @@ class LoggingArgs(object):
     return arg_parser
 
 
+class OutputFormatArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.json: bool = args.json
+    self.markdown: bool = args.markdown
+    self.yaml: bool = args.yaml
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    group = arg_parser.add_mutually_exclusive_group()
+    group.add_argument("--json", action=opts_actions.STORE_TRUE)
+    group.add_argument("--markdown", action=opts_actions.STORE_TRUE)
+    group.add_argument("--yaml", action=opts_actions.STORE_TRUE)
+    return arg_parser
+
+
 class PagerArgs(object):
 
   def __init__(self, args: argparse.Namespace):
@@ -157,7 +174,7 @@ class PagerArgs(object):
     if self.no_pager:
       return False
 
-    return default
+    return default and is_output_to_terminal()
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:

@@ -126,7 +126,12 @@ def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
   return data_frame.to_csv(index=showindex)
 
 
-def dicts_to_markdown_table(data: Union[List[dict], List[TypeWithDictRepr]], showindex: bool = False, tablefmt: str = "github") -> str:
+def dicts_to_markdown_table(
+  data: Union[List[dict], List[TypeWithDictRepr]],
+  showindex: bool = False,
+  tablefmt: str = "github",
+  headers: Sequence[str] = None,
+) -> str:
   import tabulate
 
   from pandas import DataFrame
@@ -139,7 +144,7 @@ def dicts_to_markdown_table(data: Union[List[dict], List[TypeWithDictRepr]], sho
   return tabulate.tabulate(
     data_frame,
     showindex=showindex,
-    headers=data_frame.columns,
+    headers=headers if headers is not None else data_frame.columns,
     tablefmt=tablefmt,
   )
 
