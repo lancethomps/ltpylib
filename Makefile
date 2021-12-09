@@ -1,6 +1,6 @@
 init:
 	pip install pipenv --upgrade
-	pipenv install --dev
+	pipenv install
 	pipenv run flake8 --version
 	pipenv run yapf --version
 
