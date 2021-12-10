@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from types import TracebackType
+from typing import Any, Callable, IO, List, Optional, Tuple, Type, Union
 
 
 class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
@@ -30,6 +32,26 @@ class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
       return "Command '%s' returned non-zero exit status %d.%s" % (self.cmd, self.returncode, stdout_and_stderr)
 
 
+def run_popen(
+  *popenargs,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  stdout: Optional[Union[int, IO]] = subprocess.PIPE,
+  stderr: Optional[Union[int, IO]] = subprocess.PIPE,
+  **kwargs,
+) -> subprocess.Popen:
+  kwargs['universal_newlines'] = True
+
+  return subprocess.Popen(
+    *popenargs,
+    cwd=cwd,
+    shell=shell,
+    stdout=stdout,
+    stderr=stderr,
+    **kwargs,
+  )
+
+
 def run(
   *popenargs,
   input: Union[bytes, str, None] = None,
@@ -37,13 +59,11 @@ def run(
   check: bool = False,
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
+  stdout: Optional[Union[int, IO]] = subprocess.PIPE,
+  stderr: Optional[Union[int, IO]] = subprocess.PIPE,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   kwargs['universal_newlines'] = True
-  if 'stdout' not in kwargs:
-    kwargs['stdout'] = subprocess.PIPE
-  if 'stderr' not in kwargs:
-    kwargs['stderr'] = subprocess.PIPE
 
   result = subprocess.run(
     *popenargs,
@@ -52,6 +72,8 @@ def run(
     check=False,
     cwd=cwd,
     shell=shell,
+    stdout=stdout,
+    stderr=stderr,
     **kwargs,
   )
 
@@ -59,6 +81,32 @@ def run(
     check_returncode_with_output(result)
 
   return result
+
+
+def run_with_logging_output(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = False,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  level: int = logging.INFO,
+  **kwargs,
+) -> subprocess.CompletedProcess:
+  from ltpylib import logs
+
+  with logs.LogPipe(level=level) as log_pipe:
+    return run(
+      *popenargs,
+      input=input,
+      timeout=timeout,
+      check=check,
+      cwd=cwd,
+      shell=shell,
+      stdout=log_pipe,
+      stderr=log_pipe,
+      **kwargs,
+    )
 
 
 def run_with_regular_stdout(
@@ -208,6 +256,63 @@ def await_termination(pid: int, timeout: int = 30, sleep_time: int = 1, log_leve
     logging.log(log_level, 'STATUS: Process killed.')
   else:
     logging.log(log_level, 'STATUS: Process successfully shutdown after %s seconds.', total_time)
+
+
+orig_unraisablehook = None
+
+
+def disable_unraisablehook():
+  if not hasattr(sys, "unraisablehook"):
+    return
+
+  global orig_unraisablehook
+  if orig_unraisablehook is None:
+    orig_unraisablehook = sys.unraisablehook
+
+  sys.unraisablehook = ignoring_unraisablehook
+
+
+def enable_unraisablehook():
+  if not hasattr(sys, "unraisablehook"):
+    return
+
+  global orig_unraisablehook
+  if orig_unraisablehook is None:
+    raise Exception("sys.unraisablehook was never overridden")
+  sys.unraisablehook = orig_unraisablehook
+  orig_unraisablehook = None
+
+
+def ignoring_unraisablehook(*args, **kwargs):
+  pass
+
+
+class catch_unraisable_exception:
+
+  def __init__(self) -> None:
+    self.unraisable: Optional["sys.UnraisableHookArgs"] = None
+    self._old_hook: Optional[Callable[["sys.UnraisableHookArgs"], Any]] = None
+
+  def _hook(self, unraisable: "sys.UnraisableHookArgs") -> None:
+    # Storing unraisable.object can resurrect an object which is being
+    # finalized. Storing unraisable.exc_value creates a reference cycle.
+    self.unraisable = unraisable
+
+  def __enter__(self) -> "catch_unraisable_exception":
+    self._old_hook = sys.unraisablehook
+    sys.unraisablehook = self._hook
+    return self
+
+  def __exit__(
+    self,
+    exc_type: Optional[Type[BaseException]],
+    exc_val: Optional[BaseException],
+    exc_tb: Optional[TracebackType],
+  ) -> None:
+    assert self._old_hook is not None
+    sys.unraisablehook = self._old_hook
+    self._old_hook = None
+    del self.unraisable
 
 
 def _main():

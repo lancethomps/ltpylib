@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import time
+from typing import Callable, SupportsFloat
 
 
 def format_seconds(frac_seconds):
@@ -38,6 +39,25 @@ def get_time_remaining_msg(start_time, count, total):
 def sleep_and_log(seconds: int, log_level: int = logging.INFO):
   logging.log(log_level, "Sleeping %s seconds...", seconds)
   time.sleep(seconds)
+
+
+def has_time_remaining(
+  start_time: float,
+  max_seconds: SupportsFloat,
+  log_time_ran_out: bool = False,
+  time_ran_out_func: Callable[[float, SupportsFloat, float], None] = None,
+) -> bool:
+  curr_time = time.time()
+  check_result = (curr_time - start_time) < float(max_seconds)
+
+  if not check_result:
+    if log_time_ran_out:
+      logging.warning(f"Timed out waiting after {max_seconds:,} seconds")
+
+    if time_ran_out_func is not None:
+      time_ran_out_func(start_time, max_seconds, curr_time)
+
+  return check_result
 
 
 if __name__ == "__main__":

@@ -8,10 +8,11 @@ jira
 pandas
 psutil
 Pygments
-PyYAML
 python-dateutil
+PyYAML
 requests
 semver
+SQLAlchemy
 stashy
 tabulate
 urllib3

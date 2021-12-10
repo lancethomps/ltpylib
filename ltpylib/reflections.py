@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
 import inspect
-from typing import ClassVar, List, Tuple
+from typing import ClassVar, List, Tuple, Type
 
-SIMPLE_TYPES: Tuple[type] = (str, bool, int, float)
+SIMPLE_TYPES: Tuple[Type] = (str, bool, int, float)
 
 
 def create_typing_description(val) -> str:
   if isinstance(val, list):
     if len(val) == 0:
-      return "List[str]"
+      return "List"
     else:
       return "List[%s]" % create_typing_description(val[0])
   else:

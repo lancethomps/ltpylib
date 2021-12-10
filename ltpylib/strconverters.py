@@ -3,7 +3,7 @@
 
 import re
 import urllib.parse as urllib_parse
-from typing import Callable, List
+from typing import Callable, List, Union
 
 StrConverter = Callable[[str], str]
 
@@ -31,8 +31,8 @@ def num_only(val: str) -> str:
   return re.sub(r'[^0-9.]', '', val)
 
 
-def url_encode(val: str) -> str:
-  return urllib_parse.quote_plus(val)
+def url_encode(val: str, safe: Union[bytes, str] = "") -> str:
+  return urllib_parse.quote_plus(val, safe=safe)
 
 
 def url_decode(val: str) -> str:

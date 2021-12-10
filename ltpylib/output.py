@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import json
 import os
-
-from typing import List, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from ltpylib.common_types import TypeWithDictRepr
+
+CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
 
 def colorize_json(json_data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
@@ -29,6 +30,55 @@ def is_output_to_terminal() -> bool:
   return sys.stdout.isatty()
 
 
+def add_custom_json_dumper(dumper_id: str, dumper: Callable[[Any], Any], use_if: Callable[[Any], bool] = None):
+  global CUSTOM_JSON_DUMPERS
+  CUSTOM_JSON_DUMPERS[dumper_id] = (dumper, use_if)
+
+
+def json_dump_default(val: Any) -> Any:
+  if hasattr(val, "to_dict"):
+    return getattr(val, "to_dict")()
+
+  if CUSTOM_JSON_DUMPERS:
+    for dumper, use_if in CUSTOM_JSON_DUMPERS.values():
+      if use_if is not None:
+        if not use_if(val):
+          continue
+        return dumper(val)
+      else:
+        dumper_val = dumper(val)
+        if dumper_val is not None:
+          return dumper_val
+
+  return getattr(val, '__dict__', str(val))
+
+
+def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
+  if remove_nulls:
+    from ltpylib import dicts
+
+    obj = json.loads(
+      prettify_json(obj, remove_nulls=False, colorize=False),
+      object_hook=dicts.remove_nulls_and_empty,
+    )
+  output = json.dumps(
+    obj,
+    sort_keys=True,
+    indent=None,
+    separators=(",", ":"),
+    default=json_dump_default,
+  )
+
+  if colorize:
+    output = colorize_json(output)
+
+  return output
+
+
+def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, colorize=is_output_to_terminal())
+
+
 def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
   if remove_nulls:
     from ltpylib import dicts
@@ -41,7 +91,7 @@ def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> st
     obj,
     sort_keys=True,
     indent='  ',
-    default=lambda x: getattr(x, '__dict__', str(x)),
+    default=json_dump_default,
   )
 
   if colorize:
@@ -54,6 +104,21 @@ def prettify_json_remove_nulls(obj) -> str:
   return prettify_json(obj, remove_nulls=True)
 
 
+def prettify_yaml(obj, remove_nulls: bool = False) -> str:
+  import yaml
+
+  obj = json.loads(prettify_json(
+    obj,
+    remove_nulls=remove_nulls,
+    colorize=False,
+  ))
+
+  return yaml.dump(
+    obj,
+    default_flow_style=False,
+  )
+
+
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
   from pandas import DataFrame
 
@@ -61,7 +126,12 @@ def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
   return data_frame.to_csv(index=showindex)
 
 
-def dicts_to_markdown_table(data: Union[List[dict], List[TypeWithDictRepr]], showindex: bool = False, tablefmt: str = "github") -> str:
+def dicts_to_markdown_table(
+  data: Union[List[dict], List[TypeWithDictRepr]],
+  showindex: bool = False,
+  tablefmt: str = "github",
+  headers: Sequence[str] = None,
+) -> str:
   import tabulate
 
   from pandas import DataFrame
@@ -74,7 +144,7 @@ def dicts_to_markdown_table(data: Union[List[dict], List[TypeWithDictRepr]], sho
   return tabulate.tabulate(
     data_frame,
     showindex=showindex,
-    headers=data_frame.columns,
+    headers=headers if headers is not None else data_frame.columns,
     tablefmt=tablefmt,
   )
 

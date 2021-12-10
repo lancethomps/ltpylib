@@ -2,8 +2,9 @@
 import argparse
 import os
 from pathlib import Path
-from typing import Callable, List, Optional, Sequence
+from typing import Any, Callable, List, Optional, Sequence, Union
 
+from ltpylib import opts_actions
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.opts_actions import APPEND, STORE_TRUE
 from ltpylib.output import is_output_to_terminal
@@ -21,9 +22,11 @@ class PositionalsHelpFormatter(argparse.HelpFormatter):
     max_help_position=24,
     width=None,
     positionals_key: str = DEFAULT_POSITIONALS_KEY,
+    positionals_type: Callable = None,
   ):
     super().__init__(prog, indent_increment, max_help_position, width)
     self.positionals_key = positionals_key
+    self.positionals_type = positionals_type
     self.positionals_action = argparse._StoreAction([], self.positionals_key, nargs="+")
 
   def add_usage(self, usage, actions, groups, prefix=None):
@@ -143,6 +146,22 @@ class LoggingArgs(object):
     return arg_parser
 
 
+class OutputFormatArgs(object):
+
+  def __init__(self, args: argparse.Namespace):
+    self.json: bool = args.json
+    self.markdown: bool = args.markdown
+    self.yaml: bool = args.yaml
+
+  @staticmethod
+  def add_arguments_to_parser(arg_parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    group = arg_parser.add_mutually_exclusive_group()
+    group.add_argument("--json", action=opts_actions.STORE_TRUE)
+    group.add_argument("--markdown", action=opts_actions.STORE_TRUE)
+    group.add_argument("--yaml", action=opts_actions.STORE_TRUE)
+    return arg_parser
+
+
 class PagerArgs(object):
 
   def __init__(self, args: argparse.Namespace):
@@ -157,7 +176,7 @@ class PagerArgs(object):
     if self.no_pager:
       return False
 
-    return default
+    return default and is_output_to_terminal()
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
@@ -208,10 +227,13 @@ def create_default_arg_parser() -> argparse.ArgumentParser:
   return add_default_arguments_to_parser(arg_parser)
 
 
-def create_default_with_positionals_arg_parser(positionals_key: str = DEFAULT_POSITIONALS_KEY) -> argparse.ArgumentParser:
+def create_default_with_positionals_arg_parser(
+  positionals_key: str = DEFAULT_POSITIONALS_KEY,
+  positionals_type: Callable = None,
+) -> argparse.ArgumentParser:
   import functools
 
-  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key))
+  arg_parser = argparse.ArgumentParser(formatter_class=functools.partial(PositionalsHelpFormatter, positionals_key=positionals_key, positionals_type=positionals_type))
   return add_default_arguments_to_parser(arg_parser)
 
 
@@ -223,43 +245,65 @@ def parse_args(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]
   return args
 
 
-def parse_args_and_init_others(arg_parser: argparse.ArgumentParser, argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args_and_init_others(
+  arg_parser: argparse.ArgumentParser,
+  argv: Optional[Sequence[str]] = None,
+  log_level: Union[str, int] = None,
+  log_format: str = None,
+) -> argparse.Namespace:
   from ltpylib.logs import init_logging
 
+  if has_positionals_formatter_class(arg_parser):
+    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
+
   args = parse_args(arg_parser, argv=argv)
-  init_logging(args=args)
+  init_logging(args=args, log_level=log_level, log_format=log_format)
   return args
 
 
 def parse_args_with_positionals_and_init_others(
   arg_parser: argparse.ArgumentParser,
-  positionals_key: str = None,
   argv: Optional[Sequence[str]] = None,
+  log_level: Union[str, int] = None,
+  log_format: str = None,
+  positionals_key: str = None,
   positionals_type: Callable = None,
 ) -> argparse.Namespace:
   import argcomplete
-  import functools
   from ltpylib.logs import init_logging
 
   argcomplete.autocomplete(arg_parser)
   args, positionals = arg_parser.parse_known_intermixed_args(args=argv)
 
   if positionals_key is None:
-    if isinstance(arg_parser.formatter_class, PositionalsHelpFormatter):
-      help_formatter: PositionalsHelpFormatter = arg_parser.formatter_class
-      positionals_key = help_formatter.positionals_key
-    elif isinstance(arg_parser.formatter_class, functools.partial):
-      help_formatter: functools.partial = arg_parser.formatter_class
-      positionals_key = help_formatter.keywords.get("positionals_key")
+    if has_positionals_formatter_class(arg_parser):
+      positionals_key = get_positionals_formatter_field(arg_parser, "positionals_key")
     else:
       positionals_key = DEFAULT_POSITIONALS_KEY
+
+  if positionals_type is None and has_positionals_formatter_class(arg_parser):
+    positionals_type = get_positionals_formatter_field(arg_parser, "positionals_type")
 
   if positionals_type is not None:
     positionals = [positionals_type(arg) for arg in positionals]
 
   args.__setattr__(positionals_key, positionals)
-  init_logging(args=args)
+  init_logging(args=args, log_level=log_level, log_format=log_format)
   return args
+
+
+def get_positionals_formatter_field(arg_parser: argparse.ArgumentParser, field: str) -> Any:
+  import functools
+
+  help_formatter: functools.partial = arg_parser.formatter_class
+  return help_formatter.keywords.get(field)
+
+
+def has_positionals_formatter_class(arg_parser: argparse.ArgumentParser) -> bool:
+  import functools
+
+  fc = arg_parser.formatter_class
+  return isinstance(fc, functools.partial) and fc.func == PositionalsHelpFormatter
 
 
 def does_stdin_have_data() -> bool:

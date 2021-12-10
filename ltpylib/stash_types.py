@@ -3,9 +3,8 @@ import argparse
 from enum import auto
 from typing import Dict, List
 
-from ltpylib import opts_actions
+from ltpylib import enums, opts_actions
 from ltpylib.common_types import DataWithUnknownProperties, TypeWithDictRepr
-from ltpylib.enums import EnumAutoName
 
 
 class DisplayIdAndId(object):
@@ -28,7 +27,7 @@ class PaginatedValues(object):
     self.start: int = values.pop("start", None)
 
 
-class PullRequestParticipantStatus(EnumAutoName):
+class PullRequestParticipantStatus(enums.EnumAutoName):
   APPROVED = auto()
   NEEDS_WORK = auto()
   UNAPPROVED = auto()
@@ -44,7 +43,7 @@ class PullRequestParticipantStatus(EnumAutoName):
       raise e
 
 
-class PullRequestRole(EnumAutoName):
+class PullRequestRole(enums.EnumAutoName):
   AUTHOR = auto()
   PARTICIPANT = auto()
   REVIEWER = auto()
@@ -60,7 +59,7 @@ class PullRequestRole(EnumAutoName):
       raise e
 
 
-class PullRequestState(EnumAutoName):
+class PullRequestState(enums.EnumAutoName):
   DECLINED = auto()
   MERGED = auto()
   OPEN = auto()
@@ -498,6 +497,7 @@ class ScriptArgPullRequest(TypeWithDictRepr):
     project: str = None,
     repo: str = None,
     pr_id: int = None,
+    stash_url: str = None,
   ):
     self.url: str = url
     self.project: str = project
@@ -530,7 +530,10 @@ class ScriptArgPullRequest(TypeWithDictRepr):
         else:
           self.project_type = "projects"
 
-        self.url = ("https://stash.wlth.fr/projects/%s/repos/%s/pull-requests/%s/overview" % (self.project, self.repo, self.pr_id))
+        if stash_url.endswith("/"):
+          stash_url = stash_url[:-1]
+
+        self.url = ("%s/projects/%s/repos/%s/pull-requests/%s/overview" % (stash_url, self.project, self.repo, self.pr_id))
       else:
         raise ValueError("Either the URL (via --url) or project/repo/id (via --project/--repo/--id) arguments must be specified.")
 

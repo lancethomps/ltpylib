@@ -26,7 +26,6 @@ from ltpylib.stash_types import (
 )
 from ltpylib.strings import str_list_max_length
 
-STASH_URL: str = "https://stash.wlth.fr"
 BRANCH_PR_META_KEY: str = "com.atlassian.bitbucket.server.bitbucket-ref-metadata:outgoing-pull-request-metadata"
 
 

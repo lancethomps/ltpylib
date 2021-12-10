@@ -1,14 +1,40 @@
 #!/usr/bin/env python
-import logging
+import os.path
 from getpass import getpass, getuser
 
-from ltpylib import inputs, procs
+import logging
+from pathlib import Path
+from typing import List, Union
+
+from ltpylib import enums, inputs, procs
+
+MAC_SOUND_DIRS = [
+  "/System/Library/Sounds",
+  "~/Library/Sounds",
+]
 
 
-def notify(message: str, title: str = "Terminal Notification", sound_name: str = "Ping", subtitle: str = ""):
+class MacSoundsSystem(enums.EnumAutoName):
+  BASSO = "Basso"
+  BLOW = "Blow"
+  BOTTLE = "Bottle"
+  FROG = "Frog"
+  FUNK = "Funk"
+  GLASS = "Glass"
+  HERO = "Hero"
+  MORSE = "Morse"
+  PING = "Ping"
+  POP = "Pop"
+  PURR = "Purr"
+  SOSUMI = "Sosumi"
+  SUBMARINE = "Submarine"
+  TINK = "Tink"
+
+
+def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
   message = message.replace('"', '\\"').replace("\n", "\\n")
   title = title.replace('"', '\\"')
-  sound_name = sound_name.replace('"', '\\"')
+  sound_name = (sound_name.name if isinstance(sound_name, MacSoundsSystem) else sound_name).replace('"', '\\"')
   subtitle = subtitle.replace('"', '\\"')
 
   js_function = f"""
@@ -39,6 +65,28 @@ def pbcopy(val: str):
     input=val,
     check=True,
   )
+
+
+def find_sound_file(sound: Union[MacSoundsSystem, str]):
+  sound_name = (sound.name if isinstance(sound, MacSoundsSystem) else sound)
+  for sounds_dir in MAC_SOUND_DIRS:
+    for file_ext in ["", ".aiff"]:
+      sound_file = Path(os.path.expanduser(sounds_dir)).joinpath(sound_name + file_ext)
+      if sound_file.is_file():
+        return sound_file
+
+  if isinstance(sound, MacSoundsSystem):
+    raise ValueError("sound file not found for: %s" % sound)
+
+  sound_file = Path(os.path.expanduser(sound_name))
+  if sound_file.is_file():
+    return sound_file
+
+  raise ValueError("sound file not found for: %s" % sound)
+
+
+def play_sound(sound: Union[MacSoundsSystem, str]):
+  procs.run_with_regular_stdout(["afplay", find_sound_file(sound).as_posix()], check=True)
 
 
 def add_generic_password(label: str, pw: str, account: str = None) -> bool:
@@ -151,6 +199,15 @@ def find_internet_password(
 
 def open_url(url: str):
   return procs.run_with_regular_stdout(["open", url], check=True)
+
+
+def trash(paths: Union[List[Path], List[str], Path, str], check: bool = True) -> bool:
+  if not isinstance(paths, list):
+    paths = [paths]
+
+  paths = [p.as_posix() if isinstance(p, Path) else p for p in paths]
+
+  return procs.run_with_regular_stdout(["trash", "-Fv"] + paths, check=check).returncode == 0
 
 
 def _main():

@@ -6,6 +6,12 @@ EMPTY_LIST: frozenset = frozenset([])
 EMPTY_MAP: tuple = tuple(sorted({}.items()))
 
 
+def flatten(list_of_lists: List[List]) -> List:
+  from itertools import chain
+
+  return list(chain.from_iterable(list_of_lists))
+
+
 def flatten_list_of_possible_csv_strings(vals: List[str], sep: str = ",") -> List[str]:
   if not vals:
     return vals

@@ -4,16 +4,26 @@ import itertools
 import json
 import os
 import re
+import sys
 from pathlib import Path
-from typing import AnyStr, Callable, List, Match, Pattern, Sequence, Set, Tuple, Union
+from subprocess import CalledProcessError
+from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-# NB: replacement matching groups should be in the \1 format instead of $1
-from ltpylib import strings
+from ltpylib import inputs, logs, procs, strings
+from ltpylib.common_types import TypeWithDictRepr
+from ltpylib.macos import pbcopy
 
 
 def convert_to_path(path: Union[Path, str]) -> Path:
   if isinstance(path, str):
     return Path(path)
+
+  return path
+
+
+def convert_to_path_expandvars(path: Union[Path, str]) -> Path:
+  if isinstance(path, str):
+    return Path(os.path.expandvars(path))
 
   return path
 
@@ -140,8 +150,20 @@ def read_json_file(file: Union[str, Path]) -> Union[dict, list]:
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
-    loaded_json = json.load(fr)
-  return loaded_json
+    parsed = json.load(fr)
+
+  return parsed
+
+
+def read_yaml_file(file: Union[str, Path]) -> Union[dict, list]:
+  import yaml
+
+  file = convert_to_path(file)
+
+  with open(file.as_posix(), 'r') as fr:
+    parsed = yaml.full_load(fr)
+
+  return parsed
 
 
 def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
@@ -179,9 +201,12 @@ def append_file(file: Union[str, Path], contents: AnyStr):
     fw.write(contents)
 
 
-def list_files(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
+def list_files(base_dir: Path, globs: Union[List[str], str] = ('**/*',)) -> List[Path]:
+  if isinstance(globs, str):
+    globs = [globs]
+
   files: Set[Path] = set()
-  file: Path = None
+  file: Optional[Path] = None
   for file in list(itertools.chain(*[base_dir.glob(glob) for glob in globs])):
     if file.is_file():
       files.add(file)
@@ -193,7 +218,7 @@ def list_files(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
 
 def list_dirs(base_dir: Path, globs: List[str] = ('**/*',)) -> List[Path]:
   dirs: Set[Path] = set()
-  child_dir: Path = None
+  child_dir: Optional[Path] = None
   for child_dir in list(itertools.chain(*[base_dir.glob(glob) for glob in globs])):
     if child_dir.is_dir():
       dirs.add(child_dir)
@@ -361,6 +386,241 @@ def _find_children(
       )
 
   return found_match, found_dirs
+
+
+class SplitLine(TypeWithDictRepr):
+
+  def __init__(self, file_name: str, line_number: int = None, content: str = None):
+    self.file_name: str = file_name
+    self.line_number: int = line_number
+    self.content: str = content
+
+  def to_open_arg(self) -> str:
+    if self.line_number is not None:
+      return "%s:%s" % (self.file_name, self.line_number)
+
+    return self.file_name
+
+
+class OpenGreppedLines:
+  CHOICE_PRINT = "Print"
+  CHOICE_COPY = "Copy"
+  CHOICE_IDEA = "Open in IntelliJ"
+  CHOICE_CODE = "Open in VSCode"
+  APP_IDEA = "idea"
+  APP_CODE = "code"
+
+  REPLACE_HOME_REGEX = re.compile(r"(?m)^~")
+  LINE_NUMBERS_COLON_REGEX = re.compile(r"^(.*\S):(\d+):(.*)")
+  LINE_NUMBERS_DASH_REGEX = re.compile(r"^(.*\S)-(\d+)-(.*)")
+
+  def __init__(
+    self,
+    results: str,
+    ask: bool = None,
+    line_numbers: bool = None,
+    lines_exit_code: int = None,
+    open_in_app: str = None,
+    select_header: str = None,
+    select_lines: bool = None,
+    select_preview_file_cmd: str = None,
+    skip_code: bool = None,
+    skip_copy: bool = None,
+    skip_idea: bool = None,
+    skip_print: bool = None,
+    debug: bool = None,
+  ):
+    self.ask: bool = ask
+    self.line_numbers: bool = line_numbers
+    self.lines_exit_code: int = lines_exit_code
+    self.open_in_app: str = open_in_app
+    self.select_header: str = select_header
+    self.select_lines: bool = select_lines
+    self.select_preview_file_cmd: str = select_preview_file_cmd
+    self.skip_code: bool = skip_code
+    self.skip_copy: bool = skip_copy
+    self.skip_idea: bool = skip_idea
+    self.skip_print: bool = skip_print
+    self.debug: bool = debug
+
+    self.results: Optional[str] = None
+    if not results or results[0] == "-":
+      self.using_stdin: bool = True
+      if not self.select_lines:
+        self.results: str = sys.stdin.read()
+    else:
+      self.using_stdin: bool = False
+      self.results: str = "\n".join(results)
+
+    if self.results:
+      self.results: str = self.results.strip()
+
+    self.original_results: str = self.results
+    self.check_for_line_numbers()
+
+  def check_for_line_numbers(self) -> bool:
+    if self.line_numbers is None and self.results:
+      if ":" in self.results or OpenGreppedLines.LINE_NUMBERS_DASH_REGEX.match(self.results):
+        self.line_numbers = True
+      else:
+        self.line_numbers = False
+
+    return self.line_numbers
+
+  def main(self):
+
+    if self.lines_exit_code != 0:
+      print(self.results)
+      exit(self.lines_exit_code)
+
+    if self.select_lines:
+      self.handle_select_lines()
+
+    if not self.results.strip():
+      exit(0)
+
+    if self.ask:
+      selected_action: str = self.ask_for_action()
+    else:
+      selected_action: str = self.open_in_app
+
+    if selected_action == OpenGreppedLines.CHOICE_PRINT:
+      self.handle_print()
+    elif selected_action == OpenGreppedLines.CHOICE_COPY:
+      self.handle_copy()
+    elif selected_action in [OpenGreppedLines.CHOICE_IDEA, OpenGreppedLines.APP_IDEA]:
+      self.handle_open_in_app([OpenGreppedLines.APP_IDEA])
+    elif selected_action in [OpenGreppedLines.CHOICE_CODE, OpenGreppedLines.APP_CODE]:
+      self.handle_open_in_app([OpenGreppedLines.APP_CODE, "-r", "-g"])
+    elif self.open_in_app and self.open_in_app != OpenGreppedLines.APP_IDEA:
+      self.handle_open_in_app([self.open_in_app])
+    else:
+      print("FATAL action not recognized: %s" % selected_action)
+      exit(1)
+
+  def handle_copy(self):
+    if self.line_numbers:
+      code_lines = [self.split_line(line).content for line in self.get_cleaned_results().splitlines()]
+    else:
+      code_lines = self.get_cleaned_results().splitlines()
+
+    pbcopy("\n".join(code_lines).strip())
+
+  def handle_print(self):
+    print(self.results)
+
+  def handle_open_in_app(self, open_args: List[str]):
+    for open_file in self.get_files_from_results():
+      proc_args = open_args + [open_file]
+      if self.debug:
+        print(proc_args)
+      else:
+        procs.run_with_regular_stdout(proc_args)
+
+  def create_select_lines_preview_command(self) -> str:
+    if self.line_numbers:
+      filename_regex = r"^([^:]+):([0-9]+):"
+      lineno_cmd = f"$(echo {{}} | pcregrep -o2 '{filename_regex}')"
+    else:
+      filename_regex = r"^([^:]+)"
+      lineno_cmd = ""
+
+    return f"""
+filename="$(echo {{}} | pcregrep -o1 '{filename_regex}')"
+filepath="$(echo "$filename" | sed 's|~|{Path.home().as_posix()}|')"
+lineno="{lineno_cmd}"
+if test -n "$filename" && test -e "$filepath"; then
+  if test -n "$lineno"; then
+    echo "${{filename}}:${{lineno}}"
+  else
+    echo "${{filename}}"
+  fi
+  echo "{logs.LOG_SEP}"
+  {self.select_preview_file_cmd}
+else
+  echo 'No file found to display'
+fi
+"""
+
+  def handle_select_lines(self):
+    bind_open_cmd = "open_grepped_lines"
+    if self.line_numbers is not None:
+      bind_open_cmd += " --line-numbers" if self.line_numbers else " --no-line-numbers"
+
+    self.results = inputs.select_prompt(
+      None if self.using_stdin else self.original_results.splitlines(),
+      stdin=sys.stdin if self.using_stdin else None,
+      header=self.select_header,
+      multi=True,
+      ansi=True,
+      preview=self.create_select_lines_preview_command(),
+      binds=[
+        "?:toggle-preview",
+        f"right:execute-silent({bind_open_cmd} {{}})",
+        "ctrl-a:select-all",
+      ],
+    )
+
+  def split_line(self, line: str) -> SplitLine:
+    if not self.line_numbers:
+      return SplitLine(line)
+
+    for regex in [OpenGreppedLines.LINE_NUMBERS_COLON_REGEX, OpenGreppedLines.LINE_NUMBERS_DASH_REGEX]:
+      match = regex.fullmatch(line)
+      if match:
+        return SplitLine(match.group(1), line_number=int(match.group(2)), content=match.group(3))
+
+    return SplitLine(line)
+
+  def get_files_from_results(self) -> List[str]:
+    results = self.get_cleaned_results()
+    files_from_results: List[str] = []
+    found_files = []
+
+    for line in results.splitlines():
+      line_parts = self.split_line(line)
+      if line_parts.file_name in found_files:
+        continue
+
+      found_files.append(line_parts.file_name)
+      files_from_results.append(line_parts.to_open_arg())
+
+    return files_from_results
+
+  def ask_for_action(self) -> str:
+    try:
+      action = inputs.select_prompt(
+        self.get_action_choices(),
+        header="Action for lines",
+      )
+
+      return action
+    except CalledProcessError:
+      print(self.results)
+      exit(0)
+
+  def get_action_choices(self) -> List[str]:
+    choices: List[str] = []
+
+    if not self.skip_idea:
+      choices.append(OpenGreppedLines.CHOICE_IDEA)
+
+    if not self.skip_code:
+      choices.append(OpenGreppedLines.CHOICE_CODE)
+
+    if not self.skip_copy:
+      choices.append(OpenGreppedLines.CHOICE_COPY)
+
+    if not self.skip_print:
+      choices.append(OpenGreppedLines.CHOICE_PRINT)
+
+    return choices
+
+  def get_cleaned_results(self) -> str:
+    return OpenGreppedLines.REPLACE_HOME_REGEX.sub(
+      Path.home().as_posix(),
+      strings.strip_color_codes(self.results.strip()),
+    )
 
 
 def _main():

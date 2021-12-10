@@ -1,12 +1,37 @@
 #!/usr/bin/env python
-from datetime import datetime
+import pytz
+from datetime import datetime, tzinfo
+from typing import Optional
+
+
+def add_timezone_if_missing(date: datetime, tz: tzinfo) -> datetime:
+  if date.tzinfo is not None:
+    return date
+
+  return date.astimezone(tz)
+
+
+def as_local_timezone(date: datetime) -> datetime:
+  from dateutil import tz
+
+  return date.astimezone(tz.tzlocal())
+
+
+def as_pacific_time(date: datetime) -> datetime:
+  return date.astimezone(pytz.timezone("US/Pacific"))
 
 
 def from_millis(millis: int) -> datetime:
   return datetime.fromtimestamp(millis / 1000.0)
 
 
-def parse_iso_date(date_string: str) -> datetime:
+def is_last_day_of_month(date: datetime) -> datetime:
+  import calendar
+
+  return calendar.monthrange(date.year, date.month)[1] == date.day
+
+
+def parse_iso_date(date_string: str) -> Optional[datetime]:
   if not date_string:
     return None
 
@@ -15,12 +40,19 @@ def parse_iso_date(date_string: str) -> datetime:
   return parser.isoparse(date_string)
 
 
-def parse_date(date_string: str, format: str = None) -> datetime:
+def parse_date(date_string: str, date_format: str = None) -> Optional[datetime]:
+  if not date_string:
+    return None
+
+  if isinstance(date_string, datetime):
+    return date_string
+
   from dateutil import parser
 
-  if not format:
+  if not date_format:
     return parser.parse(date_string)
-  return datetime.strptime(date_string, format)
+
+  return datetime.strptime(date_string, date_format)
 
 
 def parse_possibly_relative_date(date_string: str) -> datetime:
@@ -43,6 +75,10 @@ def to_json_isoformat(date: datetime) -> str:
 
 def to_json_isoformat_friendly(date: datetime) -> str:
   return date.isoformat(sep=" ", timespec="auto")
+
+
+def to_hhMMss_ampm(date: datetime) -> str:
+  return date.strftime("%I:%M:%S %p")
 
 
 def add(
