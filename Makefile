@@ -1,8 +1,7 @@
 init:
 	pip install pipenv --upgrade
-	pipenv install
-	pipenv run flake8 --version
-	pipenv run yapf --version
+	pipenv install --dev
+	pipenv graph
 
 format-python:
 	pipenv run yapf --in-place --parallel --recursive --verbose ltpylib ltpylibtests setup.py
