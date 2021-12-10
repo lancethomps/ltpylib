@@ -560,6 +560,7 @@ fi
         "ctrl-a:select-all",
       ],
     )
+    self.check_for_line_numbers()
 
   def split_line(self, line: str) -> SplitLine:
     if not self.line_numbers:
@@ -581,6 +582,9 @@ fi
       line_parts = self.split_line(line)
       if line_parts.file_name in found_files:
         continue
+
+      if not Path(line_parts.file_name).exists():
+        raise ValueError(f"could not parse file from results: {line_parts.file_name}")
 
       found_files.append(line_parts.file_name)
       files_from_results.append(line_parts.to_open_arg())
