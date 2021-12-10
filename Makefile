@@ -1,6 +1,8 @@
 init:
 	pip install pipenv --upgrade
-	pipenv install --dev
+	pipenv install --dev --skip-lock
+
+debug:
 	pipenv graph
 
 format-python:

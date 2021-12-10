@@ -21,3 +21,6 @@ install:
 
 script:
 - make ci
+
+after_failure:
+- make --ignore-errors debug
