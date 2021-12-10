@@ -46,6 +46,14 @@ def pull_matches_from_file(
   return matches
 
 
+def regex_match(val: str, patterns: List[Union[str, re.Pattern]]) -> bool:
+  for pattern in patterns:
+    if re.fullmatch(pattern, val):
+      return True
+
+  return False
+
+
 def _main():
   import sys
 
