@@ -32,14 +32,14 @@ def replace_templates_in_files(
     logging.warning("No candidate files found: candidate_files_dir=%s candidate_files_globs=%s", candidate_files_dir.as_posix(), candidate_files_globs)
     return False
 
-  logs.log_with_title_sep(logging.DEBUG, 'Candidate Files', '\n'.join([file.absolute().as_posix() for file in candidate_files]))
+  logs.log_with_title_sep('Candidate Files', '\n'.join([file.absolute().as_posix() for file in candidate_files]), level=logging.DEBUG)
 
   template_files: List[Path] = files.list_files(template_dir, template_files_globs)
   if not template_files:
     logging.warning("No template files found: template_dir=%s template_files_globs=%s", template_dir.as_posix(), template_files_globs)
     return False
 
-  logs.log_with_title_sep(logging.DEBUG, 'Template Files', '\n'.join([file.absolute().as_posix() for file in template_files]))
+  logs.log_with_title_sep('Template Files', '\n'.join([file.absolute().as_posix() for file in template_files]), level=logging.DEBUG)
 
   for template_file in template_files:
     replace_template(
@@ -116,9 +116,9 @@ def replace_template(
 
     replacement = repl
 
-  logs.log_with_title_sep(logging.DEBUG, 'template_file', template_file.as_posix())
-  logs.log_with_title_sep(logging.DEBUG, 'search_string', search_string)
-  logs.log_with_title_sep(logging.DEBUG, 'replacement_str', replacement_str)
+  logs.log_with_title_sep('template_file', template_file.as_posix(), level=logging.DEBUG)
+  logs.log_with_title_sep('search_string', search_string, level=logging.DEBUG)
+  logs.log_with_title_sep('replacement_str', replacement_str, level=logging.DEBUG)
 
   if not debug_mode:
     for file in candidate_files:

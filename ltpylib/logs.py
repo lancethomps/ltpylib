@@ -132,13 +132,13 @@ def create_path_log_info(path: Path, replace_home_dir: bool = True) -> str:
   return output
 
 
-def log_with_sep(level: int, msg, *args, **kwargs):
+def log_with_sep(msg, *args, level: int = logging.INFO, **kwargs):
   logging.log(level, LOG_SEP)
   logging.log(level, msg, *args, **kwargs)
   logging.log(level, LOG_SEP)
 
 
-def log_with_title_sep(level: int, title, msg, *args, **kwargs):
+def log_with_title_sep(title, msg, *args, level: int = logging.INFO, **kwargs):
   logging.log(level, title)
   logging.log(level, LOG_SEP)
   logging.log(level, msg, *args, **kwargs)
