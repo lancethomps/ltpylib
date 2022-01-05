@@ -156,6 +156,10 @@ def select_prompt_and_return_indexes(
   header: str = None,
   multi: bool = False,
   ansi: bool = False,
+  preview: str = None,
+  preview_window: str = "down:wrap:hidden",
+  binds: Sequence[str] = None,
+  fzf_args: Sequence[str] = None,
 ) -> List[int]:
   selections = select_prompt(
     choices,
@@ -164,6 +168,10 @@ def select_prompt_and_return_indexes(
     layout="reverse",
     multi=multi,
     ansi=ansi,
+    preview=preview,
+    preview_window=preview_window,
+    binds=binds,
+    fzf_args=fzf_args,
   ).splitlines(keepends=False)
 
   choices_without_colors = [strip_color_codes(choice) for choice in choices]

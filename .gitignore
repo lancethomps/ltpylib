@@ -47,6 +47,7 @@ out/
 /coverage.xml
 /dist
 /report.xml
+.mypy_cache
 
 ############################
 # Libraries
