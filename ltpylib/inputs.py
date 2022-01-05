@@ -42,7 +42,7 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
     elif choice in valid:
       return valid[choice]
     else:
-      logging.error("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+      logging.error("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
 
 def confirm_default_yes(question: str = 'Continue?') -> bool:
