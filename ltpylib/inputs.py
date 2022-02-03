@@ -67,6 +67,7 @@ def create_fzf_select_prompt_command(
   preview: str = None,
   preview_window: str = "down:wrap:hidden",
   binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
   fzf_args: Sequence[str] = None,
 ) -> List[str]:
   command = [
@@ -98,6 +99,14 @@ def create_fzf_select_prompt_command(
       preview_window,
     ])
 
+  if include_select_all_bind:
+    if not binds:
+      binds = []
+    else:
+      binds = list(binds)
+
+    binds.append("ctrl-a:select-all")
+
   if binds:
     for bind in binds:
       command.extend([
@@ -122,6 +131,7 @@ def select_prompt(
   preview: str = None,
   preview_window: str = "down:wrap:hidden",
   binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
   fzf_args: Sequence[str] = None,
 ) -> str:
   command = create_fzf_select_prompt_command(
@@ -133,6 +143,7 @@ def select_prompt(
     preview=preview,
     preview_window=preview_window,
     binds=binds,
+    include_select_all_bind=include_select_all_bind,
     fzf_args=fzf_args,
   )
 
@@ -159,6 +170,7 @@ def select_prompt_and_return_indexes(
   preview: str = None,
   preview_window: str = "down:wrap:hidden",
   binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
   fzf_args: Sequence[str] = None,
 ) -> List[int]:
   selections = select_prompt(
@@ -171,6 +183,7 @@ def select_prompt_and_return_indexes(
     preview=preview,
     preview_window=preview_window,
     binds=binds,
+    include_select_all_bind=include_select_all_bind,
     fzf_args=fzf_args,
   ).splitlines(keepends=False)
 
