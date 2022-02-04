@@ -1,5 +1,5 @@
 # LT pylib
 
-[![Build Status](https://travis-ci.com/lancethomps/ltpylib.svg?branch=main)](https://travis-ci.com/lancethomps/ltpylib)
+[![Build](https://github.com/lancethomps/ltpylib/actions/workflows/build.yml/badge.svg)](https://github.com/lancethomps/ltpylib/actions/workflows/build.yml)
 
 A Python library that exposes some commonly used helper functions.
