@@ -18,7 +18,7 @@ LOG_FORMAT_PART_TIMESTAMP = "{asctime}"
 DEFAULT_LOG_LEVEL = logging.INFO
 DEFAULT_LOG_FORMAT = f"{LOG_FORMAT_PART_MESSAGE}"
 DEFAULT_LOG_STYLE = "{"
-LOG_SEP = "------------------------------------------------"
+LOG_SEP = "----------------------------------------------------------------------------------------------------------------------------------"
 
 LOG_FORMAT_WITH_LEVEL = f"{LOG_FORMAT_PART_LEVEL} {LOG_FORMAT_PART_MESSAGE}"
 LOG_FORMAT_WITH_TIMESTAMP = f"[{LOG_FORMAT_PART_TIMESTAMP}] {LOG_FORMAT_PART_MESSAGE}"
@@ -141,8 +141,9 @@ def log_with_sep(msg, *args, level: int = logging.INFO, **kwargs):
 def log_with_title_sep(title, msg, *args, level: int = logging.INFO, **kwargs):
   logging.log(level, title)
   logging.log(level, LOG_SEP)
-  logging.log(level, msg, *args, **kwargs)
-  logging.log(level, '')
+  if msg is not None:
+    logging.log(level, msg, *args, **kwargs)
+    logging.log(level, '')
 
 
 def tail_log_file(file: str, *func_args):

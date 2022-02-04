@@ -42,7 +42,7 @@ def confirm(question: str = 'Continue?', default: str = None) -> bool:
     elif choice in valid:
       return valid[choice]
     else:
-      logging.error("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+      logging.error("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
 
 
 def confirm_default_yes(question: str = 'Continue?') -> bool:
@@ -67,6 +67,7 @@ def create_fzf_select_prompt_command(
   preview: str = None,
   preview_window: str = "down:wrap:hidden",
   binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
   fzf_args: Sequence[str] = None,
 ) -> List[str]:
   command = [
@@ -98,6 +99,14 @@ def create_fzf_select_prompt_command(
       preview_window,
     ])
 
+  if include_select_all_bind:
+    if not binds:
+      binds = []
+    else:
+      binds = list(binds)
+
+    binds.append("ctrl-a:select-all")
+
   if binds:
     for bind in binds:
       command.extend([
@@ -122,6 +131,7 @@ def select_prompt(
   preview: str = None,
   preview_window: str = "down:wrap:hidden",
   binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
   fzf_args: Sequence[str] = None,
 ) -> str:
   command = create_fzf_select_prompt_command(
@@ -133,6 +143,7 @@ def select_prompt(
     preview=preview,
     preview_window=preview_window,
     binds=binds,
+    include_select_all_bind=include_select_all_bind,
     fzf_args=fzf_args,
   )
 
@@ -156,6 +167,11 @@ def select_prompt_and_return_indexes(
   header: str = None,
   multi: bool = False,
   ansi: bool = False,
+  preview: str = None,
+  preview_window: str = "down:wrap:hidden",
+  binds: Sequence[str] = None,
+  include_select_all_bind: bool = False,
+  fzf_args: Sequence[str] = None,
 ) -> List[int]:
   selections = select_prompt(
     choices,
@@ -164,6 +180,11 @@ def select_prompt_and_return_indexes(
     layout="reverse",
     multi=multi,
     ansi=ansi,
+    preview=preview,
+    preview_window=preview_window,
+    binds=binds,
+    include_select_all_bind=include_select_all_bind,
+    fzf_args=fzf_args,
   ).splitlines(keepends=False)
 
   choices_without_colors = [strip_color_codes(choice) for choice in choices]
