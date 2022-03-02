@@ -112,6 +112,18 @@ def init_logging(
   )
 
 
+def add_file_logging(log_file: Path):
+  if not log_file.parent.exists():
+    log_file.parent.mkdir(parents=True)
+
+  root_logger = logging.getLogger()
+
+  file_handler = logging.FileHandler(log_file.as_posix())
+  file_handler.setFormatter(root_logger.handlers[0].formatter)
+
+  root_logger.addHandler(file_handler)
+
+
 def is_debug_enabled():
   return logging.root.isEnabledFor(logging.DEBUG)
 
@@ -144,6 +156,10 @@ def log_with_title_sep(title, msg, *args, level: int = logging.INFO, **kwargs):
   if msg is not None:
     logging.log(level, msg, *args, **kwargs)
     logging.log(level, '')
+
+
+def ltlogs_dir() -> Path:
+  return Path(os.getenv("LTLOGS_DIR", os.path.expanduser("~/Library/Logs/lt_logs")))
 
 
 def tail_log_file(file: str, *func_args):

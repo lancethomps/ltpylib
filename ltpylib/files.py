@@ -395,6 +395,9 @@ class SplitLine(TypeWithDictRepr):
     self.line_number: int = line_number
     self.content: str = content
 
+  def to_file_name_and_content(self) -> str:
+    return ":".join([val for val in [self.file_name, self.content] if val is not None])
+
   def to_open_arg(self) -> str:
     if self.line_number is not None:
       return "%s:%s" % (self.file_name, self.line_number)
@@ -499,12 +502,7 @@ class OpenGreppedLines:
       exit(1)
 
   def handle_copy(self):
-    if self.line_numbers:
-      code_lines = [self.split_line(line).content for line in self.get_cleaned_results().splitlines()]
-    else:
-      code_lines = self.get_cleaned_results().splitlines()
-
-    pbcopy("\n".join(code_lines).strip())
+    pbcopy(self.get_cleaned_results().strip())
 
   def handle_print(self):
     print(self.results)
