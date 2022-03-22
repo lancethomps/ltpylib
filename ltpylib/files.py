@@ -187,11 +187,16 @@ def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
   return lines
 
 
-def write_file(file: Union[str, Path], contents: AnyStr):
+def write_file(file: Union[str, Path], contents: AnyStr, log_file_path: bool = False):
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'w') as fw:
     fw.write(contents)
+
+  if log_file_path:
+    import logging
+
+    logging.info(file.as_posix())
 
 
 def append_file(file: Union[str, Path], contents: AnyStr):

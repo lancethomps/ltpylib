@@ -53,14 +53,19 @@ def json_dump_default(val: Any) -> Any:
   return getattr(val, '__dict__', str(val))
 
 
+def load_json_remove_nulls(data: str) -> Any:
+  from ltpylib import dicts
+
+  return json.loads(
+    data,
+    object_hook=dicts.remove_nulls_and_empty,
+  )
+
+
 def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
   if remove_nulls:
-    from ltpylib import dicts
+    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
-    obj = json.loads(
-      prettify_json(obj, remove_nulls=False, colorize=False),
-      object_hook=dicts.remove_nulls_and_empty,
-    )
   output = json.dumps(
     obj,
     sort_keys=True,
@@ -81,12 +86,8 @@ def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
 
 def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
   if remove_nulls:
-    from ltpylib import dicts
+    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
-    obj = json.loads(
-      prettify_json(obj, remove_nulls=False, colorize=False),
-      object_hook=dicts.remove_nulls_and_empty,
-    )
   output = json.dumps(
     obj,
     sort_keys=True,
