@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-from enum import auto
-
 from datetime import datetime
+from enum import auto
 from typing import Dict, List, Optional
 
 from ltpylib import dates, enums
@@ -79,7 +78,6 @@ class Issue(IdAndSelf, DataWithUnknownPropertiesAsAttributes):
     self.aggregatetimespent: int = values.pop("aggregatetimespent", None)
     self.assignee: JiraUser = JiraUser(values=values.pop("assignee")) if "assignee" in values else None
     self.attachment: List[dict] = values.pop("attachment", None)
-    self.cashScrumTeam: ValueIdAndSelf = ValueIdAndSelf(values=values.pop("cashScrumTeam")) if "cashScrumTeam" in values else None
     self.comment: Dict[str, int] = values.pop("comment", None)
     self.components: List[NameIdAndSelf] = list(map(NameIdAndSelf, values.pop("components", []))) if "components" in values else None
     self.controlGroup: ValueIdAndSelf = ValueIdAndSelf(values=values.pop("controlGroup")) if "controlGroup" in values else None
