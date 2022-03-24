@@ -6,6 +6,16 @@ EMPTY_LIST: frozenset = frozenset([])
 EMPTY_MAP: tuple = tuple(sorted({}.items()))
 
 
+def add_missing_to_list(main_list: list, others: list) -> list:
+  if not main_list:
+    return others
+  elif not others:
+    return main_list
+
+  main_list.extend([val for val in others if val not in main_list])
+  return main_list
+
+
 def flatten(list_of_lists: List[List]) -> List:
   from itertools import chain
 
