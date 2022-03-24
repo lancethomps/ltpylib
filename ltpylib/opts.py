@@ -222,6 +222,10 @@ def check_verbose() -> bool:
   return os.getenv("verbose", "false").lower() in TRUE_VALUES
 
 
+def config_home_dir() -> Path:
+  return Path(os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")))
+
+
 def create_default_arg_parser() -> argparse.ArgumentParser:
   arg_parser = argparse.ArgumentParser()
   return add_default_arguments_to_parser(arg_parser)
