@@ -172,7 +172,7 @@ def get_project_version(pom: Union[str, Path], use_mvn_expression: bool = False)
 def ensure_artifact_version(artifact: MavenArtifact, rows: int = DEFAULT_SEARCH_ROWS, default_latest_version: bool = False) -> MavenArtifact:
   if not artifact.version:
     if default_latest_version:
-      artifact.version = call_latest_version_api(artifact)
+      artifact.version = latest_artifact_version(artifact)
     else:
       artifact.version = select_artifact_version(artifact, rows=rows)
 
@@ -186,8 +186,16 @@ def ensure_artifact_packaging(artifact: MavenArtifact) -> MavenArtifact:
   return artifact
 
 
-def call_latest_version_api(artifact: MavenArtifact) -> Optional[str]:
-  # latestVersion
+def latest_artifact_version(artifact: MavenArtifact) -> Optional[str]:
+  search_result = call_latest_version_api(artifact)
+  docs = search_result["response"]["docs"]
+  if not docs:
+    return None
+
+  return docs[0]["latestVersion"]
+
+
+def call_latest_version_api(artifact: MavenArtifact) -> dict:
   if not artifact.artifact_id:
     raise ValueError(f"artifact_id must be specified: {artifact}")
 
@@ -198,12 +206,7 @@ def call_latest_version_api(artifact: MavenArtifact) -> Optional[str]:
     "rows": 1,
     "wt": "json",
   }
-  search_result = maybe_throw(requests.get("https://search.maven.org/solrsearch/select", params=params)).json()
-  docs = search_result["response"]["docs"]
-  if not docs:
-    return None
-
-  return docs[0]["latestVersion"]
+  return maybe_throw(requests.get("https://search.maven.org/solrsearch/select", params=params)).json()
 
 
 # see https://central.sonatype.org/search/rest-api-guide/
