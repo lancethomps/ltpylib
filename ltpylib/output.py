@@ -7,19 +7,65 @@ from ltpylib.common_types import TypeWithDictRepr
 
 CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
+PYGMENTS_DEFAULT_STYLE_FALLBACK = "solarized-light"
+PYGMENTS_DEFAULT_STYLE_ORDER = ["smyck", PYGMENTS_DEFAULT_STYLE_FALLBACK]
+PYGMENTS_DEFAULT_STYLE: Optional[str] = None
 
-def colorize_json(json_data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
+
+def default_pygments_style() -> str:
+  global PYGMENTS_DEFAULT_STYLE
+
+  if PYGMENTS_DEFAULT_STYLE:
+    return PYGMENTS_DEFAULT_STYLE
+
+  from pygments.plugin import iter_entry_points, STYLE_ENTRY_POINT
+
+  for desired_style in PYGMENTS_DEFAULT_STYLE_ORDER:
+    for entrypoint in iter_entry_points(STYLE_ENTRY_POINT):
+      if entrypoint.name == desired_style:
+        PYGMENTS_DEFAULT_STYLE = desired_style
+        return PYGMENTS_DEFAULT_STYLE
+
+  PYGMENTS_DEFAULT_STYLE = PYGMENTS_DEFAULT_STYLE_FALLBACK
+  return PYGMENTS_DEFAULT_STYLE
+
+
+def find_pygments_style() -> str:
+  pygments_style = os.getenv("PYGMENTS_STYLE")
+  if not pygments_style:
+    pygments_style = default_pygments_style()
+
+  return pygments_style
+
+
+def colorize_json(data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
   import pygments
   from pygments.formatters.terminal import TerminalFormatter
   from pygments.formatters.terminal256 import Terminal256Formatter
   from pygments.lexers.data import JsonLexer
 
   if not pygments_style:
-    pygments_style = os.getenv("PYGMENTS_STYLE", "solarized-light")
+    pygments_style = find_pygments_style()
 
   return pygments.highlight(
-    json_data if isinstance(json_data, str) or json_data is None else prettify_json(json_data, colorize=False),
+    data if isinstance(data, str) or data is None else prettify_json(data, colorize=False),
     JsonLexer(),
+    Terminal256Formatter(style=pygments_style) if '256' in os.environ.get('TERM', '') else TerminalFormatter(style=pygments_style),
+  )
+
+
+def colorize_xml(data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
+  import pygments
+  from pygments.formatters.terminal import TerminalFormatter
+  from pygments.formatters.terminal256 import Terminal256Formatter
+  from pygments.lexers.html import XmlLexer
+
+  if not pygments_style:
+    pygments_style = find_pygments_style()
+
+  return pygments.highlight(
+    data if isinstance(data, str) or data is None else prettify_xml(data, colorize=False),
+    XmlLexer(),
     Terminal256Formatter(style=pygments_style) if '256' in os.environ.get('TERM', '') else TerminalFormatter(style=pygments_style),
   )
 
@@ -28,6 +74,16 @@ def is_output_to_terminal() -> bool:
   import sys
 
   return sys.stdout.isatty()
+
+
+def should_color(colorize: bool = False, auto_color: bool = False) -> bool:
+  if colorize:
+    return True
+
+  if auto_color and is_output_to_terminal():
+    return True
+
+  return False
 
 
 def add_custom_json_dumper(dumper_id: str, dumper: Callable[[Any], Any], use_if: Callable[[Any], bool] = None):
@@ -81,10 +137,10 @@ def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = Fals
 
 
 def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
-  return prettify_json(obj, remove_nulls=remove_nulls, colorize=is_output_to_terminal())
+  return prettify_json(obj, remove_nulls=remove_nulls, auto_color=True)
 
 
-def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
+def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
   if remove_nulls:
     obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
@@ -95,7 +151,7 @@ def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> st
     default=json_dump_default,
   )
 
-  if colorize:
+  if should_color(colorize=colorize, auto_color=auto_color):
     output = colorize_json(output)
 
   return output
@@ -103,6 +159,21 @@ def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False) -> st
 
 def prettify_json_remove_nulls(obj) -> str:
   return prettify_json(obj, remove_nulls=True)
+
+
+def prettify_xml(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
+  from xml.dom.minidom import parseString
+  from dicttoxml import dicttoxml
+
+  if remove_nulls:
+    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
+
+  output = parseString(dicttoxml(obj)).toprettyxml()
+
+  if should_color(colorize=colorize, auto_color=auto_color):
+    output = colorize_xml(output)
+
+  return output
 
 
 def prettify_yaml(obj, remove_nulls: bool = False) -> str:

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import List, Union
+from typing import List, TypeVar, Union
 
 EMPTY_LIST: frozenset = frozenset([])
 EMPTY_MAP: tuple = tuple(sorted({}.items()))
+T = TypeVar("T")
 
 
 def add_missing_to_list(main_list: list, others: list) -> list:
@@ -31,6 +32,10 @@ def flatten_list_of_possible_csv_strings(vals: List[str], sep: str = ",") -> Lis
     flattened.extend(val.split(sep))
 
   return flattened
+
+
+def remove_nulls(values: List[T]) -> List[T]:
+  return [elem for elem in values if elem is not None]
 
 
 def to_csv(values: Union[List, None], sep: str = ",") -> Union[str, None]:
