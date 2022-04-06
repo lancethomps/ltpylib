@@ -7,8 +7,9 @@ from ltpylib.common_types import TypeWithDictRepr
 
 CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
-PYGMENTS_DEFAULT_STYLE_FALLBACK = "solarized-light"
-PYGMENTS_DEFAULT_STYLE_ORDER = ["smyck", PYGMENTS_DEFAULT_STYLE_FALLBACK]
+HAS_JQ: Optional[bool] = None
+
+PYGMENTS_DEFAULT_STYLE_ORDER = ["jq", "smyck", "vim", "solarized-light"]
 PYGMENTS_DEFAULT_STYLE: Optional[str] = None
 
 
@@ -26,8 +27,7 @@ def default_pygments_style() -> str:
         PYGMENTS_DEFAULT_STYLE = desired_style
         return PYGMENTS_DEFAULT_STYLE
 
-  PYGMENTS_DEFAULT_STYLE = PYGMENTS_DEFAULT_STYLE_FALLBACK
-  return PYGMENTS_DEFAULT_STYLE
+  raise ValueError("Could not find pygments style from options: %s" % PYGMENTS_DEFAULT_STYLE_ORDER)
 
 
 def find_pygments_style() -> str:
@@ -38,36 +38,83 @@ def find_pygments_style() -> str:
   return pygments_style
 
 
-def colorize_json(data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
-  import pygments
+def create_terminal_formatter(pygments_style: str):
+  if "256" in os.getenv("TERM", ""):
+    from pygments.formatters.terminal256 import Terminal256Formatter
+
+    return Terminal256Formatter(style=pygments_style)
+
   from pygments.formatters.terminal import TerminalFormatter
-  from pygments.formatters.terminal256 import Terminal256Formatter
-  from pygments.lexers.data import JsonLexer
+
+  return TerminalFormatter(style=pygments_style)
+
+
+def has_jq() -> bool:
+  global HAS_JQ
+  if HAS_JQ is not None:
+    return HAS_JQ
+
+  from ltpylib.checks import check_command
+
+  HAS_JQ = check_command("jq")
+  return HAS_JQ
+
+
+def colorize_json_jq(data: Union[str, dict, Sequence]) -> Optional[str]:
+  from ltpylib.procs import run_and_parse_output
+
+  if data is None:
+    json_data = "null"
+  else:
+    json_data = data if isinstance(data, str) or data is None else json.dumps(data, indent=None, default=json_dump_default)
+
+  return run_and_parse_output(["jq", "--sort-keys", "--color-output"], input=json_data, check=True)[1]
+
+
+def colorize_with_pygments(format_lang: str, prettifier: Callable, data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
+  from pygments import highlight
+  from pygments.lexers import get_lexer_by_name
 
   if not pygments_style:
     pygments_style = find_pygments_style()
 
-  return pygments.highlight(
-    data if isinstance(data, str) or data is None else prettify_json(data, colorize=False),
-    JsonLexer(),
-    Terminal256Formatter(style=pygments_style) if '256' in os.environ.get('TERM', '') else TerminalFormatter(style=pygments_style),
+  if data is None:
+    string_data = "null"
+  elif isinstance(data, str):
+    string_data = data
+  else:
+    string_data = prettifier(data, colorize=False)
+
+  return highlight(
+    string_data,
+    get_lexer_by_name(format_lang),
+    create_terminal_formatter(pygments_style),
   )
+
+
+def colorize_json(data: Union[str, dict, Sequence], pygments_style: str = None, force_pygments: bool = False) -> Union[bytes, str]:
+  global HAS_JQ
+  if not force_pygments and pygments_style is None and HAS_JQ is not False:
+    if HAS_JQ is None:
+      try:
+        result = colorize_json_jq(data)
+        HAS_JQ = True
+        return result
+      except FileNotFoundError:
+        HAS_JQ = False
+
+    else:
+      return colorize_json_jq(data)
+
+  return colorize_with_pygments("json", prettify_json, data, pygments_style=pygments_style)
 
 
 def colorize_xml(data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
-  import pygments
-  from pygments.formatters.terminal import TerminalFormatter
-  from pygments.formatters.terminal256 import Terminal256Formatter
-  from pygments.lexers.html import XmlLexer
+  return colorize_with_pygments("xml", prettify_xml, data, pygments_style=pygments_style)
 
-  if not pygments_style:
-    pygments_style = find_pygments_style()
 
-  return pygments.highlight(
-    data if isinstance(data, str) or data is None else prettify_xml(data, colorize=False),
-    XmlLexer(),
-    Terminal256Formatter(style=pygments_style) if '256' in os.environ.get('TERM', '') else TerminalFormatter(style=pygments_style),
-  )
+def colorize_yaml(data: Union[str, dict, Sequence], pygments_style: str = None) -> Union[bytes, str]:
+  return colorize_with_pygments("yaml", prettify_yaml, data, pygments_style=pygments_style)
 
 
 def is_output_to_terminal() -> bool:
@@ -176,19 +223,21 @@ def prettify_xml(obj, remove_nulls: bool = False, colorize: bool = False, auto_c
   return output
 
 
-def prettify_yaml(obj, remove_nulls: bool = False) -> str:
+def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
   import yaml
 
-  obj = json.loads(prettify_json(
-    obj,
-    remove_nulls=remove_nulls,
-    colorize=False,
-  ))
+  if remove_nulls:
+    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
-  return yaml.dump(
+  output = yaml.dump(
     obj,
     default_flow_style=False,
   )
+
+  if should_color(colorize=colorize, auto_color=auto_color):
+    output = colorize_yaml(output)
+
+  return output
 
 
 def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:

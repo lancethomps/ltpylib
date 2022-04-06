@@ -322,12 +322,6 @@ def does_stdin_have_data() -> bool:
     return False
 
 
-def check_command(cmd: str) -> bool:
-  import shutil
-
-  return shutil.which(cmd) is not None
-
-
 def log_args(args: BaseArgs, include_raw_args: bool = True, only_keys: List[str] = None, skip_keys: List[str] = None):
   import logging
   from ltpylib.logs import log_sep
