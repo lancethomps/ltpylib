@@ -49,7 +49,10 @@ def confirm_default_yes(question: str = 'Continue?') -> bool:
   return confirm(question=question, default="y")
 
 
-def check_auto_confirm() -> bool:
+def check_auto_confirm(auto_confirm_arg: bool = None) -> bool:
+  if auto_confirm_arg is True:
+    return True
+
   auto_confirm = os.getenv("auto_confirm")
   return auto_confirm is not None and strings.is_boolean(auto_confirm) and strings.convert_to_bool(auto_confirm)
 
