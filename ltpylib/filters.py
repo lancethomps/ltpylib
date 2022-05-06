@@ -95,7 +95,7 @@ def should_skip_from_cmds(
         cwd=test_str,
         universal_newlines=True,
         shell=True,
-        executable='/usr/local/bin/bash',
+        executable='bash',
       )
       if result.returncode == 0:
         if verbose:
@@ -109,7 +109,7 @@ def should_skip_from_cmds(
         cwd=test_str,
         universal_newlines=True,
         shell=True,
-        executable='/usr/local/bin/bash',
+        executable='bash',
       )
       if result.returncode == 0:
         if verbose:
