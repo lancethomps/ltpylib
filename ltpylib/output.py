@@ -3,7 +3,9 @@ import json
 import os
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
+from ltpylib.collect import modify_list_of_dicts
 from ltpylib.common_types import TypeWithDictRepr
+from ltpylib.dicts import modify_dict_fields
 
 CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
@@ -251,21 +253,44 @@ def dicts_to_markdown_table(
   data: Union[List[dict], List[TypeWithDictRepr]],
   showindex: bool = False,
   tablefmt: str = "github",
+  escape_pipes: bool = True,
   headers: Sequence[str] = None,
+  fields_included: Sequence[str] = None,
+  fields_order: Sequence[str] = None,
+  modify_in_place: bool = False,
 ) -> str:
   import tabulate
 
   from pandas import DataFrame
 
+  data_as_dicts: List[dict] = data
+
   if len(data) > 0 and isinstance(data[0], TypeWithDictRepr):
     data_as_class: List[TypeWithDictRepr] = data
-    data = [val.as_dict() for val in data_as_class]
+    data_as_dicts = [val.as_dict() for val in data_as_class]
 
-  data_frame = DataFrame(data)
+  if fields_order or fields_included:
+    data_as_dicts = modify_dict_fields(
+      data_as_dicts,
+      fields_included=fields_included,
+      fields_order=fields_order,
+      in_place=modify_in_place,
+    )
+
+  if escape_pipes:
+
+    def escape_fn(row: dict):
+      for field, value in row.items():
+        if isinstance(value, str) and "|" in value:
+          row[field] = value.replace("|", "&#124;")
+
+    data_as_dicts = modify_list_of_dicts(data_as_dicts, escape_fn, in_place=modify_in_place)
+
+  data_frame = DataFrame(data_as_dicts)
   return tabulate.tabulate(
     data_frame,
     showindex=showindex,
-    headers=headers if headers is not None else data_frame.columns,
+    headers=headers if headers is not None and len(headers) > 0 else data_frame.columns,
     tablefmt=tablefmt,
   )
 

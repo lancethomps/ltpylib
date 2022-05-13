@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 from ltpylib import checks, strings
+from ltpylib.collect import modify_list_of_dicts
 
 
 def convert_keys_to_snake_case(
@@ -149,6 +150,41 @@ def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) 
     by_field[field_value].append(val)
 
   return by_field
+
+
+def modify_dict_fields(
+  datas: List[dict],
+  fields_included: Sequence[str] = None,
+  fields_order: Sequence[str] = None,
+  in_place: bool = False,
+) -> List[dict]:
+  result: List[dict] = datas
+
+  if fields_included:
+
+    def fn(updated_data: dict):
+      for field in list(updated_data.keys()):
+        if field not in fields_included:
+          updated_data.pop(field)
+
+    result = modify_list_of_dicts(result, fn, in_place=in_place)
+
+  if fields_order:
+    if in_place:
+      data_copy = result[0].copy()
+      ordered_data = result[0]
+      ordered_data.clear()
+    else:
+      data_copy = result[0].copy()
+      ordered_data = dict()
+
+    for field in fields_order:
+      ordered_data[field] = data_copy.pop(field, None)
+
+    ordered_data.update(data_copy)
+    result[0] = ordered_data
+
+  return result
 
 
 def unique_key_values(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]], include_nulls: bool = False) -> List[Any]:

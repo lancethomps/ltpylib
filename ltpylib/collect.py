@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import List, TypeVar, Union
+from typing import Callable, List, Optional, TypeVar, Union
 
 EMPTY_LIST: frozenset = frozenset([])
 EMPTY_MAP: tuple = tuple(sorted({}.items()))
@@ -32,6 +32,34 @@ def flatten_list_of_possible_csv_strings(vals: List[str], sep: str = ",") -> Lis
     flattened.extend(val.split(sep))
 
   return flattened
+
+
+def modify_list_of_dicts(
+  datas: List[dict],
+  fn: Callable[[dict], Optional[dict]],
+  in_place: bool = False,
+) -> List[dict]:
+  result: List[dict] = datas
+
+  if not in_place:
+    result = []
+
+  for idx, data in enumerate(datas):
+    if in_place:
+      updated_data = data
+    else:
+      updated_data = data.copy()
+
+    fn_result = fn(updated_data)
+    if fn_result is not None:
+      updated_data = fn_result
+
+    if in_place:
+      result[idx] = updated_data
+    else:
+      result.append(updated_data)
+
+  return result
 
 
 def remove_nulls(values: List[T]) -> List[T]:

@@ -155,6 +155,30 @@ def run_and_parse_output(
   return result.returncode, result.stdout
 
 
+def run_and_parse_output_on_success(
+  *popenargs,
+  input: Union[bytes, str, None] = None,
+  timeout: Optional[float] = None,
+  check: bool = True,
+  cwd: Union[str, bytes, Path] = None,
+  shell: bool = False,
+  **kwargs,
+) -> str:
+  kwargs['stdout'] = subprocess.PIPE
+
+  result = run(
+    *popenargs,
+    input=input,
+    timeout=timeout,
+    check=check,
+    cwd=cwd,
+    shell=shell,
+    **kwargs,
+  )
+
+  return result.stdout
+
+
 def check_returncode_with_output(result: subprocess.CompletedProcess):
   if result.returncode:
     raise CalledProcessErrorWithOutput(result.returncode, result.args, result.stdout, result.stderr)
