@@ -253,7 +253,7 @@ def dicts_to_markdown_table(
   data: Union[List[dict], List[TypeWithDictRepr]],
   showindex: bool = False,
   tablefmt: str = "github",
-  escape_pipes: bool = True,
+  escape_data: bool = True,
   headers: Sequence[str] = None,
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
@@ -277,12 +277,12 @@ def dicts_to_markdown_table(
       in_place=modify_in_place,
     )
 
-  if escape_pipes:
+  if escape_data:
 
     def escape_fn(row: dict):
       for field, value in row.items():
-        if isinstance(value, str) and "|" in value:
-          row[field] = value.replace("|", "&#124;")
+        if isinstance(value, str) and ("|" in value or "\n" in value):
+          row[field] = value.replace("|", "&#124;").replace("\n", "<br/>")
 
     data_as_dicts = modify_list_of_dicts(data_as_dicts, escape_fn, in_place=modify_in_place)
 
