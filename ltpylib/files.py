@@ -9,7 +9,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-from ltpylib import inputs, logs, procs, strings
+from ltpylib import gitrepos, inputs, logs, procs, strings
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.macos import pbcopy
 
@@ -419,8 +419,11 @@ class OpenGreppedLines:
   APP_CODE = "code"
 
   REPLACE_HOME_REGEX = re.compile(r"(?m)^~")
+  LINE_NUMBERS_COLON_STRICT_REGEX = re.compile(r"^(\S+):(\d+):(.*)")
   LINE_NUMBERS_COLON_REGEX = re.compile(r"^(.*\S):(\d+):(.*)")
+  LINE_NUMBERS_DASH_STRICT_REGEX = re.compile(r"^(\S+)-(\d+)-(.*)")
   LINE_NUMBERS_DASH_REGEX = re.compile(r"^(.*\S)-(\d+)-(.*)")
+  CHECK_REGEXES = [LINE_NUMBERS_COLON_STRICT_REGEX, LINE_NUMBERS_DASH_STRICT_REGEX, LINE_NUMBERS_COLON_REGEX, LINE_NUMBERS_DASH_REGEX]
 
   def __init__(
     self,
@@ -458,7 +461,7 @@ class OpenGreppedLines:
         self.results: str = sys.stdin.read()
     else:
       self.using_stdin: bool = False
-      self.results: str = "\n".join(results)
+      self.results: str = results
 
     if self.results:
       self.results: str = self.results.strip()
@@ -569,7 +572,7 @@ fi
     if not self.line_numbers:
       return SplitLine(line)
 
-    for regex in [OpenGreppedLines.LINE_NUMBERS_COLON_REGEX, OpenGreppedLines.LINE_NUMBERS_DASH_REGEX]:
+    for regex in OpenGreppedLines.CHECK_REGEXES:
       match = regex.fullmatch(line)
       if match:
         return SplitLine(match.group(1), line_number=int(match.group(2)), content=match.group(3))
@@ -586,10 +589,16 @@ fi
       if line_parts.file_name in found_files:
         continue
 
-      if not Path(line_parts.file_name).exists():
-        raise ValueError(f"could not parse file from results: {line_parts.file_name}")
-
       found_files.append(line_parts.file_name)
+
+      file_path = Path(line_parts.file_name)
+      if not file_path.exists():
+        file_path = gitrepos.resolve_file_relative_to_git_base_dir(file_path)
+        if file_path.exists():
+          line_parts.file_name = file_path.as_posix()
+        else:
+          raise ValueError(f"could not parse file from results: {line_parts.file_name}")
+
       files_from_results.append(line_parts.to_open_arg())
 
     return files_from_results
