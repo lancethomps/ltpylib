@@ -1,8 +1,7 @@
 #!/usr/bin/env python
+import logging
 import os.path
 from getpass import getpass, getuser
-
-import logging
 from pathlib import Path
 from typing import List, Union
 
@@ -29,6 +28,10 @@ class MacSoundsSystem(enums.EnumAutoName):
   SOSUMI = "Sosumi"
   SUBMARINE = "Submarine"
   TINK = "Tink"
+
+
+MAC_SOUND_FAILURE = MacSoundsSystem.BASSO
+MAC_SOUND_FINISHED = MacSoundsSystem.FUNK
 
 
 def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
