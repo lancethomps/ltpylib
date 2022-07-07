@@ -242,11 +242,30 @@ def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_
   return output
 
 
-def dicts_to_csv(data: List[dict], showindex: bool = False) -> str:
+def dicts_to_csv(
+  data: Union[List[dict], List[TypeWithDictRepr]],
+  showindex: bool = False,
+  sep: str = ",",
+  header: bool = True,
+  fields_included: Sequence[str] = None,
+  fields_order: Sequence[str] = None,
+  modify_in_place: bool = False,
+) -> str:
   from pandas import DataFrame
 
-  data_frame = DataFrame(data)
-  return data_frame.to_csv(index=showindex)
+  data_as_dicts: List[dict] = create_data_as_dicts(
+    data,
+    fields_included=fields_included,
+    fields_order=fields_order,
+    modify_in_place=modify_in_place,
+  )
+
+  data_frame = DataFrame(data_as_dicts)
+  return data_frame.to_csv(
+    sep=sep,
+    header=header,
+    index=showindex,
+  )
 
 
 def dicts_to_markdown_table(
@@ -263,19 +282,12 @@ def dicts_to_markdown_table(
 
   from pandas import DataFrame
 
-  data_as_dicts: List[dict] = data
-
-  if len(data) > 0 and isinstance(data[0], TypeWithDictRepr):
-    data_as_class: List[TypeWithDictRepr] = data
-    data_as_dicts = [val.as_dict() for val in data_as_class]
-
-  if fields_order or fields_included:
-    data_as_dicts = modify_dict_fields(
-      data_as_dicts,
-      fields_included=fields_included,
-      fields_order=fields_order,
-      in_place=modify_in_place,
-    )
+  data_as_dicts: List[dict] = create_data_as_dicts(
+    data,
+    fields_included=fields_included,
+    fields_order=fields_order,
+    modify_in_place=modify_in_place,
+  )
 
   if escape_data:
 
@@ -297,3 +309,26 @@ def dicts_to_markdown_table(
 
 def sort_csv_rows(rows: List[str]) -> List[str]:
   return [rows[0]] + sorted(rows[1:])
+
+
+def create_data_as_dicts(
+  data: Union[List[dict], List[TypeWithDictRepr]],
+  fields_included: Sequence[str] = None,
+  fields_order: Sequence[str] = None,
+  modify_in_place: bool = False,
+) -> List[dict]:
+  data_as_dicts: List[dict] = data
+
+  if len(data) > 0 and isinstance(data[0], TypeWithDictRepr):
+    data_as_class: List[TypeWithDictRepr] = data
+    data_as_dicts = [val.as_dict() for val in data_as_class]
+
+  if fields_order or fields_included:
+    data_as_dicts = modify_dict_fields(
+      data_as_dicts,
+      fields_included=fields_included,
+      fields_order=fields_order,
+      in_place=modify_in_place,
+    )
+
+  return data_as_dicts

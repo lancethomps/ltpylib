@@ -187,6 +187,21 @@ def modify_dict_fields(
   return result
 
 
+def prefix_dict_keys(require_prefix: str, data: Dict[str, Any], always_add: str = None) -> dict:
+  updated_data = {}
+  for input_key, value in data.items():
+    key = input_key
+    if not key.startswith(require_prefix):
+      key = require_prefix + key
+
+    if always_add:
+      key = always_add + key
+
+    updated_data[key] = value
+
+  return updated_data
+
+
 def unique_key_values(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]], include_nulls: bool = False) -> List[Any]:
   key_getter = create_key_getter(key)
   unique_values = []
