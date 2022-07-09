@@ -104,17 +104,20 @@ def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter
   return to_val
 
 
-def find(key: str, obj: dict) -> List[dict]:
+def find(key: str, obj: dict, yield_parent: bool = False) -> List[dict]:
   if isinstance(obj, dict):
-    for k, v in obj.items():
+    for k, v in list(obj.items()):
       if k == key:
-        yield v
+        if yield_parent:
+          yield obj
+        else:
+          yield v
       else:
-        for res in find(key, v):
+        for res in find(key, v, yield_parent):
           yield res
   elif isinstance(obj, list):
     for d in obj:
-      for res in find(key, d):
+      for res in find(key, d, yield_parent):
         yield res
 
 

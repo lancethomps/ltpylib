@@ -225,7 +225,7 @@ def prettify_xml(obj, remove_nulls: bool = False, colorize: bool = False, auto_c
   return output
 
 
-def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
+def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False, sort_keys: bool = True) -> str:
   import yaml
 
   if remove_nulls:
@@ -234,6 +234,7 @@ def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_
   output = yaml.dump(
     obj,
     default_flow_style=False,
+    sort_keys=sort_keys,
   )
 
   if should_color(colorize=colorize, auto_color=auto_color):
