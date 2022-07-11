@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Union
 
 from ltpylib import checks, strings
 from ltpylib.collect import modify_list_of_dicts
+
+T = TypeVar('T')
 
 
 def convert_keys_to_snake_case(
@@ -91,13 +93,19 @@ def convert_string_to_correct_type(
   return val
 
 
-def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None) -> dict:
+def copy_fields(
+  from_val: dict,
+  to_val: dict,
+  fields: List[str],
+  field_converter: Callable[[str], str] = None,
+  field_converter_map: Dict[str, str] = None,
+) -> dict:
   for field in fields:
     if field in from_val:
       if field_converter is not None:
         to_val[field_converter(field)] = from_val[field]
       elif field_converter_map:
-        to_val[field_converter_map[field]] = from_val[field]
+        to_val[field_converter_map.get(field, field)] = from_val[field]
       else:
         to_val[field] = from_val[field]
 
@@ -121,11 +129,17 @@ def find(key: str, obj: dict, yield_parent: bool = False) -> List[dict]:
         yield res
 
 
-def create_key_getter(key: Union[str, Callable[[dict], Any]]) -> Callable[[dict], Any]:
+def create_key_getter(key: Union[str, Callable[[T], Any]], is_dict: bool = True) -> Callable[[T], Any]:
   if isinstance(key, str):
 
-    def key_getter(x):
-      return x.get(key)
+    if is_dict:
+
+      def key_getter(x):
+        return x.get(key)
+    else:
+
+      def key_getter(x):
+        return getattr(x, key)
 
   else:
     key_getter = key
@@ -142,9 +156,9 @@ def find_first_with_key_value(list_of_dicts: List[dict], key: Union[str, Callabl
       return val
 
 
-def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) -> Dict[Any, List[dict]]:
-  key_getter = create_key_getter(key)
-  by_field: Dict[str, List[dict]] = {}
+def group_by(list_of_dicts: List[T], key: Union[str, Callable[[T], Any]], is_dict: bool = True) -> Dict[Any, List[T]]:
+  key_getter = create_key_getter(key, is_dict=is_dict)
+  by_field: Dict[str, List[T]] = {}
   for val in list_of_dicts:
     field_value = key_getter(val)
     if field_value not in by_field:

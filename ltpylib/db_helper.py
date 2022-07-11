@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import dataclasses
-import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Union
@@ -13,7 +11,6 @@ from ltpylib.common_types import DataWithUnknownPropertiesAsAttributes
 
 DEFAULT_PG_SERVICE_CONFIG_SECTION = "dwh"
 PG_ENGINES: Dict[str, sqlalchemy.engine.Engine] = {}
-SQLITE_QUOTE_COL_REGEX = re.compile(r"[^a-zA-Z0-9_]")
 
 
 class PgServiceConfig(DataWithUnknownPropertiesAsAttributes):
@@ -28,86 +25,6 @@ class PgServiceConfig(DataWithUnknownPropertiesAsAttributes):
     self.user: str = values.pop("user", None)
 
     DataWithUnknownPropertiesAsAttributes.__init__(self, values)
-
-
-@dataclasses.dataclass
-class SQLiteColumn:
-  name: str
-  value_type: str
-  has_nulls: bool = False
-
-  @staticmethod
-  def col_sort(col: 'SQLiteColumn') -> list:
-    return [col.name]
-
-  def create_col_name(self) -> str:
-    name = self.name
-    if SQLITE_QUOTE_COL_REGEX.match(name):
-      name = '"' + name + '"'
-
-    return name
-
-  def create_update_blanks_to_null(self, table_name: str) -> str:
-    col_name = self.create_col_name()
-    return f"""
-UPDATE {table_name}
-SET {col_name} = NULL
-WHERE {col_name} = '';
-    """.strip()
-
-  def to_create_column(self) -> str:
-    col_def = f"{self.create_col_name()} {self.value_type}"
-    if not self.has_nulls:
-      col_def = col_def + " NOT NULL"
-
-    return col_def
-
-
-def add_sqlite_columns_from_dicts(
-  datas: List[Dict[str, Any]],
-  sqlite_cols: List[SQLiteColumn],
-  ignore_cols: List[re.Pattern] = None,
-) -> List[SQLiteColumn]:
-  cols_by_name: Dict[str, SQLiteColumn] = {col.name: col for col in sqlite_cols}
-  existing = [col.name for col in sqlite_cols]
-  has_nulls = set()
-  add_cols: List[SQLiteColumn] = []
-  attr_cols: List[SQLiteColumn] = []
-
-  for data in datas:
-    for key, value in data.items():
-      if ignore_cols and any([regex.fullmatch(key) is not None for regex in ignore_cols]):
-        continue
-
-      if value is None:
-        has_nulls.add(key)
-
-        if key in cols_by_name:
-          cols_by_name.get(key).has_nulls = True
-
-        continue
-      elif key in existing:
-        continue
-
-      existing.append(key)
-      value_type = "TEXT"
-      if isinstance(value, int):
-        value_type = "INTEGER"
-      elif isinstance(value, float):
-        value_type = "REAL"
-
-      col = SQLiteColumn(name=key, value_type=value_type, has_nulls=(key in has_nulls))
-      cols_by_name[col.name] = col
-
-      if key.startswith("attr_"):
-        attr_cols.append(col)
-      else:
-        add_cols.append(col)
-
-  sqlite_cols.extend(sorted(add_cols, key=SQLiteColumn.col_sort))
-  sqlite_cols.extend(sorted(attr_cols, key=SQLiteColumn.col_sort))
-
-  return sqlite_cols
 
 
 def create_sqlite_connection(

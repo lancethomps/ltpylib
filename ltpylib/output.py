@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import json
 import os
+import tempfile
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from ltpylib.collect import modify_list_of_dicts
@@ -241,6 +243,29 @@ def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_
     output = colorize_yaml(output)
 
   return output
+
+
+def prettify_sql(sql: str) -> str:
+  from ltpylib.files import read_file, write_file
+  from ltpylib.procs import run_with_regular_stdout
+
+  tmp_sql_file = Path(tempfile.mktemp(suffix=".sql"))
+  try:
+    write_file(tmp_sql_file, sql)
+    sql_formatter_cmd = [
+      "sql-formatter",
+      "--language",
+      "sqlite",
+      "--config",
+      Path.home().joinpath(".config/sql-formatter/sqlite.json").as_posix(),
+      "--output",
+      tmp_sql_file.as_posix(),
+      tmp_sql_file.as_posix(),
+    ]
+    run_with_regular_stdout(sql_formatter_cmd, check=True)
+    return read_file(tmp_sql_file)
+  finally:
+    tmp_sql_file.unlink(missing_ok=True)
 
 
 def dicts_to_csv(
