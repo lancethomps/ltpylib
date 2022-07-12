@@ -247,22 +247,12 @@ def prettify_yaml(obj, remove_nulls: bool = False, colorize: bool = False, auto_
 
 def prettify_sql(sql: str) -> str:
   from ltpylib.files import read_file, write_file
-  from ltpylib.procs import run_with_regular_stdout
+  from ltpylib.files_prettifier import prettify_sql_file
 
   tmp_sql_file = Path(tempfile.mktemp(suffix=".sql"))
   try:
     write_file(tmp_sql_file, sql)
-    sql_formatter_cmd = [
-      "sql-formatter",
-      "--language",
-      "sqlite",
-      "--config",
-      Path.home().joinpath(".config/sql-formatter/sqlite.json").as_posix(),
-      "--output",
-      tmp_sql_file.as_posix(),
-      tmp_sql_file.as_posix(),
-    ]
-    run_with_regular_stdout(sql_formatter_cmd, check=True)
+    prettify_sql_file(tmp_sql_file)
     return read_file(tmp_sql_file)
   finally:
     tmp_sql_file.unlink(missing_ok=True)

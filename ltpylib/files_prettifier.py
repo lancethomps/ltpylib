@@ -85,6 +85,25 @@ def prettify_json_file(
   files.write_file(file, result.stdout)
 
 
+def prettify_sql_file(
+  file: Path,
+  compact: bool = False,
+  debug_mode: bool = False,
+  verbose: bool = False,
+):
+  sql_formatter_cmd = [
+    "sql-formatter",
+    "--language",
+    "sqlite",
+    "--config",
+    Path.home().joinpath(".config/sql-formatter/sqlite.json").as_posix(),
+    "--output",
+    file.as_posix(),
+    file.as_posix(),
+  ]
+  procs.run_with_regular_stdout(sql_formatter_cmd, check=True)
+
+
 def prettify_xml_file(
   file: Path,
   compact: bool = False,
