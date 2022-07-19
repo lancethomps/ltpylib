@@ -196,7 +196,14 @@ def write_file(file: Union[str, Path], contents: AnyStr, log_file_path: bool = F
   if log_file_path:
     import logging
 
-    logging.info(file.as_posix())
+    if not logging.root.hasHandlers():
+      print(file.as_posix())
+    else:
+      logging.info(file.as_posix())
+
+
+def write_file_and_log(file: Union[str, Path], contents: AnyStr):
+  write_file(file, contents, log_file_path=True)
 
 
 def append_file(file: Union[str, Path], contents: AnyStr):
