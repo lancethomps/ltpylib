@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 from ltpylib import files
+from ltpylib.numbers_util import convert_decimal_precision
 from ltpylib.output import dicts_to_csv, prettify_sql
 
 SQLITE_QUOTE_COL_REGEX = re.compile(r"[^a-zA-Z0-9_]")
@@ -209,3 +210,17 @@ def sqlite_create_table_from_dicts(
       files.write_file(result.csv_file, result.rows_as_csv, log_file_path=True)
 
   return result
+
+
+def sqlite_vacuum(db_file: Path):
+  from ltpylib.procs import run_with_regular_stdout
+
+  prev_size = convert_decimal_precision(db_file.stat().st_size / 1024.0 / 1024.0, 2)
+  sqlite_cmd = [
+    "sqlite3",
+    db_file.as_posix(),
+    "VACUUM;",
+  ]
+  run_with_regular_stdout(sqlite_cmd, check=True, cwd=db_file.parent)
+  new_size = convert_decimal_precision(db_file.stat().st_size / 1024.0 / 1024.0, 2)
+  print(f"VACUUM result: db={db_file.name} before_mb={prev_size} after_mb={new_size}")
