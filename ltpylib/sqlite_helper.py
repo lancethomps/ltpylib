@@ -108,6 +108,8 @@ def add_sqlite_columns_from_dicts(
 
     if missing_existing_cols:
       has_nulls.update(missing_existing_cols)
+      for col_name in missing_existing_cols:
+        cols_by_name.get(col_name).has_nulls = True
 
   sqlite_cols.extend(sorted(add_cols, key=SQLiteColumn.col_sort))
   sqlite_cols.extend(sorted(attr_cols, key=SQLiteColumn.col_sort))
@@ -125,6 +127,7 @@ def sqlite_create_table_from_dicts(
   additional_table_config: List[str] = None,
   load_file: Union[str, Path] = None,
   create_csv_from_rows: bool = True,
+  create_csv_convert_booleans: bool = True,
 ) -> SQLiteCreateTable:
   sqlite_cols: List[SQLiteColumn] = existing_cols.copy() if existing_cols else []
 
@@ -186,6 +189,13 @@ def sqlite_create_table_from_dicts(
 
   if create_csv_from_rows:
     cols_fields = [col.name for col in sqlite_cols]
+    if create_csv_convert_booleans:
+      for row in rows:
+        for col_name in cols_fields:
+          value = row.get(col_name)
+          if isinstance(value, bool):
+            row[col_name] = str(value).upper()
+
     result.rows_as_csv = dicts_to_csv(
       rows,
       sep="|",

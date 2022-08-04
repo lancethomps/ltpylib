@@ -45,6 +45,7 @@ def convert_string_values_to_correct_type(
   convert_booleans: bool = True,
   use_decimal: bool = False,
   recursive: bool = False,
+  ignore_fields: List[str] = None,
 ) -> Union[dict, list]:
   if isinstance(value_to_convert, list):
     if isinstance(value_to_convert[0], str):
@@ -57,6 +58,8 @@ def convert_string_values_to_correct_type(
   for obj_dict in objs:
     for key, val in obj_dict.items():
       if isinstance(val, str):
+        if ignore_fields and key in ignore_fields:
+          continue
         obj_dict[key] = convert_string_to_correct_type(val, convert_numbers=convert_numbers, convert_booleans=convert_booleans, use_decimal=use_decimal)
       elif recursive and isinstance(val, dict):
         convert_string_values_to_correct_type(
@@ -65,6 +68,7 @@ def convert_string_values_to_correct_type(
           convert_booleans=convert_booleans,
           use_decimal=use_decimal,
           recursive=recursive,
+          ignore_fields=ignore_fields,
         )
       elif recursive and isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
         for inner_val in val:
@@ -74,6 +78,7 @@ def convert_string_values_to_correct_type(
             convert_booleans=convert_booleans,
             use_decimal=use_decimal,
             recursive=recursive,
+            ignore_fields=ignore_fields,
           )
 
   return value_to_convert
