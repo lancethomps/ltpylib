@@ -67,8 +67,15 @@ def add_sqlite_columns_from_dicts(
   add_cols: List[SQLiteColumn] = []
   attr_cols: List[SQLiteColumn] = []
 
-  for data in datas:
+  for idx, data in enumerate(datas):
+    missing_existing_cols = list(cols_by_name.keys())
+
     for key, value in data.items():
+      if key in missing_existing_cols:
+        missing_existing_cols.remove(key)
+      elif idx > 0:
+        has_nulls.add(key)
+
       if ignore_cols and any([regex.fullmatch(key) is not None for regex in ignore_cols]):
         continue
       elif only_cols and key not in only_cols:
@@ -98,6 +105,9 @@ def add_sqlite_columns_from_dicts(
         attr_cols.append(col)
       else:
         add_cols.append(col)
+
+    if missing_existing_cols:
+      has_nulls.update(missing_existing_cols)
 
   sqlite_cols.extend(sorted(add_cols, key=SQLiteColumn.col_sort))
   sqlite_cols.extend(sorted(attr_cols, key=SQLiteColumn.col_sort))
