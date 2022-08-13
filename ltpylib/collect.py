@@ -17,6 +17,11 @@ def add_missing_to_list(main_list: list, others: list) -> list:
   return main_list
 
 
+def divide_chunks(values: list, chunk_size: int):
+  for idx in range(0, len(values), chunk_size):
+    yield values[idx:idx + chunk_size]
+
+
 def flatten(list_of_lists: List[List]) -> List:
   from itertools import chain
 
