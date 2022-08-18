@@ -105,14 +105,15 @@ def copy_fields(
   field_converter: Callable[[str], str] = None,
   field_converter_map: Dict[str, str] = None,
 ) -> dict:
-  for field in fields:
-    if field in from_val:
-      if field_converter is not None:
-        to_val[field_converter(field)] = from_val[field]
-      elif field_converter_map:
-        to_val[field_converter_map.get(field, field)] = from_val[field]
-      else:
-        to_val[field] = from_val[field]
+  if from_val:
+    for field in fields:
+      if field in from_val:
+        if field_converter is not None:
+          to_val[field_converter(field)] = from_val[field]
+        elif field_converter_map:
+          to_val[field_converter_map.get(field, field)] = from_val[field]
+        else:
+          to_val[field] = from_val[field]
 
   return to_val
 
