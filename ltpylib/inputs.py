@@ -49,6 +49,13 @@ def confirm_default_yes(question: str = 'Continue?') -> bool:
   return confirm(question=question, default="y")
 
 
+def confirm_with_auto(question: str = 'Continue?', auto_confirm_arg: bool = None, default: str = "y") -> bool:
+  if check_auto_confirm(auto_confirm_arg):
+    return True
+
+  return confirm(question=question, default="y")
+
+
 def check_auto_confirm(auto_confirm_arg: bool = None) -> bool:
   if auto_confirm_arg is True:
     return True
