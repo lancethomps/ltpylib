@@ -17,12 +17,24 @@ class LenientVersionInfo(semver.VersionInfo):
     elif version.count(".") <= 1:
       version = version + ".0"
 
-    parsed = semver.parse_version_info(version)
+    prerelease = None
+    try:
+      parsed = semver.VersionInfo.parse(version)
+      prerelease = parsed.prerelease
+    except ValueError:
+      parts = original_version.split(".")
+      if len(parts) > 3:
+        prerelease = ".".join(parts[3:])
+      else:
+        raise
+
+      parsed = semver.VersionInfo.parse(".".join(parts[:3]))
+
     return LenientVersionInfo(
       parsed.major,
       minor=parsed.minor,
       patch=parsed.patch,
-      prerelease=parsed.prerelease,
+      prerelease=prerelease,
       build=parsed.build,
       original_version=original_version,
     )
