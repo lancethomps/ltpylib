@@ -25,7 +25,7 @@ def camel_case_to_title_case(val: str):
   return " ".join(re.findall(r'[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))', val))
 
 
-def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, None]:
+def convert_to_bool(val: str, check_if_valid: bool = False, unknown_value: bool = None) -> Union[bool, str, None]:
   if val is None:
     return None
 
@@ -38,6 +38,8 @@ def convert_to_bool(val: str, check_if_valid: bool = False) -> Union[bool, str, 
     return False
   elif lower_val in BOOLEAN_STRINGS_TRUE:
     return True
+  elif unknown_value is not None:
+    return unknown_value
 
   raise ValueError("String is not a boolean: " % val)
 

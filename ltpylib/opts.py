@@ -226,7 +226,14 @@ def config_home_dir() -> Path:
   return Path(os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")))
 
 
-def create_default_arg_parser() -> argparse.ArgumentParser:
+def create_default_arg_parser(
+  has_positionals: bool = False,
+  positionals_key: str = DEFAULT_POSITIONALS_KEY,
+  positionals_type: Callable = None,
+) -> argparse.ArgumentParser:
+  if has_positionals:
+    return create_default_with_positionals_arg_parser(positionals_key=positionals_key, positionals_type=positionals_type)
+
   arg_parser = argparse.ArgumentParser()
   return add_default_arguments_to_parser(arg_parser)
 
@@ -254,7 +261,11 @@ def parse_args_and_init_others(
   argv: Optional[Sequence[str]] = None,
   log_level: Union[str, int] = None,
   log_format: str = None,
+  has_positionals: bool = False,
 ) -> argparse.Namespace:
+  if has_positionals:
+    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
+
   from ltpylib.logs import init_logging
 
   if has_positionals_formatter_class(arg_parser):
