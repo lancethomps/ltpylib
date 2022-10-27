@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any, Dict, List, Union
@@ -6,11 +7,20 @@ from typing import Any, Dict, List, Union
 import sqlalchemy
 import sqlalchemy.engine.url
 
-from ltpylib import configs
+from ltpylib import configs, files, patterns
 from ltpylib.common_types import DataWithUnknownPropertiesAsAttributes
 
 DEFAULT_PG_SERVICE_CONFIG_SECTION = "dwh"
 PG_ENGINES: Dict[str, sqlalchemy.engine.Engine] = {}
+
+SQL_CMD_REGEX_MAIN = r"((SELECT|WITH|EXPLAIN)[^;]*?^;)"
+SQL_CMD_REGEX_PRIMARY = r"(?s)^-- ?use\n" + SQL_CMD_REGEX_MAIN
+SQL_CMD_REGEX_SECONDARY = r"(?s)^" + SQL_CMD_REGEX_MAIN
+SQL_CMD_REGEX_QUERY_ID_REPL_STR = "<query_id>"
+SQL_CMD_REGEX_QUERY_ID = r"(?s)^-- ?" + SQL_CMD_REGEX_QUERY_ID_REPL_STR + r"\n([^;]+^;)"
+SQL_CMD_REGEX_QUERY_ID_ALL = r"(?s)^-- ?([a-zA-Z0-9_-]+)\n([^;]+^;)"
+SQL_CMD_REGEX_FLAGS = re.MULTILINE
+SQL_CMD_REGEX_GROUP = 1
 
 
 class PgServiceConfig(DataWithUnknownPropertiesAsAttributes):
@@ -118,3 +128,68 @@ def get_or_create_pg_engine(config: PgServiceConfig) -> sqlalchemy.engine.Engine
     PG_ENGINES[str(config)] = create_pg_engine(config)
 
   return PG_ENGINES[str(config)]
+
+
+def pull_sql_from_file(query_ids: Union[List[str], str], resolved_sql_file: Path) -> str:
+  if isinstance(query_ids, str):
+    query_ids = [query_ids]
+
+  if query_ids:
+    queries: List[str] = []
+    for qid in query_ids:
+      queries.append(match_query_regex_in_file(
+        resolved_sql_file,
+        [
+          SQL_CMD_REGEX_QUERY_ID.replace(SQL_CMD_REGEX_QUERY_ID_REPL_STR, qid),
+        ],
+      ))
+
+    return "\n".join(queries)
+
+  else:
+    return match_query_regex_in_file(
+      resolved_sql_file,
+      [
+        SQL_CMD_REGEX_PRIMARY,
+        SQL_CMD_REGEX_SECONDARY,
+      ],
+    )
+
+
+def pull_query_ids_from_file(sql_file: Path) -> List[str]:
+  return patterns.pull_matches_from_file(sql_file, SQL_CMD_REGEX_QUERY_ID_ALL, group=1, flags=SQL_CMD_REGEX_FLAGS)
+
+
+def locate_sql_file(
+  sql_file: str,
+  base_dir: Path = None,
+  default_file: Path = None,
+) -> Path:
+  if not sql_file:
+    if not default_file:
+      raise ValueError("You must either pass --default-file or a valid <sql_file> parameter to this script.")
+
+    return default_file
+
+  for maybe_file in [Path(sql_file), Path(sql_file + ".sql")]:
+    if maybe_file.is_file():
+      return maybe_file
+
+  if not base_dir:
+    raise ValueError("<sql_file> does not exist: " + sql_file)
+
+  for maybe_file in [base_dir.joinpath(sql_file), base_dir.joinpath(sql_file + ".sql")]:
+    if maybe_file.is_file():
+      return maybe_file
+
+  raise ValueError("<sql_file> does not exist: " + sql_file)
+
+
+def match_query_regex_in_file(resolved_sql_file: Path, regexes_to_check: List[str]) -> str:
+  file_contents = files.read_file(resolved_sql_file)
+
+  for regex_to_check in regexes_to_check:
+    for match in re.finditer(regex_to_check, file_contents, flags=SQL_CMD_REGEX_FLAGS):
+      return match.group(SQL_CMD_REGEX_GROUP)
+
+  raise Exception("Could not find a sql query match in file: " + resolved_sql_file.as_posix())

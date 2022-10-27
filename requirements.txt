@@ -1,4 +1,6 @@
 argcomplete
+boto3
+botocore
 bs4
 colorama
 configparser

@@ -15,6 +15,7 @@ FILE_EXT_MAPPINGS = {
 def prettify(
   files_to_prettify: Union[Path, List[Path]],
   file_type: str = None,
+  compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
@@ -31,13 +32,14 @@ def prettify(
     if not callable(func_for_type):
       raise ValueError("Unsupported file type: file=%s type=%s" % (file.as_posix(), single_file_type))
 
-    func_for_type(file, debug_mode=debug_mode, verbose=verbose)
+    func_for_type(file, compact=compact, debug_mode=debug_mode, verbose=verbose)
     if verbose:
       logging.debug("Updated %s", file.as_posix())
 
 
 def prettify_html_file(
   file: Path,
+  compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
@@ -70,16 +72,41 @@ def prettify_html_file(
 
 def prettify_json_file(
   file: Path,
+  compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  result = procs.run(["jq", "--sort-keys", ".", file.as_posix()])
+  jq_args = ["--sort-keys", ".", file.as_posix()]
+  if compact:
+    jq_args.insert(0, "--compact-output")
+
+  result = procs.run(["jq"] + jq_args)
   check_proc_result(file, result)
   files.write_file(file, result.stdout)
 
 
+def prettify_sql_file(
+  file: Path,
+  compact: bool = False,
+  debug_mode: bool = False,
+  verbose: bool = False,
+):
+  sql_formatter_cmd = [
+    "sql-formatter",
+    "--language",
+    "sqlite",
+    "--config",
+    Path.home().joinpath(".config/sql-formatter/sqlite.json").as_posix(),
+    "--output",
+    file.as_posix(),
+    file.as_posix(),
+  ]
+  procs.run_with_regular_stdout(sql_formatter_cmd, check=True)
+
+
 def prettify_xml_file(
   file: Path,
+  compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
@@ -90,6 +117,7 @@ def prettify_xml_file(
 
 def prettify_yaml_file(
   file: Path,
+  compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):

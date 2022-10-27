@@ -43,8 +43,12 @@ class JenkinsApi(object):
     return self._api
 
   def url(self, resource_path: str):
+    if resource_path.startswith("https://") or resource_path.startswith("http://"):
+      return resource_path
+
     if not resource_path.startswith("/"):
       resource_path = "/" + resource_path
+
     return self.base_url + resource_path
 
   def all_builds(
@@ -89,6 +93,33 @@ def jenkinsapi_dumper(val: Any) -> Any:
 
 def jenkinsapi_dumper_use_if(val: Any) -> bool:
   return isinstance(val, jenkinsapi.jenkinsbase.JenkinsBase)
+
+
+def create_default_jenkins_api(
+  url: str = None,
+  user: str = None,
+  token: str = None,
+) -> JenkinsApi:
+  if not url:
+    import os
+
+    url = os.getenv("JENKINS_BASE_URL")
+
+  return JenkinsApi(url, create_jenkins_auth(user=user, token=token))
+
+
+def create_jenkins_auth(user: str = None, token: str = None) -> Tuple[str, str]:
+  if not user:
+    import os
+
+    user = os.getenv("JENKINS_USER_ID")
+
+  if not token:
+    import os
+
+    token = os.getenv("JENKINS_API_TOKEN")
+
+  return user, token
 
 
 output.add_custom_json_dumper("jenkinsapi", jenkinsapi_dumper, use_if=jenkinsapi_dumper_use_if)

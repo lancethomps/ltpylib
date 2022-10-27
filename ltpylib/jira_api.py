@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
-import jira.resources
 import re
+from typing import Dict, List, Tuple, Union
+
+import jira.resources
 from jira import JIRA
 from requests import Session
-from typing import Dict, List, Tuple, Union
 
 from ltpylib import inputs, strconverters, strings
 from ltpylib.collect import EMPTY_LIST, EMPTY_MAP, to_csv
@@ -13,7 +14,6 @@ from ltpylib.jira_api_types import Issue, IssueSearchResult, JiraProject, Sprint
 OPTION_AGILE_REST_PATH = "agile_rest_path"
 
 JIRA_API_SEARCH: str = "/rest/api/2/search"
-JIRA_API_SPRINTS: str = "/rest/greenhopper/latest/sprintquery/225?includeFutureSprints=true"
 JIRA_API_EPICS: str = "/rest/greenhopper/latest/xboard/plan/backlog/epics"
 JIRA_API_SPRINT_REPORT: str = "/rest/greenhopper/1.0/rapid/charts/sprintreport"
 JIRA_API_VELOCITY_REPORT: str = "/rest/greenhopper/1.0/rapid/charts/velocity.json"

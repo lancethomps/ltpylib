@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Union
 
 from ltpylib import checks, strings
+from ltpylib.collect import modify_list_of_dicts
+
+T = TypeVar('T')
 
 
 def convert_keys_to_snake_case(
@@ -42,6 +45,7 @@ def convert_string_values_to_correct_type(
   convert_booleans: bool = True,
   use_decimal: bool = False,
   recursive: bool = False,
+  ignore_fields: List[str] = None,
 ) -> Union[dict, list]:
   if isinstance(value_to_convert, list):
     if isinstance(value_to_convert[0], str):
@@ -54,6 +58,8 @@ def convert_string_values_to_correct_type(
   for obj_dict in objs:
     for key, val in obj_dict.items():
       if isinstance(val, str):
+        if ignore_fields and key in ignore_fields:
+          continue
         obj_dict[key] = convert_string_to_correct_type(val, convert_numbers=convert_numbers, convert_booleans=convert_booleans, use_decimal=use_decimal)
       elif recursive and isinstance(val, dict):
         convert_string_values_to_correct_type(
@@ -62,6 +68,7 @@ def convert_string_values_to_correct_type(
           convert_booleans=convert_booleans,
           use_decimal=use_decimal,
           recursive=recursive,
+          ignore_fields=ignore_fields,
         )
       elif recursive and isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
         for inner_val in val:
@@ -71,6 +78,7 @@ def convert_string_values_to_correct_type(
             convert_booleans=convert_booleans,
             use_decimal=use_decimal,
             recursive=recursive,
+            ignore_fields=ignore_fields,
           )
 
   return value_to_convert
@@ -90,38 +98,54 @@ def convert_string_to_correct_type(
   return val
 
 
-def copy_fields(from_val: dict, to_val: dict, fields: List[str], field_converter: Callable[[str], str] = None, field_converter_map: Dict[str, str] = None) -> dict:
-  for field in fields:
-    if field in from_val:
-      if field_converter is not None:
-        to_val[field_converter(field)] = from_val[field]
-      elif field_converter_map:
-        to_val[field_converter_map[field]] = from_val[field]
-      else:
-        to_val[field] = from_val[field]
+def copy_fields(
+  from_val: dict,
+  to_val: dict,
+  fields: List[str],
+  field_converter: Callable[[str], str] = None,
+  field_converter_map: Dict[str, str] = None,
+) -> dict:
+  if from_val:
+    for field in fields:
+      if field in from_val:
+        if field_converter is not None:
+          to_val[field_converter(field)] = from_val[field]
+        elif field_converter_map:
+          to_val[field_converter_map.get(field, field)] = from_val[field]
+        else:
+          to_val[field] = from_val[field]
 
   return to_val
 
 
-def find(key: str, obj: dict) -> List[dict]:
+def find(key: str, obj: dict, yield_parent: bool = False) -> List[dict]:
   if isinstance(obj, dict):
-    for k, v in obj.items():
+    for k, v in list(obj.items()):
       if k == key:
-        yield v
+        if yield_parent:
+          yield obj
+        else:
+          yield v
       else:
-        for res in find(key, v):
+        for res in find(key, v, yield_parent):
           yield res
   elif isinstance(obj, list):
     for d in obj:
-      for res in find(key, d):
+      for res in find(key, d, yield_parent):
         yield res
 
 
-def create_key_getter(key: Union[str, Callable[[dict], Any]]) -> Callable[[dict], Any]:
+def create_key_getter(key: Union[str, Callable[[T], Any]], is_dict: bool = True) -> Callable[[T], Any]:
   if isinstance(key, str):
 
-    def key_getter(x):
-      return x.get(key)
+    if is_dict:
+
+      def key_getter(x):
+        return x.get(key)
+    else:
+
+      def key_getter(x):
+        return getattr(x, key)
 
   else:
     key_getter = key
@@ -138,9 +162,9 @@ def find_first_with_key_value(list_of_dicts: List[dict], key: Union[str, Callabl
       return val
 
 
-def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) -> Dict[Any, List[dict]]:
-  key_getter = create_key_getter(key)
-  by_field: Dict[str, List[dict]] = {}
+def group_by(list_of_dicts: List[T], key: Union[str, Callable[[T], Any]], is_dict: bool = True) -> Dict[Any, List[T]]:
+  key_getter = create_key_getter(key, is_dict=is_dict)
+  by_field: Dict[str, List[T]] = {}
   for val in list_of_dicts:
     field_value = key_getter(val)
     if field_value not in by_field:
@@ -149,6 +173,56 @@ def group_by(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]]) 
     by_field[field_value].append(val)
 
   return by_field
+
+
+def modify_dict_fields(
+  datas: List[dict],
+  fields_included: Sequence[str] = None,
+  fields_order: Sequence[str] = None,
+  in_place: bool = False,
+) -> List[dict]:
+  result: List[dict] = datas
+
+  if fields_included:
+
+    def fn(updated_data: dict):
+      for field in list(updated_data.keys()):
+        if field not in fields_included:
+          updated_data.pop(field)
+
+    result = modify_list_of_dicts(result, fn, in_place=in_place)
+
+  if fields_order:
+    if in_place:
+      data_copy = result[0].copy()
+      ordered_data = result[0]
+      ordered_data.clear()
+    else:
+      data_copy = result[0].copy()
+      ordered_data = dict()
+
+    for field in fields_order:
+      ordered_data[field] = data_copy.pop(field, None)
+
+    ordered_data.update(data_copy)
+    result[0] = ordered_data
+
+  return result
+
+
+def prefix_dict_keys(require_prefix: str, data: Dict[str, Any], always_add: str = None) -> dict:
+  updated_data = {}
+  for input_key, value in data.items():
+    key = input_key
+    if not key.startswith(require_prefix):
+      key = require_prefix + key
+
+    if always_add:
+      key = always_add + key
+
+    updated_data[key] = value
+
+  return updated_data
 
 
 def unique_key_values(list_of_dicts: List[dict], key: Union[str, Callable[[dict], Any]], include_nulls: bool = False) -> List[Any]:

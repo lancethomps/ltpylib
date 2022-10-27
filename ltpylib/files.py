@@ -9,7 +9,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-from ltpylib import inputs, logs, procs, strings
+from ltpylib import gitrepos, inputs, logs, procs, strings
 from ltpylib.common_types import TypeWithDictRepr
 from ltpylib.macos import pbcopy
 
@@ -187,11 +187,23 @@ def read_file_n_lines(file: Union[str, Path], n_lines: int = -1) -> List[str]:
   return lines
 
 
-def write_file(file: Union[str, Path], contents: AnyStr):
+def write_file(file: Union[str, Path], contents: AnyStr, log_file_path: bool = False):
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'w') as fw:
     fw.write(contents)
+
+  if log_file_path:
+    import logging
+
+    if not logging.root.hasHandlers():
+      print(file.as_posix())
+    else:
+      logging.info(file.as_posix())
+
+
+def write_file_and_log(file: Union[str, Path], contents: AnyStr):
+  write_file(file, contents, log_file_path=True)
 
 
 def append_file(file: Union[str, Path], contents: AnyStr):
@@ -395,6 +407,9 @@ class SplitLine(TypeWithDictRepr):
     self.line_number: int = line_number
     self.content: str = content
 
+  def to_file_name_and_content(self) -> str:
+    return ":".join([val for val in [self.file_name, self.content] if val is not None])
+
   def to_open_arg(self) -> str:
     if self.line_number is not None:
       return "%s:%s" % (self.file_name, self.line_number)
@@ -411,8 +426,11 @@ class OpenGreppedLines:
   APP_CODE = "code"
 
   REPLACE_HOME_REGEX = re.compile(r"(?m)^~")
+  LINE_NUMBERS_COLON_STRICT_REGEX = re.compile(r"^(\S+):(\d+):(.*)")
   LINE_NUMBERS_COLON_REGEX = re.compile(r"^(.*\S):(\d+):(.*)")
+  LINE_NUMBERS_DASH_STRICT_REGEX = re.compile(r"^(\S+)-(\d+)-(.*)")
   LINE_NUMBERS_DASH_REGEX = re.compile(r"^(.*\S)-(\d+)-(.*)")
+  CHECK_REGEXES = [LINE_NUMBERS_COLON_STRICT_REGEX, LINE_NUMBERS_DASH_STRICT_REGEX, LINE_NUMBERS_COLON_REGEX, LINE_NUMBERS_DASH_REGEX]
 
   def __init__(
     self,
@@ -450,7 +468,7 @@ class OpenGreppedLines:
         self.results: str = sys.stdin.read()
     else:
       self.using_stdin: bool = False
-      self.results: str = "\n".join(results)
+      self.results: str = results
 
     if self.results:
       self.results: str = self.results.strip()
@@ -499,12 +517,7 @@ class OpenGreppedLines:
       exit(1)
 
   def handle_copy(self):
-    if self.line_numbers:
-      code_lines = [self.split_line(line).content for line in self.get_cleaned_results().splitlines()]
-    else:
-      code_lines = self.get_cleaned_results().splitlines()
-
-    pbcopy("\n".join(code_lines).strip())
+    pbcopy(self.get_cleaned_results().strip())
 
   def handle_print(self):
     print(self.results)
@@ -566,7 +579,7 @@ fi
     if not self.line_numbers:
       return SplitLine(line)
 
-    for regex in [OpenGreppedLines.LINE_NUMBERS_COLON_REGEX, OpenGreppedLines.LINE_NUMBERS_DASH_REGEX]:
+    for regex in OpenGreppedLines.CHECK_REGEXES:
       match = regex.fullmatch(line)
       if match:
         return SplitLine(match.group(1), line_number=int(match.group(2)), content=match.group(3))
@@ -583,10 +596,16 @@ fi
       if line_parts.file_name in found_files:
         continue
 
-      if not Path(line_parts.file_name).exists():
-        raise ValueError(f"could not parse file from results: {line_parts.file_name}")
-
       found_files.append(line_parts.file_name)
+
+      file_path = Path(line_parts.file_name)
+      if not file_path.exists():
+        file_path = gitrepos.resolve_file_relative_to_git_base_dir(file_path)
+        if file_path.exists():
+          line_parts.file_name = file_path.as_posix()
+        else:
+          raise ValueError(f"could not parse file from results: {line_parts.file_name}")
+
       files_from_results.append(line_parts.to_open_arg())
 
     return files_from_results

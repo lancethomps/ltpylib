@@ -4,13 +4,12 @@
 import argparse
 import inspect
 import logging
-import os
+import psutil
 import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Tuple, Union
 
-import psutil
 from ltpylib import files, logs, opts, procs
 
 
@@ -36,7 +35,7 @@ class ProcessRunner(object):
     self.start_cmd = start_cmd
     self.build_cmds = build_cmds
     self.force_build_before_start = force_build_before_start
-    self.log_file = log_file or ('%s/Library/Logs/%s.log' % (os.getenv('HOME'), proc_id))
+    self.log_file = log_file or logs.ltlogs_dir().joinpath(f"{proc_id}.log").as_posix()
     self.log_multitail_args = log_multitail_args
     self.pid_file = pid_file
     self.proc_name_matcher = proc_name_matcher
