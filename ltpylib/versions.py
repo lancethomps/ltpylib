@@ -10,12 +10,18 @@ class LenientVersionInfo(semver.VersionInfo):
     self.version: str = self.__str__()
 
   @staticmethod
-  def parse_lenient(original_version: str) -> 'LenientVersionInfo':
-    version = original_version
-    if version.count(".") <= 0:
+  def make_version_semantic(version: str) -> str:
+    dot_count = version.count(".")
+    if dot_count <= 0:
       version = version + ".0.0"
-    elif version.count(".") <= 1:
+    elif dot_count <= 1:
       version = version + ".0"
+
+    return version
+
+  @staticmethod
+  def parse_lenient(original_version: str) -> 'LenientVersionInfo':
+    version = LenientVersionInfo.make_version_semantic(original_version)
 
     prerelease = None
     try:
@@ -25,6 +31,9 @@ class LenientVersionInfo(semver.VersionInfo):
       parts = original_version.split(".")
       if len(parts) > 3:
         prerelease = ".".join(parts[3:])
+      elif "-" in original_version:
+        main_part, prerelease = original_version.split("-", maxsplit=1)
+        parts = LenientVersionInfo.make_version_semantic(main_part).split(".")
       else:
         raise
 
