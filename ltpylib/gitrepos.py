@@ -1,13 +1,42 @@
 #!/usr/bin/env python
 import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import IO, List, Optional, Sequence, Union
 
-from ltpylib import files, filters
+from ltpylib import files, filters, procs
 
 FIND_REPOS_RECURSION_EXCLUDES = frozenset([
   'node_modules',
 ])
+
+
+def run_git_cmd(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  stderr: Optional[Union[int, IO]] = sys.stderr,
+) -> subprocess.CompletedProcess:
+  git_cmd = ["git"]
+  if isinstance(git_args, str):
+    git_cmd.append(git_args)
+  else:
+    git_cmd.extend(git_args)
+
+  return procs.run(git_cmd, check=check, cwd=cwd, stderr=stderr)
+
+
+def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
+  return Path(run_git_cmd("base-dir", cwd=cwd).stdout)
+
+
+def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd("repo-name", cwd=cwd).stdout
+
+
+def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
+  return run_git_cmd("in-repo", cwd=cwd).returncode == 0
 
 
 def is_file_part_of_git_repo(file_path: Path) -> bool:
