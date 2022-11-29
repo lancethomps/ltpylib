@@ -430,6 +430,7 @@ class OpenGreppedLines:
   LINE_NUMBERS_COLON_REGEX = re.compile(r"^(.*\S):(\d+):(.*)")
   LINE_NUMBERS_DASH_STRICT_REGEX = re.compile(r"^(\S+)-(\d+)-(.*)")
   LINE_NUMBERS_DASH_REGEX = re.compile(r"^(.*\S)-(\d+)-(.*)")
+  LINE_NUMBERS_EXTRACTOR_REGEX = re.compile(r"^(.*?\S)[:-](\d+)[:-](.*)")
   CHECK_REGEXES = [LINE_NUMBERS_COLON_STRICT_REGEX, LINE_NUMBERS_DASH_STRICT_REGEX, LINE_NUMBERS_COLON_REGEX, LINE_NUMBERS_DASH_REGEX]
 
   def __init__(
@@ -532,7 +533,7 @@ class OpenGreppedLines:
 
   def create_select_lines_preview_command(self) -> str:
     if self.line_numbers:
-      filename_regex = r"^([^:]+):([0-9]+):"
+      filename_regex = OpenGreppedLines.LINE_NUMBERS_EXTRACTOR_REGEX.pattern
       lineno_cmd = f"$(echo {{}} | pcregrep -o2 '{filename_regex}')"
     else:
       filename_regex = r"^([^:]+)"
@@ -551,7 +552,7 @@ if test -n "$filename" && test -e "$filepath"; then
   echo "{logs.LOG_SEP}"
   {self.select_preview_file_cmd}
 else
-  echo 'No file found to display'
+  echo "No file found to display: filename=$filename filepath=$filepath lineno=$lineno"
 fi
 """
 
