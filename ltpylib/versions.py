@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from typing import List
+
 import semver
 
 
@@ -51,3 +53,17 @@ class LenientVersionInfo(semver.VersionInfo):
 
 def parse_semver_lenient(version: str) -> LenientVersionInfo:
   return LenientVersionInfo.parse_lenient(version)
+
+
+def parse_all_semver_lenient(versions: List[str], ignore_invalid: bool = False) -> List[LenientVersionInfo]:
+  parsed_versions: List[LenientVersionInfo] = []
+  for v in versions:
+    try:
+      parsed_versions.append(LenientVersionInfo.parse_lenient(v))
+    except:  # noqa: E722
+      if ignore_invalid:
+        continue
+
+      raise
+
+  return parsed_versions
