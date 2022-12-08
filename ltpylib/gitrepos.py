@@ -27,6 +27,15 @@ def run_git_cmd(
   return procs.run(git_cmd, check=check, cwd=cwd, stderr=stderr)
 
 
+def run_git_cmd_stdout(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  stderr: Optional[Union[int, IO]] = sys.stderr,
+) -> str:
+  return run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr).stdout
+
+
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
   return Path(run_git_cmd("base-dir", cwd=cwd).stdout)
 
