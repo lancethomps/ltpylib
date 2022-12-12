@@ -118,8 +118,20 @@ def substring_after(val: str, before_str: str) -> str:
   return val.split(before_str, 1)[1]
 
 
+def substring_after_last(val: str, sep: str) -> str:
+  return val.split(sep)[-1]
+
+
 def substring_before(val: str, before_str: str) -> str:
   return val.split(before_str)[0]
+
+
+def substring_before_last(val: str, before_str: str) -> str:
+  parts = val.split(before_str)
+  if len(parts) == 1:
+    return parts[0]
+
+  return before_str.join(parts[0:-1])
 
 
 def _to_snake_case_replacer(match: Match) -> str:
