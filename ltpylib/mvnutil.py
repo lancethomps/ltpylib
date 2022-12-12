@@ -195,6 +195,7 @@ def latest_artifact_version(artifact: MavenArtifact) -> Optional[str]:
   return docs[0]["latestVersion"]
 
 
+# see https://central.sonatype.org/search/rest-api-guide/
 def call_latest_version_api(artifact: MavenArtifact) -> dict:
   if not artifact.artifact_id:
     raise ValueError(f"artifact_id must be specified: {artifact}")
@@ -215,6 +216,16 @@ def call_search_api(artifact: MavenArtifact, rows: int = DEFAULT_SEARCH_ROWS) ->
   if artifact.artifact_id:
     query += f" AND a:{artifact.artifact_id}"
 
+  params = {
+    "q": query,
+    "rows": rows,
+    "wt": "json",
+    "core": "gav",
+  }
+  return maybe_throw(requests.get("https://search.maven.org/solrsearch/select", params=params)).json()
+
+
+def call_search_api_query(query: str, rows: int = DEFAULT_SEARCH_ROWS) -> dict:
   params = {
     "q": query,
     "rows": rows,
