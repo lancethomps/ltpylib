@@ -8,6 +8,7 @@ from typing import List, Union
 from ltpylib import files, procs
 
 FILE_EXT_MAPPINGS = {
+  "jsonl": "json",
   "yml": "yaml",
 }
 
