@@ -39,6 +39,47 @@ def convert_keys_to_snake_case(
   return obj
 
 
+def convert_boolean_values_to_string(
+  value_to_convert: Union[dict, list],
+  recursive: bool = True,
+  ignore_fields: List[str] = None,
+  only_fields: List[str] = None,
+) -> Union[dict, list]:
+  if isinstance(value_to_convert, list):
+    if isinstance(value_to_convert[0], str):
+      return value_to_convert
+
+    objs = value_to_convert
+  else:
+    objs = [value_to_convert]
+
+  for obj_dict in objs:
+    items = obj_dict.items() if not only_fields else [(f, obj_dict[f]) for f in only_fields if f in obj_dict]
+    for key, val in items:
+      if isinstance(val, bool):
+        if ignore_fields and key in ignore_fields:
+          continue
+
+        obj_dict[key] = str(val).lower()
+      elif recursive and isinstance(val, dict):
+        convert_boolean_values_to_string(
+          val,
+          recursive=recursive,
+          ignore_fields=ignore_fields,
+          only_fields=only_fields,
+        )
+      elif recursive and isinstance(val, list) and len(val) > 0 and isinstance(val[0], dict):
+        for inner_val in val:
+          convert_boolean_values_to_string(
+            inner_val,
+            recursive=recursive,
+            ignore_fields=ignore_fields,
+            only_fields=only_fields,
+          )
+
+  return value_to_convert
+
+
 def convert_string_values_to_correct_type(
   value_to_convert: Union[dict, list],
   convert_numbers: bool = True,
@@ -60,6 +101,7 @@ def convert_string_values_to_correct_type(
       if isinstance(val, str):
         if ignore_fields and key in ignore_fields:
           continue
+
         obj_dict[key] = convert_string_to_correct_type(val, convert_numbers=convert_numbers, convert_booleans=convert_booleans, use_decimal=use_decimal)
       elif recursive and isinstance(val, dict):
         convert_string_values_to_correct_type(

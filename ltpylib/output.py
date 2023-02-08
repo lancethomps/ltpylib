@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from ltpylib.collect import modify_list_of_dicts
 from ltpylib.common_types import TypeWithDictRepr
-from ltpylib.dicts import modify_dict_fields
+from ltpylib.dicts import convert_boolean_values_to_string, modify_dict_fields
 
 CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
@@ -266,6 +266,7 @@ def dicts_to_csv(
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> str:
   from pandas import DataFrame
 
@@ -274,6 +275,7 @@ def dicts_to_csv(
     fields_included=fields_included,
     fields_order=fields_order,
     modify_in_place=modify_in_place,
+    convert_booleans_to_string=convert_booleans_to_string,
   )
 
   data_frame = DataFrame(data_as_dicts)
@@ -293,6 +295,7 @@ def dicts_to_markdown_table(
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> str:
   import tabulate
 
@@ -303,6 +306,7 @@ def dicts_to_markdown_table(
     fields_included=fields_included,
     fields_order=fields_order,
     modify_in_place=modify_in_place,
+    convert_booleans_to_string=convert_booleans_to_string,
   )
 
   if escape_data:
@@ -332,6 +336,7 @@ def create_data_as_dicts(
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> List[dict]:
   data_as_dicts: List[dict] = data
 
@@ -346,5 +351,8 @@ def create_data_as_dicts(
       fields_order=fields_order,
       in_place=modify_in_place,
     )
+
+  if convert_booleans_to_string:
+    data_as_dicts = convert_boolean_values_to_string(data_as_dicts, only_fields=fields_included)
 
   return data_as_dicts
