@@ -53,7 +53,7 @@ def confirm_with_auto(question: str = 'Continue?', auto_confirm_arg: bool = None
   if check_auto_confirm(auto_confirm_arg):
     return True
 
-  return confirm(question=question, default="y")
+  return confirm(question=question, default=default)
 
 
 def check_auto_confirm(auto_confirm_arg: bool = None) -> bool:
