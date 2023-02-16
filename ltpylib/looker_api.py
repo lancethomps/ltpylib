@@ -8,10 +8,12 @@ from looker_sdk.rtl.serialize import TModelOrSequence
 from looker_sdk.sdk.api40.methods import Looker40SDK
 from looker_sdk.sdk.api40.models import Dashboard
 
+from ltpylib import files
 from ltpylib.output import prettify_json, prettify_json_compact
 
 LOOKER_CONFIG_FILE_DEFAULT = Path.home().joinpath(".config/looker.ini")
 T = TypeVar("T")
+
 
 class LookerApi(object):
 
@@ -26,8 +28,10 @@ class LookerApi(object):
     self.client: Looker40SDK = looker_sdk.init40(config_file=self.config_file.as_posix())
 
   @staticmethod
-  def deserialize(data: Union[str, Any], structure: Generic[T]) -> T:
-    if not isinstance(data, str):
+  def deserialize(data: Union[str, Path, Any], structure: Generic[T]) -> T:
+    if isinstance(data, Path):
+      data = files.read_file(data)
+    elif not isinstance(data, str):
       data = prettify_json_compact(data)
 
     return looker_sdk.rtl.serialize.deserialize40(data=data, structure=structure)
