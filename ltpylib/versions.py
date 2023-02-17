@@ -3,6 +3,8 @@ from typing import List
 
 import semver
 
+STABLE_PRERELEASE_VERSIONS = ["final", "release"]
+
 
 class LenientVersionInfo(semver.VersionInfo):
 
@@ -12,7 +14,7 @@ class LenientVersionInfo(semver.VersionInfo):
     self.version: str = self.__str__()
 
   def is_stable(self) -> bool:
-    return self.prerelease is None and self.build is None
+    return self.build is None and (self.prerelease is None or self.prerelease.lower() in STABLE_PRERELEASE_VERSIONS)
 
   @staticmethod
   def make_version_semantic(version: str) -> str:

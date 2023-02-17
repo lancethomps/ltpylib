@@ -70,6 +70,10 @@ def pbcopy(val: str):
   )
 
 
+def pbpaste() -> str:
+  return procs.run_and_parse_output_on_success(["pbpaste"])
+
+
 def find_sound_file(sound: Union[MacSoundsSystem, str]):
   sound_name = (sound.name if isinstance(sound, MacSoundsSystem) else sound)
   for sounds_dir in MAC_SOUND_DIRS:
