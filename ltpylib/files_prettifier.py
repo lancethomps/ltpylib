@@ -122,7 +122,7 @@ def prettify_yaml_file(
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  result = procs.run(["yq", "--yaml-roundtrip", "--indentless-lists", "--sort-keys", ".", file.as_posix()])
+  result = procs.run(["yq", "--yaml-roundtrip", "--indentless-lists", "--sort-keys", "--width=5000", ".", file.as_posix()])
   check_proc_result(file, result)
   files.write_file(file, result.stdout)
 
