@@ -262,6 +262,7 @@ def parse_args_and_init_others(
   log_level: Union[str, int] = None,
   log_format: str = None,
   has_positionals: bool = False,
+  log_use_stderr: bool = False,
 ) -> argparse.Namespace:
   if has_positionals:
     return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
@@ -272,7 +273,7 @@ def parse_args_and_init_others(
     return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
 
   args = parse_args(arg_parser, argv=argv)
-  init_logging(args=args, log_level=log_level, log_format=log_format)
+  init_logging(args=args, log_level=log_level, log_format=log_format, use_stderr=log_use_stderr)
   return args
 
 

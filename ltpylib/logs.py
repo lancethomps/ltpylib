@@ -60,6 +60,19 @@ class LogPipe(threading.Thread):
     pass
 
 
+class StderrStreamHandler(logging.StreamHandler):
+
+  def __init__(self):
+    super().__init__(stream=sys.stderr)
+
+  def handleError(self, record):
+    err_type, err_value, traceback = sys.exc_info()
+    if err_type == BrokenPipeError:
+      exit(0)
+
+    super().handleError(record)
+
+
 class StdoutStreamHandler(logging.StreamHandler):
 
   def __init__(self):
@@ -79,6 +92,7 @@ def init_logging(
   log_level: Union[int, str] = None,
   log_format: str = None,
   args: Union[argparse.Namespace, opts.BaseArgs] = None,
+  use_stderr: bool = False,
 ):
   if args:
     if verbose is None and hasattr(args, "verbose"):
@@ -103,7 +117,7 @@ def init_logging(
 
   log_config_kwargs = {
     "style": DEFAULT_LOG_STYLE,
-    "handlers": [StdoutStreamHandler()],
+    "handlers": [StderrStreamHandler() if use_stderr else StdoutStreamHandler()],
   }
   logging.basicConfig(
     level=log_level,
