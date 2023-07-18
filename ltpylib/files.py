@@ -602,7 +602,7 @@ fi
       file_path = Path(line_parts.file_name)
       if not file_path.exists():
         file_path = gitrepos.resolve_file_relative_to_git_base_dir(file_path)
-        if file_path.exists():
+        if file_path is not None and file_path.exists():
           line_parts.file_name = file_path.as_posix()
         else:
           raise ValueError(f"could not parse file from results: {line_parts.file_name}")
