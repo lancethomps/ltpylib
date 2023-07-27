@@ -265,10 +265,14 @@ def dicts_to_csv(
   header: bool = True,
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
+  fields_order_from_included: bool = False,
   modify_in_place: bool = False,
   convert_booleans_to_string: bool = False,
 ) -> str:
   from pandas import DataFrame
+
+  if fields_included and not fields_order and fields_order_from_included:
+    fields_order = fields_included
 
   data_as_dicts: List[dict] = create_data_as_dicts(
     data,
@@ -294,12 +298,16 @@ def dicts_to_markdown_table(
   headers: Sequence[str] = None,
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
+  fields_order_from_included: bool = False,
   modify_in_place: bool = False,
   convert_booleans_to_string: bool = False,
 ) -> str:
   import tabulate
 
   from pandas import DataFrame
+
+  if fields_included and not fields_order and fields_order_from_included:
+    fields_order = fields_included
 
   data_as_dicts: List[dict] = create_data_as_dicts(
     data,
