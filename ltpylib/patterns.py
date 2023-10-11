@@ -7,7 +7,7 @@ from typing import Callable, List, Match, Union
 
 def replace_matches(
   content: str,
-  search_string: str,
+  search_string: Union[str, re.Pattern],
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
   wrap_replacement_in_function: bool = False,
@@ -31,7 +31,7 @@ def replace_matches(
 
 def pull_matches_from_file(
   file: Union[str, Path],
-  search_string: str,
+  search_string: Union[str, re.Pattern],
   group: int = 0,
   flags: Union[int, re.RegexFlag] = 0,
 ) -> List[str]:

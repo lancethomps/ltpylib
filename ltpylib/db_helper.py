@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Union
 import sqlalchemy
 import sqlalchemy.engine.url
 
-from ltpylib import configs, files, patterns
+from ltpylib import configs, files, patterns, procs
 from ltpylib.common_types import DataWithUnknownPropertiesAsAttributes
 
 DEFAULT_PG_SERVICE_CONFIG_SECTION = "dwh"
@@ -130,7 +130,7 @@ def get_or_create_pg_engine(config: PgServiceConfig) -> sqlalchemy.engine.Engine
   return PG_ENGINES[str(config)]
 
 
-def pull_sql_from_file(query_ids: Union[List[str], str], resolved_sql_file: Path) -> str:
+def pull_sql_from_file(query_ids: Union[List[str], str], resolved_sql_file: Path, inject_env: bool = True) -> str:
   if isinstance(query_ids, str):
     query_ids = [query_ids]
 
@@ -144,16 +144,23 @@ def pull_sql_from_file(query_ids: Union[List[str], str], resolved_sql_file: Path
         ],
       ))
 
-    return "\n".join(queries)
+    query = "\n".join(queries)
 
   else:
-    return match_query_regex_in_file(
+    query = match_query_regex_in_file(
       resolved_sql_file,
       [
         SQL_CMD_REGEX_PRIMARY,
         SQL_CMD_REGEX_SECONDARY,
       ],
     )
+
+  if inject_env:
+    exit_code, updated_query = procs.run_and_parse_output(["envsubst"], input=query)
+    if exit_code == 0:
+      query = updated_query
+
+  return query
 
 
 def pull_query_ids_from_file(sql_file: Path) -> List[str]:
