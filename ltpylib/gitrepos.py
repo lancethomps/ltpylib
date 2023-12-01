@@ -12,19 +12,23 @@ FIND_REPOS_RECURSION_EXCLUDES = frozenset([
 ])
 
 
-def run_git_cmd(
-  git_args: Union[str, List[str]],
-  cwd: Union[Path, str] = os.getcwd(),
-  check: bool = True,
-  stderr: Optional[Union[int, IO]] = sys.stderr,
-) -> subprocess.CompletedProcess:
+def create_git_cmd(git_args: Union[str, List[str]],) -> List[str]:
   git_cmd = ["git"]
   if isinstance(git_args, str):
     git_cmd.append(git_args)
   else:
     git_cmd.extend(git_args)
 
-  return procs.run(git_cmd, check=check, cwd=cwd, stderr=stderr)
+  return git_cmd
+
+
+def run_git_cmd(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  stderr: Optional[Union[int, IO]] = sys.stderr,
+) -> subprocess.CompletedProcess:
+  return procs.run(create_git_cmd(git_args), check=check, cwd=cwd, stderr=stderr)
 
 
 def run_git_cmd_stdout(
@@ -34,6 +38,15 @@ def run_git_cmd_stdout(
   stderr: Optional[Union[int, IO]] = sys.stderr,
 ) -> str:
   return run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr).stdout
+
+
+def run_git_cmd_regular_stdout(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  **kwargs,
+) -> subprocess.CompletedProcess:
+  return procs.run_with_regular_stdout(create_git_cmd(git_args), cwd=cwd, check=check, **kwargs)
 
 
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
@@ -46,6 +59,14 @@ def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
 
 def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
   return run_git_cmd("in-repo", cwd=cwd).returncode == 0
+
+
+def diff_show(cwd: Union[Path, str] = os.getcwd(), diff_file: Union[Path, str] = None) -> bool:
+  git_args = ["--no-pager", "diff"]
+  if diff_file:
+    git_args.append(files.convert_to_path(diff_file).relative_to(cwd).as_posix())
+
+  return run_git_cmd_regular_stdout(git_args, cwd=cwd, check=False).returncode == 1
 
 
 def is_file_part_of_git_repo(file_path: Path) -> bool:

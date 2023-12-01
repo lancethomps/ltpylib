@@ -6,7 +6,7 @@ from typing import Any, Generic, Sequence, TypeVar, Union
 import looker_sdk
 from looker_sdk.rtl.serialize import TModelOrSequence
 from looker_sdk.sdk.api40.methods import Looker40SDK
-from looker_sdk.sdk.api40.models import Dashboard
+from looker_sdk.sdk.api40.models import Dashboard, Look, LookWithQuery
 
 from ltpylib import files
 from ltpylib.output import prettify_json, prettify_json_compact
@@ -37,11 +37,18 @@ class LookerApi(object):
     return looker_sdk.rtl.serialize.deserialize40(data=data, structure=structure)
 
   @staticmethod
-  def remove_dashboard_non_config_fields(dash: Dashboard) -> Dashboard:
-    dash.last_accessed_at = None
-    dash.last_viewed_at = None
-    dash.view_count = None
-    return dash
+  def remove_dashboard_non_config_fields(config: Dashboard) -> Dashboard:
+    config.last_accessed_at = None
+    config.last_viewed_at = None
+    config.view_count = None
+    return config
+
+  @staticmethod
+  def remove_config_non_config_fields(config: Union[Dashboard, Look, LookWithQuery]) -> Union[Dashboard, Look, LookWithQuery]:
+    config.last_accessed_at = None
+    config.last_viewed_at = None
+    config.view_count = None
+    return config
 
   @staticmethod
   def to_json(api_model: TModelOrSequence) -> str:
@@ -60,3 +67,6 @@ class LookerApi(object):
 
   def my_dashboards(self, limit: int = 100) -> Sequence[Dashboard]:
     return self.client.search_dashboards(user_id=self.user_id, limit=limit)
+
+  def my_looks(self, limit: int = 100) -> Sequence[Look]:
+    return self.client.search_looks(user_id=self.user_id, limit=limit)
