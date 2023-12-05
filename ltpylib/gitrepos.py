@@ -12,7 +12,9 @@ FIND_REPOS_RECURSION_EXCLUDES = frozenset([
 ])
 
 
-def create_git_cmd(git_args: Union[str, List[str]],) -> List[str]:
+def create_git_cmd(
+  git_args: Union[str, List[str]],
+) -> List[str]:
   git_cmd = ["git"]
   if isinstance(git_args, str):
     git_cmd.append(git_args)
