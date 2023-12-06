@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import logging
+import re
 import subprocess
 import sys
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, IO, List, Optional, Tuple, Type, Union
+
+CMD_NO_QUOTES_NEEDED_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
@@ -222,6 +225,20 @@ def proc_debug_string(proc) -> str:
     proc.__class__.__name__,
     ", ".join(["%s=%r" % (k, v) for k, v in info.items()]),
   )
+
+
+def create_cmd_debug_string(popenargs: List[str]) -> str:
+  output: List[str] = []
+  for part in popenargs:
+    if CMD_NO_QUOTES_NEEDED_REGEX.fullmatch(part):
+      output.append(part)
+    elif "'" in part:
+      escaped_part = part.replace('"', '\\"')
+      output.append(f"\"{escaped_part}\"")
+    else:
+      output.append(f"'{part}'")
+
+  return " ".join(output)
 
 
 def stop_proc_by_name(name_matcher: str) -> bool:
