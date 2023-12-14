@@ -71,6 +71,20 @@ def diff_show(cwd: Union[Path, str] = os.getcwd(), diff_file: Union[Path, str] =
   return run_git_cmd_regular_stdout(git_args, cwd=cwd, check=False).returncode == 1
 
 
+def commit_show(
+  message: str,
+  cwd: Union[Path, str] = os.getcwd(),
+  repo_files: Sequence[Union[Path, str]] = None,
+  add_first: bool = True,
+  check: bool = True,
+) -> subprocess.CompletedProcess:
+  file_args = [files.convert_to_path(f).relative_to(cwd).as_posix() for f in repo_files if f] if repo_files else []
+  if add_first:
+    run_git_cmd_regular_stdout(["add"] + file_args, cwd=cwd, check=check)
+
+  return run_git_cmd_regular_stdout(["commit", "-m", message] + file_args, cwd=cwd, check=check)
+
+
 def is_file_part_of_git_repo(file_path: Path) -> bool:
   return git_repo_root_for_file(file_path) is not None
 
