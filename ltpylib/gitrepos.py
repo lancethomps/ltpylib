@@ -29,8 +29,9 @@ def run_git_cmd(
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
   stderr: Optional[Union[int, IO]] = sys.stderr,
+  log_cmd: bool = False,
 ) -> subprocess.CompletedProcess:
-  return procs.run(create_git_cmd(git_args), check=check, cwd=cwd, stderr=stderr)
+  return procs.run(create_git_cmd(git_args), check=check, cwd=cwd, stderr=stderr, log_cmd=log_cmd)
 
 
 def run_git_cmd_stdout(
@@ -38,17 +39,19 @@ def run_git_cmd_stdout(
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
   stderr: Optional[Union[int, IO]] = sys.stderr,
+  log_cmd: bool = False,
 ) -> str:
-  return run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr).stdout
+  return run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr, log_cmd=log_cmd).stdout
 
 
 def run_git_cmd_regular_stdout(
   git_args: Union[str, List[str]],
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
+  log_cmd: bool = False,
   **kwargs,
 ) -> subprocess.CompletedProcess:
-  return procs.run_with_regular_stdout(create_git_cmd(git_args), cwd=cwd, check=check, **kwargs)
+  return procs.run_with_regular_stdout(create_git_cmd(git_args), cwd=cwd, check=check, log_cmd=log_cmd, **kwargs)
 
 
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
@@ -63,12 +66,22 @@ def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
   return run_git_cmd("in-repo", cwd=cwd).returncode == 0
 
 
-def diff_show(cwd: Union[Path, str] = os.getcwd(), diff_file: Union[Path, str] = None) -> bool:
+def diff_show(
+  cwd: Union[Path, str] = os.getcwd(),
+  diff_file: Union[Path, str] = None,
+  diff_to_head: bool = True,
+  log_cmd: bool = False,
+) -> bool:
   git_args = ["--no-pager", "diff"]
-  if diff_file:
-    git_args.append(files.convert_to_path(diff_file).relative_to(cwd).as_posix())
 
-  return run_git_cmd_regular_stdout(git_args, cwd=cwd, check=False).returncode == 1
+  if diff_to_head:
+    git_args.append("HEAD")
+
+  if diff_file:
+    diff_file_path = files.convert_to_path(diff_file)
+    git_args.append(diff_file_path.relative_to(cwd).as_posix() if diff_file_path.is_absolute() else diff_file_path.as_posix())
+
+  return run_git_cmd_regular_stdout(git_args, cwd=cwd, check=False, log_cmd=log_cmd).returncode == 1
 
 
 def commit_show(
@@ -77,12 +90,13 @@ def commit_show(
   repo_files: Sequence[Union[Path, str]] = None,
   add_first: bool = True,
   check: bool = True,
+  log_cmd: bool = False,
 ) -> subprocess.CompletedProcess:
   file_args = [files.convert_to_path(f).relative_to(cwd).as_posix() for f in repo_files if f] if repo_files else []
   if add_first:
-    run_git_cmd_regular_stdout(["add"] + file_args, cwd=cwd, check=check)
+    run_git_cmd_regular_stdout(["add"] + file_args, cwd=cwd, check=check, log_cmd=log_cmd)
 
-  return run_git_cmd_regular_stdout(["commit", "-m", message] + file_args, cwd=cwd, check=check)
+  return run_git_cmd_regular_stdout(["commit", "-m", message] + file_args, cwd=cwd, check=check, log_cmd=log_cmd)
 
 
 def is_file_part_of_git_repo(file_path: Path) -> bool:

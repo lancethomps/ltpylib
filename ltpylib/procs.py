@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, IO, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, IO, Iterable, List, Optional, Tuple, Type, Union
 
 CMD_NO_QUOTES_NEEDED_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
 
@@ -64,8 +64,19 @@ def run(
   shell: bool = False,
   stdout: Optional[Union[int, IO]] = subprocess.PIPE,
   stderr: Optional[Union[int, IO]] = subprocess.PIPE,
+  log_cmd: bool = False,
+  log_cmd_level: int = logging.INFO,
   **kwargs,
 ) -> subprocess.CompletedProcess:
+  if log_cmd:
+    from ltpylib import logs
+
+    logs.log_with_title_sep(
+      create_cmd_debug_string(popenargs[0]) if isinstance(popenargs[0], Iterable) else popenargs[0],
+      msg=None,
+      level=log_cmd_level,
+    )
+
   kwargs['universal_newlines'] = True
 
   result = subprocess.run(
@@ -94,6 +105,8 @@ def run_with_logging_output(
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
   level: int = logging.INFO,
+  log_cmd: bool = False,
+  log_cmd_level: int = logging.INFO,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   from ltpylib import logs
@@ -105,6 +118,8 @@ def run_with_logging_output(
       timeout=timeout,
       check=check,
       cwd=cwd,
+      log_cmd=log_cmd,
+      log_cmd_level=log_cmd_level,
       shell=shell,
       stdout=log_pipe,
       stderr=log_pipe,
@@ -119,6 +134,8 @@ def run_with_regular_stdout(
   check: bool = False,
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
+  log_cmd: bool = False,
+  log_cmd_level: int = logging.INFO,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   return run(
@@ -127,6 +144,8 @@ def run_with_regular_stdout(
     timeout=timeout,
     check=check,
     cwd=cwd,
+    log_cmd=log_cmd,
+    log_cmd_level=log_cmd_level,
     shell=shell,
     stdout=sys.stdout,
     stderr=sys.stderr,
@@ -141,6 +160,8 @@ def run_and_parse_output(
   check: bool = False,
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
+  log_cmd: bool = False,
+  log_cmd_level: int = logging.INFO,
   **kwargs,
 ) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
@@ -151,6 +172,8 @@ def run_and_parse_output(
     timeout=timeout,
     check=check,
     cwd=cwd,
+    log_cmd=log_cmd,
+    log_cmd_level=log_cmd_level,
     shell=shell,
     **kwargs,
   )
@@ -165,6 +188,8 @@ def run_and_parse_output_on_success(
   check: bool = True,
   cwd: Union[str, bytes, Path] = None,
   shell: bool = False,
+  log_cmd: bool = False,
+  log_cmd_level: int = logging.INFO,
   **kwargs,
 ) -> str:
   kwargs['stdout'] = subprocess.PIPE
@@ -175,6 +200,8 @@ def run_and_parse_output_on_success(
     timeout=timeout,
     check=check,
     cwd=cwd,
+    log_cmd=log_cmd,
+    log_cmd_level=log_cmd_level,
     shell=shell,
     **kwargs,
   )
@@ -227,7 +254,7 @@ def proc_debug_string(proc) -> str:
   )
 
 
-def create_cmd_debug_string(popenargs: List[str]) -> str:
+def create_cmd_debug_string(popenargs: Iterable[str]) -> str:
   output: List[str] = []
   for part in popenargs:
     if CMD_NO_QUOTES_NEEDED_REGEX.fullmatch(part):
