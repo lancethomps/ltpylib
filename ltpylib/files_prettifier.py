@@ -9,6 +9,7 @@ from ltpylib import files, procs
 
 FILE_EXT_MAPPINGS = {
   "jsonl": "json",
+  "lookml": "yaml",
   "yml": "yaml",
 }
 
