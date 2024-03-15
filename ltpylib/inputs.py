@@ -172,6 +172,9 @@ def select_prompt(
   if result.returncode == 130:
     raise KeyboardInterrupt
 
+  if result.returncode == 1:
+    exit(0)
+
   result.check_returncode()
   return result.stdout.strip()
 
