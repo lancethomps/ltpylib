@@ -55,11 +55,27 @@ def run_git_cmd_regular_stdout(
 
 
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
-  return Path(run_git_cmd("base-dir", cwd=cwd).stdout)
+  return Path(run_git_cmd_stdout("base-dir", cwd=cwd))
+
+
+def current_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("current-branch", cwd=cwd).strip()
+
+
+def default_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("default-branch", cwd=cwd).strip()
 
 
 def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd("repo-name", cwd=cwd).stdout
+  return run_git_cmd_stdout("repo-name", cwd=cwd).strip()
+
+
+def repo_name_with_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("repo-name-with-owner", cwd=cwd).strip()
+
+
+def repo_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("repo-owner", cwd=cwd).strip()
 
 
 def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
