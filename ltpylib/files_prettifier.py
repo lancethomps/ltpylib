@@ -10,6 +10,7 @@ from ltpylib import files, procs
 FILE_EXT_MAPPINGS = {
   "jsonl": "json",
   "lookml": "yaml",
+  "sh": "bash",
   "yml": "yaml",
 }
 
@@ -39,15 +40,45 @@ def prettify(
       logging.debug("Updated %s", file.as_posix())
 
 
+def prettify_bash_file(
+  file: Path,
+  compact: bool = False,
+  debug_mode: bool = False,
+  verbose: bool = False,
+):
+  formatter_args = [
+    "shfmt",
+    "--simplify",
+    "--indent",
+    "2",
+    "--case-indent",
+    "--write",
+  ]
+
+  if compact:
+    formatter_args.append("--minify")
+
+  formatter_args.append(file.as_posix())
+
+  run_formatter(
+    file,
+    formatter_args,
+    debug_mode=debug_mode,
+    verbose=verbose,
+    use_run_with_regular_stdout=True,
+    should_have_stdout=False,
+  )
+
+
 def prettify_html_file(
   file: Path,
   compact: bool = False,
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  tidy_executable = "/usr/bin/tidy" if Path("/usr/bin/tidy").exists() else "tidy"
-  tidy_args = [
-    tidy_executable,
+  formatter_path = "/usr/bin/tidy" if Path("/usr/bin/tidy").exists() else "tidy"
+  formatter_args = [
+    formatter_path,
     "-icm",
     "-wrap",
     "200",
@@ -60,16 +91,23 @@ def prettify_html_file(
   ]
 
   if not verbose:
-    tidy_args.extend([
+    formatter_args.extend([
       "-quiet",
       "--show-warnings",
       "no",
     ])
 
-  tidy_args.append(file.as_posix())
+  formatter_args.append(file.as_posix())
 
-  result = procs.run(tidy_args)
-  check_proc_result(file, result, should_have_stdout=False, allow_exit_codes=[0, 1])
+  run_formatter(
+    file,
+    formatter_args,
+    debug_mode=debug_mode,
+    verbose=verbose,
+    use_run_with_regular_stdout=True,
+    should_have_stdout=False,
+    allow_exit_codes=[0, 1],
+  )
 
 
 def prettify_json_file(
@@ -82,8 +120,12 @@ def prettify_json_file(
   if compact:
     jq_args.insert(0, "--compact-output")
 
-  result = procs.run(["jq"] + jq_args)
-  check_proc_result(file, result)
+  result = run_formatter(
+    file,
+    ["jq"] + jq_args,
+    debug_mode=debug_mode,
+    verbose=verbose,
+  )
   files.write_file(file, result.stdout)
 
 
@@ -93,7 +135,7 @@ def prettify_sql_file(
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  sql_formatter_cmd = [
+  formatter_args = [
     "sql-formatter",
     "--language",
     "sqlite",
@@ -103,7 +145,13 @@ def prettify_sql_file(
     file.as_posix(),
     file.as_posix(),
   ]
-  procs.run_with_regular_stdout(sql_formatter_cmd, check=True)
+  run_formatter(
+    file,
+    formatter_args,
+    debug_mode=debug_mode,
+    verbose=verbose,
+    use_run_with_regular_stdout=True,
+  )
 
 
 def prettify_xml_file(
@@ -112,8 +160,12 @@ def prettify_xml_file(
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  result = procs.run(["xmllint", "--format", file.as_posix()])
-  check_proc_result(file, result)
+  result = run_formatter(
+    file,
+    ["xmllint", "--format", file.as_posix()],
+    debug_mode=debug_mode,
+    verbose=verbose,
+  )
   files.write_file(file, result.stdout)
 
 
@@ -123,12 +175,39 @@ def prettify_yaml_file(
   debug_mode: bool = False,
   verbose: bool = False,
 ):
-  result = procs.run(["yq", "--yaml-roundtrip", "--indentless-lists", "--sort-keys", "--width=5000", ".", file.as_posix()])
-  check_proc_result(file, result)
+  result = run_formatter(
+    file,
+    ["yq", "--yaml-roundtrip", "--indentless-lists", "--sort-keys", "--width=5000", ".", file.as_posix()],
+    debug_mode=debug_mode,
+    verbose=verbose,
+  )
   files.write_file(file, result.stdout)
 
 
-def check_proc_result(file: Path, result: subprocess.CompletedProcess, should_have_stdout: bool = True, allow_exit_codes: List[int] = None):
+def run_formatter(
+  file: Path,
+  formatter_args: List[str],
+  debug_mode: bool = False,
+  verbose: bool = False,
+  use_run_with_regular_stdout: bool = False,
+  should_have_stdout: bool = True,
+  allow_exit_codes: List[int] = None,
+) -> subprocess.CompletedProcess:
+  result = check_proc_result(
+    file,
+    procs.run_with_regular_stdout(formatter_args, log_cmd=verbose) if use_run_with_regular_stdout else procs.run(formatter_args, log_cmd=verbose),
+    should_have_stdout=should_have_stdout,
+    allow_exit_codes=allow_exit_codes,
+  )
+  return result
+
+
+def check_proc_result(
+  file: Path,
+  result: subprocess.CompletedProcess,
+  should_have_stdout: bool = True,
+  allow_exit_codes: List[int] = None,
+) -> subprocess.CompletedProcess:
   exit_code = result.returncode
   proc_succeeded = exit_code == 0
   if allow_exit_codes and exit_code in allow_exit_codes:
@@ -145,3 +224,5 @@ def check_proc_result(file: Path, result: subprocess.CompletedProcess, should_ha
 
   if not proc_succeeded:
     result.check_returncode()
+
+  return result
