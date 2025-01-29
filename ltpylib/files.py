@@ -260,6 +260,28 @@ def filter_files_with_matching_line(files: List[Union[str, Path]], regexes: List
   return filtered
 
 
+def find_parent(
+  base_dir: Union[Path, str],
+  file_name: str,
+  max_depth: int = -1,
+) -> Optional[Path]:
+  curr_dir = convert_to_path(base_dir)
+  depth = max_depth
+
+  while depth != 0:
+    parent_file = curr_dir.joinpath(file_name)
+    if parent_file.exists():
+      return parent_file
+
+    if curr_dir == curr_dir.parent:
+      break
+
+    curr_dir = curr_dir.parent
+    depth -= 1
+
+  return None
+
+
 def find_children(
   base_dir: Union[Path, str],
   break_after_match: bool = False,
