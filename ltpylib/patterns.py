@@ -2,7 +2,11 @@
 # pylint: disable=C0111
 import re
 from pathlib import Path
-from typing import Callable, List, Match, Union
+from typing import Callable, List, Match, Sequence, Union
+
+
+def join_by_regex_or(parts: Sequence[str]) -> str:
+  return "(" + "|".join(parts) + ")"
 
 
 def replace_matches(
