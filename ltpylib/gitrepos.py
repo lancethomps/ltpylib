@@ -7,9 +7,11 @@ from typing import IO, List, Optional, Sequence, Union
 
 from ltpylib import files, filters, procs
 
-FIND_REPOS_RECURSION_EXCLUDES = frozenset([
-  'node_modules',
-])
+FIND_REPOS_RECURSION_EXCLUDES = frozenset(
+  [
+    'node_modules',
+  ]
+)
 
 
 def create_git_cmd(
@@ -40,8 +42,14 @@ def run_git_cmd_stdout(
   check: bool = True,
   stderr: Optional[Union[int, IO]] = sys.stderr,
   log_cmd: bool = False,
+  strip: bool = True,
 ) -> str:
-  return run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr, log_cmd=log_cmd).stdout
+  result = run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr, log_cmd=log_cmd)
+
+  if strip and result.stdout:
+    return result.stdout.strip()
+
+  return result.stdout
 
 
 def run_git_cmd_regular_stdout(
@@ -59,23 +67,23 @@ def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
 
 
 def current_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd_stdout("current-branch", cwd=cwd).strip()
+  return run_git_cmd_stdout("current-branch", cwd=cwd)
 
 
 def default_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd_stdout("default-branch", cwd=cwd).strip()
+  return run_git_cmd_stdout("default-branch", cwd=cwd)
 
 
 def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd_stdout("repo-name", cwd=cwd).strip()
+  return run_git_cmd_stdout("repo-name", cwd=cwd)
 
 
 def repo_name_with_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd_stdout("repo-name-with-owner", cwd=cwd).strip()
+  return run_git_cmd_stdout("repo-name-with-owner", cwd=cwd)
 
 
 def repo_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
-  return run_git_cmd_stdout("repo-owner", cwd=cwd).strip()
+  return run_git_cmd_stdout("repo-owner", cwd=cwd)
 
 
 def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
