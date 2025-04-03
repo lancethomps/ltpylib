@@ -282,6 +282,7 @@ def parse_args_with_positionals_and_init_others(
   argv: Optional[Sequence[str]] = None,
   log_level: Union[str, int] = None,
   log_format: str = None,
+  log_use_stderr: bool = False,
   positionals_key: str = None,
   positionals_type: Callable = None,
 ) -> argparse.Namespace:
@@ -304,7 +305,7 @@ def parse_args_with_positionals_and_init_others(
     positionals = [positionals_type(arg) for arg in positionals]
 
   args.__setattr__(positionals_key, positionals)
-  init_logging(args=args, log_level=log_level, log_format=log_format)
+  init_logging(args=args, log_level=log_level, log_format=log_format, use_stderr=log_use_stderr)
   return args
 
 
