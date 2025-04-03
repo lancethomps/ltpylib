@@ -138,7 +138,6 @@ def should_color(colorize: bool = False, auto_color: bool = False) -> bool:
 
 
 def add_custom_json_dumper(dumper_id: str, dumper: Callable[[Any], Any], use_if: Callable[[Any], bool] = None):
-  global CUSTOM_JSON_DUMPERS
   CUSTOM_JSON_DUMPERS[dumper_id] = (dumper, use_if)
 
 

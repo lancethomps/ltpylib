@@ -123,7 +123,6 @@ def create_pg_engine(config: PgServiceConfig) -> sqlalchemy.engine.Engine:
 
 
 def get_or_create_pg_engine(config: PgServiceConfig) -> sqlalchemy.engine.Engine:
-  global PG_ENGINES
   if str(config) not in PG_ENGINES:
     PG_ENGINES[str(config)] = create_pg_engine(config)
 

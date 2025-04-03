@@ -20,8 +20,6 @@ def get_or_create_aws_session(
   region_name: str = None,
   profile_name: str = None,
 ) -> Session:
-  global AWS_SESSIONS_BY_REGION_PROFILE
-
   key = (region_name, profile_name)
   if key in AWS_SESSIONS_BY_REGION_PROFILE:
     return AWS_SESSIONS_BY_REGION_PROFILE[key]
@@ -32,8 +30,6 @@ def get_or_create_aws_session(
 
 
 def set_default_aws_session(region_name: str = None, profile_name: str = None) -> Session:
-  global AWS_SESSIONS_BY_REGION_PROFILE
-
   session = get_or_create_aws_session(region_name=region_name, profile_name=profile_name)
   AWS_SESSIONS_BY_REGION_PROFILE[(None, None)] = session
   return session
