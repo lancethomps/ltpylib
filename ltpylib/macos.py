@@ -122,12 +122,14 @@ def find_generic_password(
   add_if_missing: bool = False,
   prompt_to_add_if_missing: bool = True,
 ) -> str:
-  status, pw = procs.run_and_parse_output([
-    "security",
-    "find-generic-password",
-    "-ws",
-    label,
-  ])
+  status, pw = procs.run_and_parse_output(
+    [
+      "security",
+      "find-generic-password",
+      "-ws",
+      label,
+    ]
+  )
   if status != 0:
     if ask_if_missing:
       prompt = 'Please enter your password for %s.' % (label)
@@ -177,16 +179,18 @@ def find_internet_password(
   if user is None:
     user = getuser()
 
-  status, pw = procs.run_and_parse_output([
-    "/usr/bin/security",
-    "find-internet-password",
-    "-t",
-    "dflt",
-    "-a",
-    user,
-    "-ws",
-    host,
-  ])
+  status, pw = procs.run_and_parse_output(
+    [
+      "/usr/bin/security",
+      "find-internet-password",
+      "-t",
+      "dflt",
+      "-a",
+      user,
+      "-ws",
+      host,
+    ]
+  )
   if status != 0:
     if ask_if_missing:
       prompt = 'Please enter your password for %s.' % (host)
@@ -204,8 +208,18 @@ def find_internet_password(
   return pw.strip()
 
 
-def open_url(url: str):
-  return procs.run_with_regular_stdout(["open", url], check=True)
+def open_url_and_log(url: str, debug_mode: bool = False):
+  return open_url(url, log_url=True, debug_mode=debug_mode)
+
+
+def open_url(url: str, log_url: bool = False, debug_mode: bool = False):
+  if log_url:
+    logging.info(url)
+
+  if debug_mode:
+    return
+
+  procs.run_with_regular_stdout(["open", url], check=True)
 
 
 def trash(paths: Union[List[Path], List[str], Path, str], check: bool = True) -> bool:
