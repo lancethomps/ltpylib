@@ -138,7 +138,7 @@ def chmod_proc(perms: str, file: Union[str, Path]) -> int:
   return subprocess.call(["chmod", perms, file.as_posix()])
 
 
-def read_file(file: Union[str, Path]) -> AnyStr:
+def read_file(file: Union[str, Path]) -> str:
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:

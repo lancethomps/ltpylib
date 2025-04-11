@@ -145,13 +145,20 @@ def resolve_file_relative_to_git_base_dir(file_path: Path, current_dir: Path = P
   return maybe_file if maybe_file.exists() else None
 
 
+def is_valid_repo(repo: Path) -> bool:
+  if not repo.is_dir():
+    return False
+
+  if repo.joinpath('.git').is_dir():
+    return True
+
+  return in_repo(repo)
+
+
 def filter_invalid_repos(git_repos: List[Path]) -> List[Path]:
   filtered = []
   for repo in git_repos:
-    if not repo.is_dir():
-      continue
-
-    if not repo.joinpath('.git').is_dir():
+    if not is_valid_repo(repo):
       continue
 
     filtered.append(repo)
