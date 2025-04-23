@@ -168,36 +168,38 @@ def load_json_remove_nulls(data: str) -> Any:
   )
 
 
-def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
+def prettify_json_compact(
+  obj,
+  remove_nulls: bool = False,
+  colorize: bool = False,
+  auto_color: bool = False,
+) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, colorize=colorize, auto_color=auto_color, compact=True)
+
+
+def prettify_json_auto_color(
+  obj,
+  remove_nulls: bool = False,
+  compact: bool = False,
+) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, auto_color=True, compact=compact)
+
+
+def prettify_json(
+  obj,
+  remove_nulls: bool = False,
+  colorize: bool = False,
+  auto_color: bool = False,
+  compact: bool = False,
+) -> str:
   if remove_nulls:
     obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
   output = json.dumps(
     obj,
     sort_keys=True,
-    indent=None,
-    separators=(",", ":"),
-    default=json_dump_default,
-  )
-
-  if colorize:
-    output = colorize_json(output)
-
-  return output
-
-
-def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
-  return prettify_json(obj, remove_nulls=remove_nulls, auto_color=True)
-
-
-def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
-  if remove_nulls:
-    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
-
-  output = json.dumps(
-    obj,
-    sort_keys=True,
-    indent='  ',
+    indent=None if compact else '  ',
+    separators=(",", ":") if compact else None,
     default=json_dump_default,
   )
 
