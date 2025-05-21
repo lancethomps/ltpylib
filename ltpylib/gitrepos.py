@@ -84,6 +84,10 @@ def repo_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
   return run_git_cmd_stdout("repo-owner", cwd=cwd)
 
 
+def in_base_dir(cwd: Union[Path, str] = os.getcwd()) -> bool:
+  return run_git_cmd("in-base-dir", cwd=cwd).returncode == 0
+
+
 def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
   return run_git_cmd("in-repo", cwd=cwd).returncode == 0
 

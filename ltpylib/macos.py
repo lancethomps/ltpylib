@@ -32,6 +32,9 @@ class MacSoundsSystem(enums.EnumAutoName):
 
 MAC_SOUND_FAILURE = MacSoundsSystem.BASSO
 MAC_SOUND_FINISHED = MacSoundsSystem.FUNK
+MAC_SOUND_COPIED = MacSoundsSystem.SUBMARINE
+
+COPIED_MSG = "Copied to clipboard"
 
 
 def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
@@ -62,11 +65,43 @@ app.displayNotification("{message}", {{
     exit(result.returncode)
 
 
-def pbcopy(val: str):
+def pbcopy(
+  val: str,
+  log_copied: bool = False,
+  log_sound: bool = False,
+  sound: Union[MacSoundsSystem, str] = MAC_SOUND_COPIED,
+  log_msg: str = COPIED_MSG,
+):
   procs.run_with_regular_stdout(
     ["pbcopy"],
     input=val,
     check=True,
+  )
+
+  if log_copied:
+    import logging
+
+    if not logging.root.hasHandlers():
+      print(log_msg)
+    else:
+      logging.info(log_msg)
+
+  if log_sound:
+    play_sound(sound)
+
+
+def pbcopy_and_log(
+  val: str,
+  log_sound: bool = True,
+  sound: Union[MacSoundsSystem, str] = MAC_SOUND_COPIED,
+  log_msg: str = COPIED_MSG,
+):
+  pbcopy(
+    val,
+    log_copied=True,
+    log_sound=log_sound,
+    sound=sound,
+    log_msg=log_msg,
   )
 
 
@@ -93,7 +128,7 @@ def find_sound_file(sound: Union[MacSoundsSystem, str]):
 
 
 def play_sound(sound: Union[MacSoundsSystem, str]):
-  procs.run_with_regular_stdout(["afplay", find_sound_file(sound).as_posix()], check=True)
+  procs.run_popen(["afplay", find_sound_file(sound).as_posix()])
 
 
 def add_generic_password(label: str, pw: str, account: str = None) -> bool:

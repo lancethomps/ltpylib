@@ -31,7 +31,10 @@ def num_only(val: str) -> str:
   return re.sub(r'[^0-9.]', '', val)
 
 
-def url_encode(val: str, safe: Union[bytes, str] = "") -> str:
+def url_encode(val: str, safe: Union[bytes, str] = "", use_plus_for_space: bool = True) -> str:
+  if not use_plus_for_space:
+    return urllib_parse.quote(val, safe=safe)
+
   return urllib_parse.quote_plus(val, safe=safe)
 
 
