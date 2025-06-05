@@ -480,10 +480,10 @@ function __custom_store_versions() {
 function __custom_publish() {
   if check_debug; then
     echo python setup.py sdist bdist_wheel
-    echo python -m twine upload --repository "$REPOSITORY" dist/*
+    echo python -m twine upload --verbose --repository "$REPOSITORY" dist/*
   else
     python setup.py sdist bdist_wheel
-    python -m twine upload --repository "$REPOSITORY" dist/*
+    python -m twine upload --verbose --repository "$REPOSITORY" dist/*
   fi
   __custom_clean_local
 }
@@ -491,10 +491,8 @@ function __custom_publish() {
 function __custom_next_version_bump() {
   if check_debug; then
     echo echo -n "${NEXT_VERS}" '>' "$VERSION_FILE"
-    echo git sed "${CURR_VERS}" "${NEXT_VERS}" -- pyproject.toml
   else
     echo -n "${NEXT_VERS}" > "$VERSION_FILE"
-    git sed "${CURR_VERS}" "${NEXT_VERS}" -- pyproject.toml
   fi
 }
 ##################################################################################################################################################
