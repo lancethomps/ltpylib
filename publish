@@ -491,8 +491,10 @@ function __custom_publish() {
 function __custom_next_version_bump() {
   if check_debug; then
     echo echo -n "${NEXT_VERS}" '>' "$VERSION_FILE"
+    echo git sed "${CURR_VERS}" "${NEXT_VERS}" -- pyproject.toml
   else
     echo -n "${NEXT_VERS}" > "$VERSION_FILE"
+    git sed "${CURR_VERS}" "${NEXT_VERS}" -- pyproject.toml
   fi
 }
 ##################################################################################################################################################
