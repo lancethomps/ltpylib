@@ -39,7 +39,7 @@ class JiraApi(object):
         auth=auth,
         basic_auth=basic_auth,
         options={
-          OPTION_AGILE_REST_PATH: jira.resources.GreenHopperResource.AGILE_BASE_REST_PATH,
+          OPTION_AGILE_REST_PATH: jira.resources.AgileResource.AGILE_BASE_REST_PATH,
         },
       )
     else:

@@ -257,8 +257,7 @@ class StashApi(object):
       at=target_branch,
       state=(state.name if state else None),
       order=order,
-      author=author,
-    )]
+      author=author,)]
 
   def repo(self, project: str, repo: str) -> Repository:
     return Repository(self.stash.projects[project].repos[repo].get())

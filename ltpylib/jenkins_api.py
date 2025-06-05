@@ -70,6 +70,13 @@ class JenkinsApi(object):
     response = self.session.get(self.url("job/%s/%s/api/json?tree=*" % (job, str(build))))
     return JenkinsBuild(requests_helper.parse_raw_response(response))
 
+  def build_from_full_url(
+    self,
+    full_url: str,
+  ) -> JenkinsBuild:
+    response = self.session.get(self.url("%s/api/json?tree=*" % full_url))
+    return JenkinsBuild(requests_helper.parse_raw_response(response))
+
   def instance_info(self, tree: str = "*") -> JenkinsInstance:
     response = self.session.get(self.url("api/json?tree=%s" % tree))
     return JenkinsInstance(requests_helper.parse_raw_response(response))

@@ -1,13 +1,128 @@
 #!/usr/bin/env python
 import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import IO, List, Optional, Sequence, Union
 
-from ltpylib import files, filters
+from ltpylib import files, filters, procs
 
 FIND_REPOS_RECURSION_EXCLUDES = frozenset([
   'node_modules',
 ])
+
+
+def create_git_cmd(
+  git_args: Union[str, List[str]],
+) -> List[str]:
+  git_cmd = ["git"]
+  if isinstance(git_args, str):
+    git_cmd.append(git_args)
+  else:
+    git_cmd.extend(git_args)
+
+  return git_cmd
+
+
+def run_git_cmd(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  stderr: Optional[Union[int, IO]] = sys.stderr,
+  log_cmd: bool = False,
+) -> subprocess.CompletedProcess:
+  return procs.run(create_git_cmd(git_args), check=check, cwd=cwd, stderr=stderr, log_cmd=log_cmd)
+
+
+def run_git_cmd_stdout(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  stderr: Optional[Union[int, IO]] = sys.stderr,
+  log_cmd: bool = False,
+  strip: bool = True,
+) -> str:
+  result = run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr, log_cmd=log_cmd)
+
+  if strip and result.stdout:
+    return result.stdout.strip()
+
+  return result.stdout
+
+
+def run_git_cmd_regular_stdout(
+  git_args: Union[str, List[str]],
+  cwd: Union[Path, str] = os.getcwd(),
+  check: bool = True,
+  log_cmd: bool = False,
+  **kwargs,
+) -> subprocess.CompletedProcess:
+  return procs.run_with_regular_stdout(create_git_cmd(git_args), cwd=cwd, check=check, log_cmd=log_cmd, **kwargs)
+
+
+def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
+  return Path(run_git_cmd_stdout("base-dir", cwd=cwd))
+
+
+def current_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("current-branch", cwd=cwd)
+
+
+def default_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("default-branch", cwd=cwd)
+
+
+def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("repo-name", cwd=cwd)
+
+
+def repo_name_with_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("repo-name-with-owner", cwd=cwd)
+
+
+def repo_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("repo-owner", cwd=cwd)
+
+
+def in_base_dir(cwd: Union[Path, str] = os.getcwd()) -> bool:
+  return run_git_cmd("in-base-dir", cwd=cwd).returncode == 0
+
+
+def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
+  return run_git_cmd("in-repo", cwd=cwd).returncode == 0
+
+
+def diff_show(
+  cwd: Union[Path, str] = os.getcwd(),
+  diff_file: Union[Path, str] = None,
+  diff_to_head: bool = True,
+  log_cmd: bool = False,
+) -> bool:
+  git_args = ["--no-pager", "diff"]
+
+  if diff_to_head:
+    git_args.append("HEAD")
+
+  if diff_file:
+    diff_file_path = files.convert_to_path(diff_file)
+    git_args.append(diff_file_path.relative_to(cwd).as_posix() if diff_file_path.is_absolute() else diff_file_path.as_posix())
+
+  return run_git_cmd_regular_stdout(git_args, cwd=cwd, check=False, log_cmd=log_cmd).returncode == 1
+
+
+def commit_show(
+  message: str,
+  cwd: Union[Path, str] = os.getcwd(),
+  repo_files: Sequence[Union[Path, str]] = None,
+  add_first: bool = True,
+  check: bool = True,
+  log_cmd: bool = False,
+) -> subprocess.CompletedProcess:
+  file_args = [files.convert_to_path(f).relative_to(cwd).as_posix() for f in repo_files if f] if repo_files else []
+  if add_first:
+    run_git_cmd_regular_stdout(["add"] + file_args, cwd=cwd, check=check, log_cmd=log_cmd)
+
+  return run_git_cmd_regular_stdout(["commit", "-m", message] + file_args, cwd=cwd, check=check, log_cmd=log_cmd)
 
 
 def is_file_part_of_git_repo(file_path: Path) -> bool:
@@ -34,13 +149,20 @@ def resolve_file_relative_to_git_base_dir(file_path: Path, current_dir: Path = P
   return maybe_file if maybe_file.exists() else None
 
 
+def is_valid_repo(repo: Path) -> bool:
+  if not repo.is_dir():
+    return False
+
+  if repo.joinpath('.git').is_dir():
+    return True
+
+  return in_repo(repo)
+
+
 def filter_invalid_repos(git_repos: List[Path]) -> List[Path]:
   filtered = []
   for repo in git_repos:
-    if not repo.is_dir():
-      continue
-
-    if not repo.joinpath('.git').is_dir():
+    if not is_valid_repo(repo):
       continue
 
     filtered.append(repo)

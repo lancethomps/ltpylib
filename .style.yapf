@@ -63,7 +63,7 @@ blank_line_before_module_docstring=False
 #   class Foo:
 #                      # <------ this blank line
 #     def method():
-#       ...
+#       pass
 blank_line_before_nested_class_or_def=True
 
 # Do not split consecutive brackets. Only relevant when
@@ -121,7 +121,18 @@ dedent_closing_brackets=True
 
 # Disable the heuristic which places each list element on a separate line
 # if the list is comma-terminated.
+#
+# Note: The behavior of this flag changed in v0.40.3.  Before, if this flag
+# was true, we would split lists that contained a trailing comma or a
+# comment.  Now, we have a separate flag, `DISABLE_SPLIT_LIT_WITH_COMMENT`,
+# that controls splitting when a list contains a comment.  To get the old
+# behavior, set both flags to true.  More information in CHANGELOG.md.
 disable_ending_comma_heuristic=False
+
+#
+# Don't put every element on a new line within a list that contains
+# interstitial comments.
+disable_split_list_with_comment=False
 
 # Place each dictionary entry onto its own line.
 each_dict_entry_on_separate_line=True
@@ -194,7 +205,8 @@ no_spaces_around_selected_binary_operators=
 # Use spaces around default or named assigns.
 spaces_around_default_or_named_assign=False
 
-# Adds a space after the opening '{' and before the ending '}' dict delimiters.
+# Adds a space after the opening '{' and before the ending '}' dict
+# delimiters.
 #
 #   {1: 2}
 #
@@ -203,7 +215,8 @@ spaces_around_default_or_named_assign=False
 #   { 1: 2 }
 spaces_around_dict_delimiters=False
 
-# Adds a space after the opening '[' and before the ending ']' list delimiters.
+# Adds a space after the opening '[' and before the ending ']' list
+# delimiters.
 #
 #   [1, 2]
 #
@@ -220,7 +233,8 @@ spaces_around_power_operator=False
 #   my_list[1 : 10 : 2]
 spaces_around_subscript_colon=False
 
-# Adds a space after the opening '(' and before the ending ')' tuple delimiters.
+# Adds a space after the opening '(' and before the ending ')' tuple
+# delimiters.
 #
 #   (1, 2, 3)
 #
@@ -242,7 +256,8 @@ spaces_around_tuple_delimiters=False
 #
 # will be formatted as:
 #
-#   1 + 1     # Adding values <-- 5 spaces between the end of the statement and comment
+#   1 + 1     # Adding values <-- 5 spaces between the end of the
+#             # statement and comment
 #
 # With spaces_before_comment=15, 20:
 #
@@ -257,10 +272,12 @@ spaces_around_tuple_delimiters=False
 #
 # will be formatted as:
 #
-#   1 + 1          # Adding values <-- end of line comments in block aligned to col 15
+#   1 + 1          # Adding values <-- end of line comments in block
+#                  # aligned to col 15
 #   two + two      # More adding
 #
-#   longer_statement    # This is a longer statement <-- end of line comments in block aligned to col 20
+#   longer_statement    # This is a longer statement <-- end of line
+#                       # comments in block aligned to col 20
 #   short               # This is a shorter statement
 #
 #   a_very_long_statement_that_extends_beyond_the_final_column  # Comment <-- the end of line comments are aligned based on the line length
@@ -279,7 +296,7 @@ space_between_ending_comma_and_closing_bracket=False
 #   my_set = { 1, 2, 3 }
 space_inside_brackets=False
 
-# Split before arguments
+# Split before arguments.
 split_all_comma_separated_values=False
 
 # Split before arguments, but do not split all subexpressions recursively
@@ -359,14 +376,13 @@ split_penalty_after_opening_bracket=0
 split_penalty_after_unary_operator=10000
 
 # The penalty of splitting the line around the '+', '-', '*', '/', '//',
-# ``%``, and '@' operators.
+# `%`, and '@' operators.
 split_penalty_arithmetic_operator=300
 
 # The penalty for splitting right before an if expression.
 split_penalty_before_if_expr=0
 
-# The penalty of splitting the line around the '&', '|', and '^'
-# operators.
+# The penalty of splitting the line around the '&', '|', and '^' operators.
 split_penalty_bitwise_operator=300
 
 # The penalty for splitting a list comprehension or generator
@@ -376,7 +392,7 @@ split_penalty_comprehension=2100
 # The penalty for characters over the column limit.
 split_penalty_excess_character=7000
 
-# The penalty incurred by adding a line split to the unwrapped line. The
+# The penalty incurred by adding a line split to the logical line. The
 # more line splits added the higher the penalty.
 split_penalty_for_added_line_split=0
 
@@ -392,8 +408,7 @@ split_penalty_for_added_line_split=0
 #       long_argument_1, long_argument_2, long_argument_3)
 split_penalty_import_names=0
 
-# The penalty of splitting the line around the 'and' and 'or'
-# operators.
+# The penalty of splitting the line around the 'and' and 'or' operators.
 split_penalty_logical_operator=300
 
 # Use the Tab character for indentation.

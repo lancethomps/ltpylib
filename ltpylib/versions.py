@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+from typing import List
+
 import semver
+
+STABLE_PRERELEASE_VERSIONS = ["final", "release"]
 
 
 class LenientVersionInfo(semver.VersionInfo):
@@ -8,6 +12,9 @@ class LenientVersionInfo(semver.VersionInfo):
     self.original_version: str = original_version
     semver.VersionInfo.__init__(self, major, minor, patch, prerelease, build)
     self.version: str = self.__str__()
+
+  def is_stable(self) -> bool:
+    return self.build is None and (self.prerelease is None or self.prerelease.lower() in STABLE_PRERELEASE_VERSIONS)
 
   @staticmethod
   def make_version_semantic(version: str) -> str:
@@ -51,3 +58,25 @@ class LenientVersionInfo(semver.VersionInfo):
 
 def parse_semver_lenient(version: str) -> LenientVersionInfo:
   return LenientVersionInfo.parse_lenient(version)
+
+
+def parse_all_semver_lenient(
+  versions: List[str],
+  ignore_invalid: bool = False,
+  remove_non_stable: bool = False,
+) -> List[LenientVersionInfo]:
+  parsed_versions: List[LenientVersionInfo] = []
+  for v in versions:
+    try:
+      parsed = LenientVersionInfo.parse_lenient(v)
+      if remove_non_stable and not parsed.is_stable():
+        continue
+
+      parsed_versions.append(parsed)
+    except:  # noqa: E722
+      if ignore_invalid:
+        continue
+
+      raise
+
+  return parsed_versions

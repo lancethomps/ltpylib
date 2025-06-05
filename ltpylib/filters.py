@@ -77,6 +77,7 @@ def should_skip_from_cmds(
   include_commands: Sequence[str] = None,
   exclude_commands: Sequence[str] = None,
   verbose: bool = False,
+  include_all_must_match: bool = False,
 ) -> bool:
   from ltpylib import procs
 
@@ -111,12 +112,20 @@ def should_skip_from_cmds(
         shell=True,
         executable='bash',
       )
-      if result.returncode == 0:
+      if include_all_must_match and result.returncode != 0:
+        if verbose:
+          logging.info('Skipped path from include not matching: path=%s command=%s', test_str, command)
+        return True
+      elif result.returncode == 0:
         if verbose:
           logging.info('Included path: path=%s command=%s', test_str, command)
-        return False
+        if not include_all_must_match:
+          return False
 
-    return True
+    if include_all_must_match:
+      return False
+    else:
+      return True
 
   return False
 

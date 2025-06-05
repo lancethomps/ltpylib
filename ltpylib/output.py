@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from ltpylib.collect import modify_list_of_dicts
 from ltpylib.common_types import TypeWithDictRepr
-from ltpylib.dicts import modify_dict_fields
+from ltpylib.dicts import convert_boolean_values_to_string, modify_dict_fields
 
 CUSTOM_JSON_DUMPERS: Dict[str, Tuple[Callable[[Any], Any], Optional[Callable[[Any], bool]]]] = {}
 
@@ -138,7 +138,6 @@ def should_color(colorize: bool = False, auto_color: bool = False) -> bool:
 
 
 def add_custom_json_dumper(dumper_id: str, dumper: Callable[[Any], Any], use_if: Callable[[Any], bool] = None):
-  global CUSTOM_JSON_DUMPERS
   CUSTOM_JSON_DUMPERS[dumper_id] = (dumper, use_if)
 
 
@@ -169,36 +168,38 @@ def load_json_remove_nulls(data: str) -> Any:
   )
 
 
-def prettify_json_compact(obj, remove_nulls: bool = False, colorize: bool = False) -> str:
+def prettify_json_compact(
+  obj,
+  remove_nulls: bool = False,
+  colorize: bool = False,
+  auto_color: bool = False,
+) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, colorize=colorize, auto_color=auto_color, compact=True)
+
+
+def prettify_json_auto_color(
+  obj,
+  remove_nulls: bool = False,
+  compact: bool = False,
+) -> str:
+  return prettify_json(obj, remove_nulls=remove_nulls, auto_color=True, compact=compact)
+
+
+def prettify_json(
+  obj,
+  remove_nulls: bool = False,
+  colorize: bool = False,
+  auto_color: bool = False,
+  compact: bool = False,
+) -> str:
   if remove_nulls:
     obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
 
   output = json.dumps(
     obj,
     sort_keys=True,
-    indent=None,
-    separators=(",", ":"),
-    default=json_dump_default,
-  )
-
-  if colorize:
-    output = colorize_json(output)
-
-  return output
-
-
-def prettify_json_auto_color(obj, remove_nulls: bool = False) -> str:
-  return prettify_json(obj, remove_nulls=remove_nulls, auto_color=True)
-
-
-def prettify_json(obj, remove_nulls: bool = False, colorize: bool = False, auto_color: bool = False) -> str:
-  if remove_nulls:
-    obj = load_json_remove_nulls(json.dumps(obj, default=json_dump_default))
-
-  output = json.dumps(
-    obj,
-    sort_keys=True,
-    indent='  ',
+    indent=None if compact else '  ',
+    separators=(",", ":") if compact else None,
     default=json_dump_default,
   )
 
@@ -265,15 +266,21 @@ def dicts_to_csv(
   header: bool = True,
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
+  fields_order_from_included: bool = False,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> str:
   from pandas import DataFrame
+
+  if fields_included and not fields_order and fields_order_from_included:
+    fields_order = fields_included
 
   data_as_dicts: List[dict] = create_data_as_dicts(
     data,
     fields_included=fields_included,
     fields_order=fields_order,
     modify_in_place=modify_in_place,
+    convert_booleans_to_string=convert_booleans_to_string,
   )
 
   data_frame = DataFrame(data_as_dicts)
@@ -292,17 +299,23 @@ def dicts_to_markdown_table(
   headers: Sequence[str] = None,
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
+  fields_order_from_included: bool = False,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> str:
   import tabulate
 
   from pandas import DataFrame
+
+  if fields_included and not fields_order and fields_order_from_included:
+    fields_order = fields_included
 
   data_as_dicts: List[dict] = create_data_as_dicts(
     data,
     fields_included=fields_included,
     fields_order=fields_order,
     modify_in_place=modify_in_place,
+    convert_booleans_to_string=convert_booleans_to_string,
   )
 
   if escape_data:
@@ -332,6 +345,7 @@ def create_data_as_dicts(
   fields_included: Sequence[str] = None,
   fields_order: Sequence[str] = None,
   modify_in_place: bool = False,
+  convert_booleans_to_string: bool = False,
 ) -> List[dict]:
   data_as_dicts: List[dict] = data
 
@@ -346,5 +360,8 @@ def create_data_as_dicts(
       fields_order=fields_order,
       in_place=modify_in_place,
     )
+
+  if convert_booleans_to_string:
+    data_as_dicts = convert_boolean_values_to_string(data_as_dicts, only_fields=fields_included)
 
   return data_as_dicts

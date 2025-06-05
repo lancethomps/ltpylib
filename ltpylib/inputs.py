@@ -53,13 +53,17 @@ def confirm_with_auto(question: str = 'Continue?', auto_confirm_arg: bool = None
   if check_auto_confirm(auto_confirm_arg):
     return True
 
-  return confirm(question=question, default="y")
+  return confirm(question=question, default=default)
 
 
 def check_auto_confirm(auto_confirm_arg: bool = None) -> bool:
   if auto_confirm_arg is True:
     return True
 
+  return auto_confirm_from_env_var()
+
+
+def auto_confirm_from_env_var() -> bool:
   auto_confirm = os.getenv("auto_confirm")
   return auto_confirm is not None and strings.is_boolean(auto_confirm) and strings.convert_to_bool(auto_confirm)
 
@@ -167,6 +171,9 @@ def select_prompt(
 
   if result.returncode == 130:
     raise KeyboardInterrupt
+
+  if result.returncode == 1:
+    exit(0)
 
   result.check_returncode()
   return result.stdout.strip()

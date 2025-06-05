@@ -32,6 +32,9 @@ class MacSoundsSystem(enums.EnumAutoName):
 
 MAC_SOUND_FAILURE = MacSoundsSystem.BASSO
 MAC_SOUND_FINISHED = MacSoundsSystem.FUNK
+MAC_SOUND_COPIED = MacSoundsSystem.SUBMARINE
+
+COPIED_MSG = "Copied to clipboard"
 
 
 def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
@@ -62,12 +65,48 @@ app.displayNotification("{message}", {{
     exit(result.returncode)
 
 
-def pbcopy(val: str):
+def pbcopy(
+  val: str,
+  log_copied: bool = False,
+  log_sound: bool = False,
+  sound: Union[MacSoundsSystem, str] = MAC_SOUND_COPIED,
+  log_msg: str = COPIED_MSG,
+):
   procs.run_with_regular_stdout(
     ["pbcopy"],
     input=val,
     check=True,
   )
+
+  if log_copied:
+    import logging
+
+    if not logging.root.hasHandlers():
+      print(log_msg)
+    else:
+      logging.info(log_msg)
+
+  if log_sound:
+    play_sound(sound)
+
+
+def pbcopy_and_log(
+  val: str,
+  log_sound: bool = True,
+  sound: Union[MacSoundsSystem, str] = MAC_SOUND_COPIED,
+  log_msg: str = COPIED_MSG,
+):
+  pbcopy(
+    val,
+    log_copied=True,
+    log_sound=log_sound,
+    sound=sound,
+    log_msg=log_msg,
+  )
+
+
+def pbpaste() -> str:
+  return procs.run_and_parse_output_on_success(["pbpaste"])
 
 
 def find_sound_file(sound: Union[MacSoundsSystem, str]):
@@ -89,7 +128,7 @@ def find_sound_file(sound: Union[MacSoundsSystem, str]):
 
 
 def play_sound(sound: Union[MacSoundsSystem, str]):
-  procs.run_with_regular_stdout(["afplay", find_sound_file(sound).as_posix()], check=True)
+  procs.run_popen(["afplay", find_sound_file(sound).as_posix()])
 
 
 def add_generic_password(label: str, pw: str, account: str = None) -> bool:
@@ -118,12 +157,14 @@ def find_generic_password(
   add_if_missing: bool = False,
   prompt_to_add_if_missing: bool = True,
 ) -> str:
-  status, pw = procs.run_and_parse_output([
-    "security",
-    "find-generic-password",
-    "-ws",
-    label,
-  ])
+  status, pw = procs.run_and_parse_output(
+    [
+      "security",
+      "find-generic-password",
+      "-ws",
+      label,
+    ]
+  )
   if status != 0:
     if ask_if_missing:
       prompt = 'Please enter your password for %s.' % (label)
@@ -173,16 +214,18 @@ def find_internet_password(
   if user is None:
     user = getuser()
 
-  status, pw = procs.run_and_parse_output([
-    "/usr/bin/security",
-    "find-internet-password",
-    "-t",
-    "dflt",
-    "-a",
-    user,
-    "-ws",
-    host,
-  ])
+  status, pw = procs.run_and_parse_output(
+    [
+      "/usr/bin/security",
+      "find-internet-password",
+      "-t",
+      "dflt",
+      "-a",
+      user,
+      "-ws",
+      host,
+    ]
+  )
   if status != 0:
     if ask_if_missing:
       prompt = 'Please enter your password for %s.' % (host)
@@ -200,8 +243,18 @@ def find_internet_password(
   return pw.strip()
 
 
-def open_url(url: str):
-  return procs.run_with_regular_stdout(["open", url], check=True)
+def open_url_and_log(url: str, debug_mode: bool = False):
+  return open_url(url, log_url=True, debug_mode=debug_mode)
+
+
+def open_url(url: str, log_url: bool = False, debug_mode: bool = False):
+  if log_url:
+    logging.info(url)
+
+  if debug_mode:
+    return
+
+  procs.run_with_regular_stdout(["open", url], check=True)
 
 
 def trash(paths: Union[List[Path], List[str], Path, str], check: bool = True) -> bool:

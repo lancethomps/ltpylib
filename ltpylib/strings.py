@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import re
 from decimal import Decimal
-from typing import List, Match, Union
+from typing import List, Match, Optional, Union
 
 BOOLEAN_STRINGS_FALSE = frozenset([
   "no",
@@ -18,6 +18,14 @@ CAMEL_CASE_CAP_CHARS_REGEX = re.compile(r"(?<=[a-z])([A-Z0-9])|(?<=[^0-9])([A-Z]
 CASE_CONVERSION_IGNORE_REGEX = re.compile(r"[']")
 MULTI_SPACE_REGEX = re.compile(r"\s+")
 NON_ALPHA_NUMERIC_REGEX = re.compile(r"[^a-zA-Z0-9]")
+HUMAN_SIZE_REGEX = re.compile(r"^([\d.]+)([a-zA-Z]{,2})$")
+HUMAN_SIZE_UNITS_LOOKUP = {
+  "tb": 1_000_000_000_000,
+  "gb": 1_000_000_000,
+  "mb": 1_000_000,
+  "kb": 1_000,
+  "b": 1,
+}
 
 
 def camel_case_to_title_case(val: str):
@@ -25,9 +33,14 @@ def camel_case_to_title_case(val: str):
   return " ".join(re.findall(r'[A-Z](?:[a-z]+|[A-Z]*(?=[A-Z]|$))', val))
 
 
-def convert_to_bool(val: str, check_if_valid: bool = False, unknown_value: bool = None) -> Union[bool, str, None]:
+def convert_to_bool(
+  val: str,
+  check_if_valid: bool = False,
+  unknown_value: bool = None,
+  none_value: Union[bool, None] = None,
+) -> Union[bool, str, None]:
   if val is None:
-    return None
+    return none_value
 
   if check_if_valid and not is_boolean(val):
     return val
@@ -67,6 +80,28 @@ def convert_to_number(
     return int(val)
   except ValueError:
     return Decimal(val) if use_decimal else float(val)
+
+
+def convert_human_size_to_number(val: str, in_unit: str = None) -> Optional[float]:
+  match = HUMAN_SIZE_REGEX.match(val)
+  if match:
+    num = float(match.group(1))
+    units = match.group(2)
+    multiplier = HUMAN_SIZE_UNITS_LOOKUP.get(units.lower())
+    if not multiplier:
+      raise ValueError("missing unit: " + units)
+
+    result = num * multiplier
+    if in_unit:
+      divisor = HUMAN_SIZE_UNITS_LOOKUP.get(in_unit.lower())
+      if not divisor:
+        raise ValueError("missing unit: " + in_unit)
+
+      result = result / divisor
+
+    return result
+
+  return None
 
 
 def is_boolean(val: str) -> bool:
@@ -118,8 +153,20 @@ def substring_after(val: str, before_str: str) -> str:
   return val.split(before_str, 1)[1]
 
 
+def substring_after_last(val: str, sep: str) -> str:
+  return val.split(sep)[-1]
+
+
 def substring_before(val: str, before_str: str) -> str:
   return val.split(before_str)[0]
+
+
+def substring_before_last(val: str, before_str: str) -> str:
+  parts = val.split(before_str)
+  if len(parts) == 1:
+    return parts[0]
+
+  return before_str.join(parts[0:-1])
 
 
 def _to_snake_case_replacer(match: Match) -> str:

@@ -16,3 +16,11 @@ def convert_decimal_precision(val: Union[Decimal, float, str], precision: int, r
     exp,
     rounding=rounding,
   )
+
+
+def format_number(number: Union[Decimal, float, int], precision: int = 0, default_value: str = "") -> str:
+  if number is None:
+    return default_value
+
+  format_str = "{:,.%sf}" % precision
+  return format_str.format(number)

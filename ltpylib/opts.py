@@ -262,17 +262,18 @@ def parse_args_and_init_others(
   log_level: Union[str, int] = None,
   log_format: str = None,
   has_positionals: bool = False,
+  log_use_stderr: bool = False,
 ) -> argparse.Namespace:
   if has_positionals:
-    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
+    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format, log_use_stderr=log_use_stderr)
 
   from ltpylib.logs import init_logging
 
   if has_positionals_formatter_class(arg_parser):
-    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format)
+    return parse_args_with_positionals_and_init_others(arg_parser, argv=argv, log_level=log_level, log_format=log_format, log_use_stderr=log_use_stderr)
 
   args = parse_args(arg_parser, argv=argv)
-  init_logging(args=args, log_level=log_level, log_format=log_format)
+  init_logging(args=args, log_level=log_level, log_format=log_format, use_stderr=log_use_stderr)
   return args
 
 
@@ -281,6 +282,7 @@ def parse_args_with_positionals_and_init_others(
   argv: Optional[Sequence[str]] = None,
   log_level: Union[str, int] = None,
   log_format: str = None,
+  log_use_stderr: bool = False,
   positionals_key: str = None,
   positionals_type: Callable = None,
 ) -> argparse.Namespace:
@@ -303,7 +305,7 @@ def parse_args_with_positionals_and_init_others(
     positionals = [positionals_type(arg) for arg in positionals]
 
   args.__setattr__(positionals_key, positionals)
-  init_logging(args=args, log_level=log_level, log_format=log_format)
+  init_logging(args=args, log_level=log_level, log_format=log_format, use_stderr=log_use_stderr)
   return args
 
 

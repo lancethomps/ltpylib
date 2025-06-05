@@ -2,12 +2,16 @@
 # pylint: disable=C0111
 import re
 from pathlib import Path
-from typing import Callable, List, Match, Union
+from typing import Callable, List, Match, Sequence, Union
+
+
+def join_by_regex_or(parts: Sequence[str]) -> str:
+  return "(" + "|".join(parts) + ")"
 
 
 def replace_matches(
   content: str,
-  search_string: str,
+  search_string: Union[str, re.Pattern],
   replacement: Union[str, Callable[[Match], str]],
   quote_replacement: Union[bool, str] = False,
   wrap_replacement_in_function: bool = False,
@@ -31,7 +35,7 @@ def replace_matches(
 
 def pull_matches_from_file(
   file: Union[str, Path],
-  search_string: str,
+  search_string: Union[str, re.Pattern],
   group: int = 0,
   flags: Union[int, re.RegexFlag] = 0,
 ) -> List[str]:

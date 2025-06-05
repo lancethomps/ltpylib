@@ -138,7 +138,7 @@ def chmod_proc(perms: str, file: Union[str, Path]) -> int:
   return subprocess.call(["chmod", perms, file.as_posix()])
 
 
-def read_file(file: Union[str, Path]) -> AnyStr:
+def read_file(file: Union[str, Path]) -> str:
   file = convert_to_path(file)
 
   with open(file.as_posix(), 'r') as fr:
@@ -258,6 +258,28 @@ def filter_files_with_matching_line(files: List[Union[str, Path]], regexes: List
       filtered.append(file)
 
   return filtered
+
+
+def find_parent(
+  base_dir: Union[Path, str],
+  file_name: str,
+  max_depth: int = -1,
+) -> Optional[Path]:
+  curr_dir = convert_to_path(base_dir)
+  depth = max_depth
+
+  while depth != 0:
+    parent_file = curr_dir.joinpath(file_name)
+    if parent_file.exists():
+      return parent_file
+
+    if curr_dir == curr_dir.parent:
+      break
+
+    curr_dir = curr_dir.parent
+    depth -= 1
+
+  return None
 
 
 def find_children(
@@ -430,6 +452,7 @@ class OpenGreppedLines:
   LINE_NUMBERS_COLON_REGEX = re.compile(r"^(.*\S):(\d+):(.*)")
   LINE_NUMBERS_DASH_STRICT_REGEX = re.compile(r"^(\S+)-(\d+)-(.*)")
   LINE_NUMBERS_DASH_REGEX = re.compile(r"^(.*\S)-(\d+)-(.*)")
+  LINE_NUMBERS_EXTRACTOR_REGEX = re.compile(r"^(.*?\S)[:-](\d+)[:-](.*)")
   CHECK_REGEXES = [LINE_NUMBERS_COLON_STRICT_REGEX, LINE_NUMBERS_DASH_STRICT_REGEX, LINE_NUMBERS_COLON_REGEX, LINE_NUMBERS_DASH_REGEX]
 
   def __init__(
@@ -532,7 +555,7 @@ class OpenGreppedLines:
 
   def create_select_lines_preview_command(self) -> str:
     if self.line_numbers:
-      filename_regex = r"^([^:]+):([0-9]+):"
+      filename_regex = OpenGreppedLines.LINE_NUMBERS_EXTRACTOR_REGEX.pattern
       lineno_cmd = f"$(echo {{}} | pcregrep -o2 '{filename_regex}')"
     else:
       filename_regex = r"^([^:]+)"
@@ -551,7 +574,7 @@ if test -n "$filename" && test -e "$filepath"; then
   echo "{logs.LOG_SEP}"
   {self.select_preview_file_cmd}
 else
-  echo 'No file found to display'
+  echo "No file found to display: filename=$filename filepath=$filepath lineno=$lineno"
 fi
 """
 
@@ -601,7 +624,7 @@ fi
       file_path = Path(line_parts.file_name)
       if not file_path.exists():
         file_path = gitrepos.resolve_file_relative_to_git_base_dir(file_path)
-        if file_path.exists():
+        if file_path is not None and file_path.exists():
           line_parts.file_name = file_path.as_posix()
         else:
           raise ValueError(f"could not parse file from results: {line_parts.file_name}")
