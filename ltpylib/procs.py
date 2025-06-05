@@ -71,9 +71,8 @@ def run(
   if log_cmd:
     from ltpylib import logs
 
-    logs.log_with_title_sep(
+    logs.log_title_with_sep(
       create_cmd_debug_string(popenargs[0]) if isinstance(popenargs[0], Iterable) else popenargs[0],
-      msg=None,
       level=log_cmd_level,
     )
 

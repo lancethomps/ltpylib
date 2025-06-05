@@ -164,12 +164,17 @@ def log_with_sep(msg, *args, level: int = logging.INFO, **kwargs):
   logging.log(level, LOG_SEP)
 
 
-def log_with_title_sep(title, msg, *args, level: int = logging.INFO, **kwargs):
+def log_with_title_sep(title, *args, msg=None, level: int = logging.INFO, **kwargs):
   logging.log(level, title)
   logging.log(level, LOG_SEP)
   if msg is not None:
     logging.log(level, msg, *args, **kwargs)
     logging.log(level, '')
+
+
+def log_title_with_sep(title, level: int = logging.INFO):
+  logging.log(level, title)
+  logging.log(level, LOG_SEP)
 
 
 def ltlogs_dir() -> Path:
