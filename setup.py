@@ -67,4 +67,5 @@ setup(
   extras_require={
     "pg": ["psycopg2"],
   },
+  entry_points={"console_scripts": ["get_python_available_functions = ltpylib.cli:get_python_available_functions",]},
 )
