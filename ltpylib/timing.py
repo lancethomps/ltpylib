@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import time
+from decimal import Decimal
 from typing import Callable, SupportsFloat
 
 
@@ -58,6 +59,28 @@ def has_time_remaining(
       time_ran_out_func(start_time, max_seconds, curr_time)
 
   return check_result
+
+
+def profile_timing(
+  func: Callable,
+  iterations: int = 1000,
+  log_result: bool = True,
+  precision: int = 3,
+) -> Decimal:
+  from ltpylib import numbers_util
+
+  start = time.time()
+  for _ in range(iterations):
+    func()
+
+  end = time.time()
+  taken = (end - start) * 1000
+  avg = numbers_util.convert_decimal_precision(taken / iterations, precision)
+
+  if log_result:
+    print(f"iterations={iterations} taken={numbers_util.convert_decimal_precision(taken, precision)} avg={avg}")
+
+  return avg
 
 
 if __name__ == "__main__":

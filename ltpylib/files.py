@@ -2,6 +2,7 @@
 # pylint: disable=C0111
 import itertools
 import json
+import logging
 import os
 import re
 import sys
@@ -258,6 +259,77 @@ def filter_files_with_matching_line(files: List[Union[str, Path]], regexes: List
       filtered.append(file)
 
   return filtered
+
+
+def find_first_existing_file(
+  file_names_or_paths: Sequence[Union[str, Path]],
+  prefixes: Sequence[str] = None,
+  suffixes: Sequence[str] = None,
+  base_dirs: Sequence[Path] = None,
+  log_not_found: bool = False,
+  fail_not_found: bool = False,
+) -> Optional[Path]:
+  file_names_or_paths = [convert_to_path(f) for f in file_names_or_paths]
+  check_files: List[Path] = []
+  _add_to_check_files(
+    file_names_or_paths,
+    check_files,
+    prefixes=prefixes,
+    suffixes=suffixes,
+  )
+
+  if base_dirs:
+    for base_dir in base_dirs:
+      _add_to_check_files(
+        file_names_or_paths,
+        check_files,
+        prefixes=prefixes,
+        suffixes=suffixes,
+        base_dir=base_dir,
+      )
+
+  for check_file in check_files:
+    if check_file.exists():
+      return check_file
+
+  msg = "File not found, checked:\n%s" % "\n".join([f.as_posix() for f in check_files])
+
+  if fail_not_found:
+    raise ValueError(msg)
+  elif log_not_found:
+    logging.error(msg)
+
+  return None
+
+
+def _add_to_check_files(
+  file_names_or_paths: Sequence[Path],
+  check_files: List[Path],
+  prefixes: Sequence[str] = None,
+  suffixes: Sequence[str] = None,
+  base_dir: Optional[Path] = None,
+):
+  for file_name in file_names_or_paths:
+    check_files.append(maybe_add_base_dir(file_name, base_dir))
+
+    if suffixes:
+      for suffix in suffixes:
+        check_files.append(maybe_add_base_dir(file_name.with_suffix(suffix), base_dir))
+
+    if prefixes:
+      for prefix in prefixes:
+        check_files.append(maybe_add_base_dir(Path(f"{prefix}{file_name.as_posix()}"), base_dir))
+
+        if suffixes:
+          for suffix in suffixes:
+            check_files.append(maybe_add_base_dir(Path(f"{prefix}{file_name.with_suffix(suffix).as_posix()}"), base_dir))
+
+
+def maybe_add_base_dir(path: Path, base_dir: Optional[Path]) -> Path:
+  if base_dir:
+    return base_dir.joinpath(path)
+
+  return path
 
 
 def find_parent(
