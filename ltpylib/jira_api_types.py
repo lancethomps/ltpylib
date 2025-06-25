@@ -127,6 +127,8 @@ class Issue(IdAndSelf, DataWithUnknownPropertiesAsAttributes):
     self.worklog: dict = values.pop("worklog", None)
     self.workratio: int = values.pop("workratio", None)
 
+    self.url: Optional[str] = None
+
     IdAndSelf.__init__(self, values)
     DataWithUnknownPropertiesAsAttributes.__init__(self, values)
 

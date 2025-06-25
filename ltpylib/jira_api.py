@@ -144,6 +144,7 @@ class JiraApi(object):
     json_result: bool = True,
     # parse response config
     no_convert: bool = False,
+    add_url_field: bool = False,
     convert_single_value_arrays: bool = False,
     create_new_result: bool = False,
     skip_fields: List[str] = EMPTY_LIST,
@@ -218,6 +219,12 @@ class JiraApi(object):
         )
 
         result.issues.extend(last_result.issues)
+
+    if add_url_field and result.issues:
+      base_url = self.url + "/browse/"
+      for issue in result.issues:
+        if issue.key:
+          issue.url = base_url + issue.key
 
     return result
 

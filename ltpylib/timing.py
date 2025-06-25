@@ -28,13 +28,27 @@ def get_time_remaining_formatted_seconds(start_time, count, total):
   return format_seconds(estimated_total - frac_seconds)
 
 
-def get_time_remaining_msg(start_time, count, total):
+def get_time_remaining_msg(start_time, count, total, use_colors: bool = True):
   frac_seconds = time.time() - float(start_time)
+  elapsed = format_seconds(frac_seconds)
+
+  if use_colors:
+    from ltpylib import colors
+
+    elapsed = colors.blue(elapsed)
+
   if float(count) <= 0:
-    return "Elapsed: {0: >12} Remaining: {1: >12}".format(format_seconds(frac_seconds), 'N/A')
+    return "Elapsed: {0: >12} Remaining: {1: >12}".format(elapsed, 'N/A')
 
   estimated_total = frac_seconds * (float(total) / float(count))
-  return "Elapsed: {0: >12} Remaining: {1: >12}".format(format_seconds(frac_seconds), format_seconds(estimated_total - frac_seconds))
+  remaining = format_seconds(estimated_total - frac_seconds)
+
+  if use_colors:
+    from ltpylib import colors
+
+    remaining = colors.green(remaining)
+
+  return "Elapsed: {0: >12} Remaining: {1: >12}".format(elapsed, remaining)
 
 
 def sleep_and_log(seconds: int, log_level: int = logging.INFO):
