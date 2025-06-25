@@ -327,7 +327,7 @@ def files_completer(
   base_dir: Path,
   globs: Union[List[str], str] = ('*',),
   remove_suffix: bool = False,
-) -> 'argcomplete.ChoicesCompleter':
+) -> 'argcomplete.ChoicesCompleter':  # noqa: F821
   import argcomplete
   from ltpylib import files
 
