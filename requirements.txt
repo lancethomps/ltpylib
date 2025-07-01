@@ -4,6 +4,7 @@ botocore
 bs4
 colorama
 configparser
+dacite
 dateparser
 html5lib
 jira

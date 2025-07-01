@@ -7,9 +7,11 @@ from typing import IO, List, Optional, Sequence, Union
 
 from ltpylib import files, filters, procs
 
-FIND_REPOS_RECURSION_EXCLUDES = frozenset([
-  'node_modules',
-])
+FIND_REPOS_RECURSION_EXCLUDES = frozenset(
+  [
+    'node_modules',
+  ]
+)
 
 
 def create_git_cmd(
@@ -62,6 +64,10 @@ def run_git_cmd_regular_stdout(
 
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
   return Path(run_git_cmd_stdout("base-dir", cwd=cwd))
+
+
+def cd_to_git_base_dir():
+  os.chdir(base_dir())
 
 
 def current_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
