@@ -7,11 +7,9 @@ from typing import IO, List, Optional, Sequence, Union
 
 from ltpylib import files, filters, procs
 
-FIND_REPOS_RECURSION_EXCLUDES = frozenset(
-  [
-    'node_modules',
-  ]
-)
+FIND_REPOS_RECURSION_EXCLUDES = frozenset([
+  'node_modules',
+])
 
 
 def create_git_cmd(
