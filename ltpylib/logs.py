@@ -19,6 +19,7 @@ DEFAULT_LOG_LEVEL = logging.INFO
 DEFAULT_LOG_FORMAT = f"{LOG_FORMAT_PART_MESSAGE}"
 DEFAULT_LOG_STYLE = "{"
 LOG_SEP = "----------------------------------------------------------------------------------------------------------------------------------"
+_LOG_SEP_LARGE = ""
 
 LOG_FORMAT_WITH_LEVEL = f"{LOG_FORMAT_PART_LEVEL} {LOG_FORMAT_PART_MESSAGE}"
 LOG_FORMAT_WITH_TIMESTAMP = f"[{LOG_FORMAT_PART_TIMESTAMP}] {LOG_FORMAT_PART_MESSAGE}"
@@ -142,11 +143,32 @@ def is_debug_enabled():
   return logging.root.isEnabledFor(logging.DEBUG)
 
 
+def get_sep_cols() -> int:
+  return shutil.get_terminal_size(fallback=(160, 24)).columns
+
+
+def get_log_sep_large(sep_char: str = None) -> str:
+  if sep_char:
+    return sep_char * get_sep_cols()
+
+  global _LOG_SEP_LARGE
+  if not _LOG_SEP_LARGE:
+    import shutil
+
+    _LOG_SEP_LARGE = "#" * get_sep_cols()
+
+  return _LOG_SEP_LARGE
+
+
 def log_sep(debug_only=False):
   if debug_only:
     logging.debug(LOG_SEP)
   else:
     logging.info(LOG_SEP)
+
+
+def log_sep_large(level: int = logging.INFO, sep_char: str = None):
+  logging.log(level, get_log_sep_large(sep_char=sep_char))
 
 
 def create_path_log_info(path: Path, replace_home_dir: bool = True) -> str:
