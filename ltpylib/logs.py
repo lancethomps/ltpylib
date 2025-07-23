@@ -157,8 +157,6 @@ def get_log_sep_large(sep_char: str = None) -> str:
 
   global _LOG_SEP_LARGE
   if not _LOG_SEP_LARGE:
-    import shutil
-
     _LOG_SEP_LARGE = "#" * get_sep_cols()
 
   return _LOG_SEP_LARGE
