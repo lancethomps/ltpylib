@@ -69,14 +69,14 @@ def run(
   log_cmd_with_sep: bool = True,
   **kwargs,
 ) -> subprocess.CompletedProcess:
-  if log_cmd:
+  if log_cmd and log_cmd_level >= logging.root.level:
     from ltpylib import logs
 
     cmd_debug_string = create_cmd_debug_string(popenargs[0]) if isinstance(popenargs[0], Iterable) else popenargs[0]
     if log_cmd_with_sep:
-      logs.log_title_with_sep(cmd_debug_string, level=log_cmd_level)
-    else:
-      logging.log(log_cmd_level, cmd_debug_string)
+      cmd_debug_string = f"{cmd_debug_string}\n{logs.LOG_SEP}"
+
+    print(cmd_debug_string, file=sys.stderr)
 
   kwargs['universal_newlines'] = True
 

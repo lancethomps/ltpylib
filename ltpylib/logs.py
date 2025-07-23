@@ -127,6 +127,10 @@ def init_logging(
   )
 
 
+def is_logging_initialized() -> bool:
+  return logging.getLogger().hasHandlers()
+
+
 def add_file_logging(log_file: Path):
   if not log_file.parent.exists():
     log_file.parent.mkdir(parents=True)
