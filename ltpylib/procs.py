@@ -66,15 +66,17 @@ def run(
   stderr: Optional[Union[int, IO]] = subprocess.PIPE,
   log_cmd: bool = False,
   log_cmd_level: int = logging.INFO,
+  log_cmd_with_sep: bool = True,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   if log_cmd:
     from ltpylib import logs
 
-    logs.log_title_with_sep(
-      create_cmd_debug_string(popenargs[0]) if isinstance(popenargs[0], Iterable) else popenargs[0],
-      level=log_cmd_level,
-    )
+    cmd_debug_string = create_cmd_debug_string(popenargs[0]) if isinstance(popenargs[0], Iterable) else popenargs[0]
+    if log_cmd_with_sep:
+      logs.log_title_with_sep(cmd_debug_string, level=log_cmd_level)
+    else:
+      logging.log(log_cmd_level, cmd_debug_string)
 
   kwargs['universal_newlines'] = True
 
@@ -106,6 +108,7 @@ def run_with_logging_output(
   level: int = logging.INFO,
   log_cmd: bool = False,
   log_cmd_level: int = logging.INFO,
+  log_cmd_with_sep: bool = True,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   from ltpylib import logs
@@ -119,6 +122,7 @@ def run_with_logging_output(
       cwd=cwd,
       log_cmd=log_cmd,
       log_cmd_level=log_cmd_level,
+      log_cmd_with_sep=log_cmd_with_sep,
       shell=shell,
       stdout=log_pipe,
       stderr=log_pipe,
@@ -135,6 +139,7 @@ def run_with_regular_stdout(
   shell: bool = False,
   log_cmd: bool = False,
   log_cmd_level: int = logging.INFO,
+  log_cmd_with_sep: bool = True,
   **kwargs,
 ) -> subprocess.CompletedProcess:
   return run(
@@ -145,6 +150,7 @@ def run_with_regular_stdout(
     cwd=cwd,
     log_cmd=log_cmd,
     log_cmd_level=log_cmd_level,
+    log_cmd_with_sep=log_cmd_with_sep,
     shell=shell,
     stdout=sys.stdout,
     stderr=sys.stderr,
@@ -161,6 +167,7 @@ def run_and_parse_output(
   shell: bool = False,
   log_cmd: bool = False,
   log_cmd_level: int = logging.INFO,
+  log_cmd_with_sep: bool = False,
   **kwargs,
 ) -> Tuple[int, str]:
   kwargs['stdout'] = subprocess.PIPE
@@ -173,6 +180,7 @@ def run_and_parse_output(
     cwd=cwd,
     log_cmd=log_cmd,
     log_cmd_level=log_cmd_level,
+    log_cmd_with_sep=log_cmd_with_sep,
     shell=shell,
     **kwargs,
   )
@@ -189,6 +197,7 @@ def run_and_parse_output_on_success(
   shell: bool = False,
   log_cmd: bool = False,
   log_cmd_level: int = logging.INFO,
+  log_cmd_with_sep: bool = False,
   **kwargs,
 ) -> str:
   kwargs['stdout'] = subprocess.PIPE
@@ -201,6 +210,7 @@ def run_and_parse_output_on_success(
     cwd=cwd,
     log_cmd=log_cmd,
     log_cmd_level=log_cmd_level,
+    log_cmd_with_sep=log_cmd_with_sep,
     shell=shell,
     **kwargs,
   )

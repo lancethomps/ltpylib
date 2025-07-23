@@ -180,7 +180,7 @@ class PagerArgs(object):
 
   @staticmethod
   def add_arguments_to_parser(arg_parser: argparse.ArgumentParser, default_pager: str = None) -> argparse.ArgumentParser:
-    arg_parser.add_argument("--no-pager", action=STORE_TRUE)
+    arg_parser.add_argument("--no-pager", "-P", action=STORE_TRUE)
     arg_parser.add_argument("--pager", default=default_pager if default_pager else os.getenv("PAGER", "less"))
     arg_parser.add_argument("--use-pager", action=STORE_TRUE)
     return arg_parser
