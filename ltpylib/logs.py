@@ -7,7 +7,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import Union
+from typing import Union, Dict, Any
 
 from ltpylib import opts
 
@@ -199,6 +199,12 @@ def log_with_title_sep(title, *args, msg=None, level: int = logging.INFO, **kwar
 def log_title_with_sep(title, level: int = logging.INFO):
   logging.log(level, title)
   logging.log(level, LOG_SEP)
+
+
+def log_dict(data: Dict[str, Any], level: int = logging.INFO):
+  max_key = max([len(key) for key in data.keys()])
+  for key, value in data.items():
+    logging.log(level, f"{key.ljust(max_key)} -> {value}")
 
 
 def ltlogs_dir() -> Path:

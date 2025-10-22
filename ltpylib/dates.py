@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from datetime import datetime, tzinfo
+from datetime import datetime, tzinfo, UTC
 from typing import Optional
 
 import pytz
@@ -22,8 +22,12 @@ def as_pacific_time(date: datetime) -> datetime:
   return date.astimezone(pytz.timezone("US/Pacific"))
 
 
-def from_millis(millis: int) -> datetime:
-  return datetime.fromtimestamp(millis / 1000.0)
+def from_millis(millis: int, tz: tzinfo = None) -> datetime:
+  return datetime.fromtimestamp(millis / 1000.0, tz=tz)
+
+
+def from_millis_utc(millis: int) -> datetime:
+  return datetime.fromtimestamp(millis / 1000.0, tz=UTC)
 
 
 def is_last_day_of_month(date: datetime) -> datetime:
@@ -76,8 +80,8 @@ def to_yyyymmdd_dashes(date: datetime) -> str:
   return date.strftime("%Y-%m-%d")
 
 
-def to_json_isoformat(date: datetime) -> str:
-  return date.isoformat(sep="T", timespec="milliseconds") + "Z"
+def to_json_isoformat(date: datetime, timespec: str = "milliseconds") -> str:
+  return date.isoformat(sep="T", timespec=timespec) + "Z"
 
 
 def to_json_isoformat_friendly(date: datetime) -> str:
