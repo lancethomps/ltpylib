@@ -201,9 +201,14 @@ def log_title_with_sep(title, level: int = logging.INFO):
   logging.log(level, LOG_SEP)
 
 
-def log_dict(data: Dict[str, Any], level: int = logging.INFO):
-  max_key = max([len(key) for key in data.keys()])
-  for key, value in data.items():
+def log_dict(data: Dict[str, Any], level: int = logging.INFO, sorted_keys: bool = False):
+  keys = data.keys()
+  if sorted_keys:
+    keys = sorted(keys)
+
+  max_key = max([len(key) for key in keys])
+  for key in keys:
+    value = data.get(key)
     logging.log(level, f"{key.ljust(max_key)} -> {value}")
 
 

@@ -5,7 +5,7 @@ from getpass import getpass, getuser
 from pathlib import Path
 from typing import List, Union
 
-from ltpylib import enums, inputs, procs
+from ltpylib import enums, inputs, procs, files
 
 MAC_SOUND_DIRS = [
   "/System/Library/Sounds",
@@ -241,6 +241,17 @@ def find_internet_password(
       raise Exception("Could not find internet keychain password for label: %s" % host)
 
   return pw.strip()
+
+
+def open_file(file: Union[str, Path], log_file: bool = False, debug_mode: bool = False):
+  file = files.convert_to_path(file)
+  if log_file:
+    logging.info(file.as_posix())
+
+  if debug_mode:
+    return
+
+  procs.run_with_regular_stdout(["open", file.as_posix()], check=True)
 
 
 def open_url_and_log(url: str, debug_mode: bool = False):

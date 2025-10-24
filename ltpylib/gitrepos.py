@@ -14,6 +14,7 @@ FIND_REPOS_RECURSION_EXCLUDES = frozenset([
 
 def create_git_cmd(
   git_args: Union[str, List[str]],
+  add_args: Optional[Sequence[str]] = None,
 ) -> List[str]:
   git_cmd = ["git"]
   if isinstance(git_args, str):
@@ -21,28 +22,46 @@ def create_git_cmd(
   else:
     git_cmd.extend(git_args)
 
+  if add_args:
+    git_cmd.extend(add_args)
+
   return git_cmd
 
 
 def run_git_cmd(
   git_args: Union[str, List[str]],
+  add_args: Optional[Sequence[str]] = None,
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
   stderr: Optional[Union[int, IO]] = sys.stderr,
   log_cmd: bool = False,
 ) -> subprocess.CompletedProcess:
-  return procs.run(create_git_cmd(git_args), check=check, cwd=cwd, stderr=stderr, log_cmd=log_cmd)
+  return procs.run(
+    create_git_cmd(git_args, add_args=add_args),
+    check=check,
+    cwd=cwd,
+    stderr=stderr,
+    log_cmd=log_cmd,
+  )
 
 
 def run_git_cmd_stdout(
   git_args: Union[str, List[str]],
+  add_args: Optional[Sequence[str]] = None,
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
   stderr: Optional[Union[int, IO]] = sys.stderr,
   log_cmd: bool = False,
   strip: bool = True,
 ) -> str:
-  result = run_git_cmd(git_args, cwd=cwd, check=check, stderr=stderr, log_cmd=log_cmd)
+  result = run_git_cmd(
+    git_args,
+    add_args=add_args,
+    cwd=cwd,
+    check=check,
+    stderr=stderr,
+    log_cmd=log_cmd,
+  )
 
   if strip and result.stdout:
     return result.stdout.strip()
@@ -52,12 +71,19 @@ def run_git_cmd_stdout(
 
 def run_git_cmd_regular_stdout(
   git_args: Union[str, List[str]],
+  add_args: Optional[Sequence[str]] = None,
   cwd: Union[Path, str] = os.getcwd(),
   check: bool = True,
   log_cmd: bool = False,
   **kwargs,
 ) -> subprocess.CompletedProcess:
-  return procs.run_with_regular_stdout(create_git_cmd(git_args), cwd=cwd, check=check, log_cmd=log_cmd, **kwargs)
+  return procs.run_with_regular_stdout(
+    create_git_cmd(git_args, add_args=add_args),
+    cwd=cwd,
+    check=check,
+    log_cmd=log_cmd,
+    **kwargs,
+  )
 
 
 def base_dir(cwd: Union[Path, str] = os.getcwd()) -> Path:
@@ -74,6 +100,14 @@ def current_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
 
 def default_branch(cwd: Union[Path, str] = os.getcwd()) -> str:
   return run_git_cmd_stdout("default-branch", cwd=cwd)
+
+
+def pr_description(add_args: Optional[Sequence[str]] = None, cwd: Union[Path, str] = os.getcwd()) -> str:
+  return run_git_cmd_stdout("pr-description", add_args=add_args, cwd=cwd)
+
+
+def pr_commits_count(add_args: Optional[Sequence[str]] = None, cwd: Union[Path, str] = os.getcwd()) -> int:
+  return int(run_git_cmd_stdout("pr-commits-count", add_args=add_args, cwd=cwd))
 
 
 def repo_name(cwd: Union[Path, str] = os.getcwd()) -> str:
