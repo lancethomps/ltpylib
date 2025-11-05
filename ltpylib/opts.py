@@ -324,14 +324,20 @@ def has_positionals_formatter_class(arg_parser: argparse.ArgumentParser) -> bool
 
 
 def files_completer(
-  base_dir: Path,
+  base_dirs: Union[Path, List[Path]],
   globs: Union[List[str], str] = ('*',),
   remove_suffix: bool = False,
 ) -> 'argcomplete.ChoicesCompleter':  # noqa: F821
   import argcomplete
   from ltpylib import files
 
-  found_files = files.list_files(base_dir, globs=globs)
+  if not isinstance(base_dirs, list):
+    base_dirs = [base_dirs]
+
+  found_files = []
+  for base_dir in base_dirs:
+    found_files.extend(files.list_files(base_dir, globs=globs))
+
   if remove_suffix:
     choices = [f.name.removesuffix(f.suffix) for f in found_files]
   else:
@@ -341,11 +347,11 @@ def files_completer(
 
 def add_files_completer(
   action: argparse.Action,
-  base_dir: Path,
+  base_dirs: Union[Path, List[Path]],
   globs: Union[List[str], str] = ('*',),
   remove_suffix: bool = False,
 ) -> argparse.Action:
-  action.completer = files_completer(base_dir, globs=globs, remove_suffix=remove_suffix)
+  action.completer = files_completer(base_dirs, globs=globs, remove_suffix=remove_suffix)
   return action
 
 

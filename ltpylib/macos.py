@@ -5,7 +5,7 @@ from getpass import getpass, getuser
 from pathlib import Path
 from typing import List, Union
 
-from ltpylib import enums, inputs, procs, files
+from ltpylib import enums, inputs, procs
 
 MAC_SOUND_DIRS = [
   "/System/Library/Sounds",
@@ -244,7 +244,7 @@ def find_internet_password(
 
 
 def open_file(file: Union[str, Path], log_file: bool = False, debug_mode: bool = False):
-  file = files.convert_to_path(file)
+  file: Path = Path(file) if isinstance(file, str) else file
   if log_file:
     logging.info(file.as_posix())
 

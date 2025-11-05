@@ -10,9 +10,8 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-from ltpylib import gitrepos, inputs, logs, procs, strings
+from ltpylib import gitrepos, inputs, logs, macos, procs, strings
 from ltpylib.common_types import TypeWithDictRepr
-from ltpylib.macos import pbcopy
 
 
 def convert_to_path(path: Union[Path, str]) -> Path:
@@ -612,7 +611,7 @@ class OpenGreppedLines:
       exit(1)
 
   def handle_copy(self):
-    pbcopy(self.get_cleaned_results().strip())
+    macos.pbcopy(self.get_cleaned_results().strip())
 
   def handle_print(self):
     print(self.results)

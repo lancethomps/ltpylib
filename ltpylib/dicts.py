@@ -289,6 +289,45 @@ def remove_nulls_and_empty(dict_with_nulls: dict) -> dict:
   return {key: val for (key, val) in dict_with_nulls.items() if checks.is_not_empty(val)}
 
 
+def remove_field_paths(parent: dict, remove_fields: List[List[str]], in_place: bool = True) -> dict:
+  if not in_place:
+    import copy
+    parent = copy.deepcopy(parent)
+
+  for fields in remove_fields:
+    last_field_idx = len(fields) - 1
+    objs = [parent]
+    for idx, field in enumerate(fields):
+      new_objs = []
+      for obj in objs:
+        if idx == last_field_idx:
+          obj.pop(field, None)
+        else:
+          new_obj = obj.get(field, None)
+          if new_obj is None:
+            break
+
+          if isinstance(new_obj, list):
+            new_objs.extend(new_obj)
+          else:
+            new_objs.append(new_obj)
+
+      if not new_objs:
+        break
+
+      objs = new_objs
+
+  return parent
+
+
+def remove_all_fields(data: dict, fields: List[str]) -> dict:
+  for field in fields:
+    for parent in find(field, data, yield_parent=True):
+      parent.pop(field, None)
+
+  return data
+
+
 if __name__ == "__main__":
   import sys
 
