@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=C0111
+import datetime
 import itertools
 import json
 import logging
@@ -10,7 +11,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-from ltpylib import gitrepos, inputs, logs, macos, procs, strings
+from ltpylib import gitrepos, inputs, logs, macos, procs, strings, dicts
 from ltpylib.common_types import TypeWithDictRepr
 
 
@@ -26,6 +27,47 @@ def convert_to_path_expandvars(path: Union[Path, str]) -> Path:
     return Path(os.path.expandvars(path))
 
   return path
+
+
+def file_older_than(
+  file: Union[str, Path],
+  delta: datetime.timedelta = None,
+  weeks: Union[int, float] = None,
+  days: Union[int, float] = None,
+  hours: Union[int, float] = None,
+  minutes: Union[int, float] = None,
+  seconds: Union[int, float] = None,
+  milliseconds: Union[int, float] = None,
+  microseconds: Union[int, float] = None,
+  missing_file_value: bool = True,
+  log_file_age_if_true: bool = False,
+) -> bool:
+  file = convert_to_path(file)
+
+  if not file.exists():
+    return missing_file_value
+
+  if delta is None:
+    delta_args = dicts.remove_nulls({
+      "weeks": weeks,
+      "days": days,
+      "hours": hours,
+      "minutes": minutes,
+      "seconds": seconds,
+      "milliseconds": milliseconds,
+      "microseconds": microseconds,
+    })
+
+    delta = datetime.timedelta(**delta_args)
+
+  mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file))
+  time_diff = datetime.datetime.now() - mod_time
+  older = time_diff > delta
+
+  if older and log_file_age_if_true:
+    logging.info("File is outdated: file=%s required_age=%s outdated_by=%s", file.as_posix(), delta, time_diff - delta)
+
+  return older
 
 
 def replace_matches_in_file(

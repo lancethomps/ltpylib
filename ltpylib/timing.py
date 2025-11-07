@@ -2,7 +2,7 @@
 import logging
 import time
 from decimal import Decimal
-from typing import Callable, SupportsFloat
+from typing import Callable, SupportsFloat, Union
 
 
 def format_seconds(frac_seconds):
@@ -51,7 +51,7 @@ def get_time_remaining_msg(start_time, count, total, use_colors: bool = True):
   return "Elapsed: {0: >12} Remaining: {1: >12}".format(elapsed, remaining)
 
 
-def sleep_and_log(seconds: int, log_level: int = logging.INFO):
+def sleep_and_log(seconds: Union[int, float], log_level: int = logging.INFO):
   logging.log(log_level, "Sleeping %s seconds...", seconds)
   time.sleep(seconds)
 
