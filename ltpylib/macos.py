@@ -32,16 +32,33 @@ class MacSoundsSystem(enums.EnumAutoName):
 
 MAC_SOUND_FAILURE = MacSoundsSystem.BASSO
 MAC_SOUND_FINISHED = MacSoundsSystem.FUNK
+MAC_SOUND_SUCCESS = MacSoundsSystem.GLASS
 MAC_SOUND_COPIED = MacSoundsSystem.SUBMARINE
 
 COPIED_MSG = "Copied to clipboard"
 
 
-def notify(message: str, title: str = "Terminal Notification", sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING, subtitle: str = ""):
+def notify(
+  message: str,
+  title: str = "Terminal Notification",
+  subtitle: str = "",
+  sound_name: Union[str, MacSoundsSystem] = MacSoundsSystem.PING,
+  sound_use_success_value: bool = False,
+  sound_success_value: Union[bool, None] = None,
+):
   message = message.replace('"', '\\"').replace("\n", "\\n")
   title = title.replace('"', '\\"')
-  sound_name = (sound_name.name if isinstance(sound_name, MacSoundsSystem) else sound_name).replace('"', '\\"')
   subtitle = subtitle.replace('"', '\\"')
+
+  if sound_use_success_value:
+    if sound_success_value is None:
+      raise ValueError("sound_success_value must be specified if sound_use_success_value=true")
+    if sound_success_value:
+      sound_name = MAC_SOUND_SUCCESS
+    else:
+      sound_name = MAC_SOUND_FAILURE
+
+  sound_name = (sound_name.name if isinstance(sound_name, MacSoundsSystem) else sound_name).replace('"', '\\"')
 
   js_function = f"""
 var app = Application.currentApplication()
