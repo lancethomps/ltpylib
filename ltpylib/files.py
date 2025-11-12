@@ -11,7 +11,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from typing import AnyStr, Callable, List, Match, Optional, Pattern, Sequence, Set, Tuple, Union
 
-from ltpylib import gitrepos, inputs, logs, macos, procs, strings, dicts
+from ltpylib import dicts, gitrepos, inputs, logs, macos, procs, strings
 from ltpylib.common_types import TypeWithDictRepr
 
 
