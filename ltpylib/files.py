@@ -309,15 +309,42 @@ def find_first_existing_file(
   base_dirs: Sequence[Path] = None,
   log_not_found: bool = False,
   fail_not_found: bool = False,
+  include_pwd: bool = True,
 ) -> Optional[Path]:
-  file_names_or_paths = [convert_to_path(f) for f in file_names_or_paths]
-  check_files: List[Path] = []
-  _add_to_check_files(
+  first_match = find_all_existing_files(
     file_names_or_paths,
-    check_files,
     prefixes=prefixes,
     suffixes=suffixes,
+    base_dirs=base_dirs,
+    log_not_found=log_not_found,
+    fail_not_found=fail_not_found,
+    include_pwd=include_pwd,
+    return_on_first=True,
   )
+  return first_match[0] if first_match else None
+
+
+def find_all_existing_files(
+  file_names_or_paths: Sequence[Union[str, Path]],
+  prefixes: Sequence[str] = None,
+  suffixes: Sequence[str] = None,
+  base_dirs: Sequence[Path] = None,
+  log_not_found: bool = False,
+  fail_not_found: bool = False,
+  include_pwd: bool = True,
+  return_on_first: bool = False,
+) -> List[Path]:
+  found_files: List[Path] = []
+  file_names_or_paths = [convert_to_path(f) for f in file_names_or_paths]
+  check_files: List[Path] = []
+
+  if include_pwd:
+    _add_to_check_files(
+      file_names_or_paths,
+      check_files,
+      prefixes=prefixes,
+      suffixes=suffixes,
+    )
 
   if base_dirs:
     for base_dir in base_dirs:
@@ -328,10 +355,17 @@ def find_first_existing_file(
         suffixes=suffixes,
         base_dir=base_dir,
       )
+  elif not include_pwd:
+    raise ValueError("include_pwd=False but no base_dirs specified")
 
   for check_file in check_files:
     if check_file.exists():
-      return check_file
+      found_files.append(check_file)
+      if return_on_first:
+        return found_files
+
+  if len(found_files) > 0:
+    return found_files
 
   msg = "File not found, checked:\n%s" % "\n".join([f.as_posix() for f in check_files])
 
@@ -340,7 +374,7 @@ def find_first_existing_file(
   elif log_not_found:
     logging.error(msg)
 
-  return None
+  return found_files
 
 
 def _add_to_check_files(

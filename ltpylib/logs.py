@@ -173,6 +173,15 @@ def log_sep_large(level: int = logging.INFO, sep_char: str = None):
   logging.log(level, get_log_sep_large(sep_char=sep_char))
 
 
+def print_stderr(
+  *values: object,
+  sep: str | None = " ",
+  end: str | None = "\n",
+  flush: bool = False,
+):
+  print(*values, file=sys.stderr, sep=sep, end=end, flush=flush)
+
+
 def create_path_log_info(path: Path, replace_home_dir: bool = True) -> str:
   output = path.as_posix()
 
