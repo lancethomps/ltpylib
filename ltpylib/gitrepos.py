@@ -130,6 +130,16 @@ def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
   return run_git_cmd("in-repo", cwd=cwd).returncode == 0
 
 
+def diff_to_branch(
+  branch: str,
+  add_args: Optional[Sequence[str]] = None,
+  cwd: Union[Path, str] = os.getcwd(),
+) -> str:
+  git_args = ["--no-pager", "diff-to-branch", branch]
+
+  return run_git_cmd_stdout(git_args, add_args=add_args, cwd=cwd)
+
+
 def diff_show(
   cwd: Union[Path, str] = os.getcwd(),
   diff_file: Union[Path, str] = None,

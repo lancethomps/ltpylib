@@ -411,6 +411,7 @@ def find_parent(
   base_dir: Union[Path, str],
   file_name: str,
   max_depth: int = -1,
+  max_dir: Path = None,
 ) -> Optional[Path]:
   curr_dir = convert_to_path(base_dir)
   depth = max_depth
@@ -421,6 +422,8 @@ def find_parent(
       return parent_file
 
     if curr_dir == curr_dir.parent:
+      break
+    elif max_dir and curr_dir == max_dir:
       break
 
     curr_dir = curr_dir.parent
