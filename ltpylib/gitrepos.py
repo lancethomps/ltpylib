@@ -123,11 +123,11 @@ def repo_owner(cwd: Union[Path, str] = os.getcwd()) -> str:
 
 
 def in_base_dir(cwd: Union[Path, str] = os.getcwd()) -> bool:
-  return run_git_cmd("in-base-dir", cwd=cwd).returncode == 0
+  return run_git_cmd("in-base-dir", cwd=cwd, check=False).returncode == 0
 
 
 def in_repo(cwd: Union[Path, str] = os.getcwd()) -> bool:
-  return run_git_cmd("in-repo", cwd=cwd).returncode == 0
+  return run_git_cmd("in-repo", cwd=cwd, check=False).returncode == 0
 
 
 def diff_to_branch(
