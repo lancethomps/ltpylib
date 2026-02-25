@@ -7,7 +7,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Callable, IO, Iterable, List, Optional, Tuple, Type, Union
 
-CMD_NO_QUOTES_NEEDED_REGEX = re.compile(r"^[a-zA-Z0-9_-]+$")
+CMD_NO_QUOTES_NEEDED_REGEX = re.compile(r"^[a-zA-Z0-9._-]+$")
 
 
 class CalledProcessErrorWithOutput(subprocess.CalledProcessError):
