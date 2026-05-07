@@ -185,7 +185,7 @@ def git_repo_root_for_file(file_path: Path) -> Optional[Path]:
     if parent_file.joinpath(".git").is_dir():
       return parent_file
 
-  return None
+  return base_dir(cwd=file_path if file_path.is_dir() else file_path.parent)
 
 
 def resolve_file_relative_to_git_base_dir(file_path: Path, current_dir: Path = Path(os.getcwd())) -> Optional[Path]:
