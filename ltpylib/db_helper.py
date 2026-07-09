@@ -17,8 +17,8 @@ SQL_CMD_REGEX_MAIN = r"((SELECT|WITH|EXPLAIN)[^;]*?^;)"
 SQL_CMD_REGEX_PRIMARY = r"(?s)^-- ?use\n" + SQL_CMD_REGEX_MAIN
 SQL_CMD_REGEX_SECONDARY = r"(?s)^" + SQL_CMD_REGEX_MAIN
 SQL_CMD_REGEX_QUERY_ID_REPL_STR = "<query_id>"
-SQL_CMD_REGEX_QUERY_ID = r"(?s)^-- ?" + SQL_CMD_REGEX_QUERY_ID_REPL_STR + r"\n([^;]+^;)"
-SQL_CMD_REGEX_QUERY_ID_ALL = r"(?s)^-- ?([a-zA-Z0-9_-]+)\n([^;]+^;)"
+SQL_CMD_REGEX_QUERY_ID = r"(?s)^-- ?" + SQL_CMD_REGEX_QUERY_ID_REPL_STR + r"\n([^;]+(^;|;$))"
+SQL_CMD_REGEX_QUERY_ID_ALL = r"(?s)^-- ?([a-zA-Z0-9_-]+)\n([^;]+(^;|;$))"
 SQL_CMD_REGEX_FLAGS = re.MULTILINE
 SQL_CMD_REGEX_GROUP = 1
 
