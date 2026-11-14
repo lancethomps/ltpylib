@@ -197,6 +197,24 @@ def find_git_repos(
   return [dotgit.parent for dotgit in dotgit_dirs]
 
 
+def parse_worktree_list_porcelain(output: str) -> List[Path]:
+  worktrees = []
+  for line in output.splitlines():
+    if line.startswith("worktree "):
+      worktrees.append(Path(line[len("worktree "):]))
+
+  return worktrees
+
+
+def list_linked_worktrees(repo: Path) -> List[Path]:
+  result = run_git_cmd(["worktree", "list", "--porcelain"], cwd=repo, check=False, stderr=subprocess.DEVNULL)
+  if result.returncode != 0 or not result.stdout:
+    return []
+
+  # the first entry is always the main worktree
+  return [worktree for worktree in parse_worktree_list_porcelain(result.stdout)[1:] if worktree.is_dir()]
+
+
 def add_git_dirs(
   git_repos: List[Path],
   add_dir: List[Path],
@@ -206,7 +224,8 @@ def add_git_dirs(
   recursion_include_patterns: Sequence[str] = None,
   recursion_exclude_patterns: Sequence[str] = None,
   recursion_includes: Sequence[str] = None,
-  recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES
+  recursion_excludes: Sequence[str] = FIND_REPOS_RECURSION_EXCLUDES,
+  include_worktrees: bool = False,
 ) -> List[Path]:
   for git_dir in add_dir:
     if not git_dir.is_dir():
@@ -229,5 +248,12 @@ def add_git_dirs(
         continue
 
       git_repos.append(git_repo)
+
+      if include_worktrees:
+        for worktree in list_linked_worktrees(git_repo):
+          if worktree in git_repos:
+            continue
+
+          git_repos.append(worktree)
 
   return git_repos
